@@ -263,6 +263,10 @@ body {
 
 /* Showcase Section */
 .exercise-showcase-section { padding: 100px 50px; background: #1a1a1a; text-align: center; }
+.exercise-showcase-section .section-container {
+    display: block;
+    text-align: center;
+}
 .exercise-showcase h3 { font-size: 48px; color: #ff6600; margin-bottom: 10px; }
 .subtitle { color: #888; margin-bottom: 40px; }
 
@@ -312,47 +316,32 @@ body {
 }
 
 /* Grid e Card Vetrina */
+.exercise-showcase {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
 .exercise-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
+    gap: 20px;
     min-height: 400px;
+    align-items: center;
+    justify-items: center;
+    width: 100%;
 }
 
 /* Responsive adjustments - always 3 columns */
 @media (max-width: 1200px) {
     .exercise-grid {
-        gap: 20px;
-    }
-    
-    .exercise-image {
-        height: 200px;
-    }
-    
-    .exercise-info {
-        padding: 20px;
-    }
-    
-    .exercise-info h4 {
-        font-size: 18px;
+        gap: 18px;
     }
 }
 
 @media (max-width: 992px) {
     .exercise-grid {
-        gap: 18px;
-    }
-    
-    .exercise-image {
-        height: 170px;
-    }
-    
-    .exercise-info {
-        padding: 18px;
-    }
-    
-    .exercise-info h4 {
-        font-size: 16px;
+        gap: 15px;
     }
 }
 
@@ -365,33 +354,6 @@ body {
     .exercise-showcase-section {
         padding: 60px 25px;
     }
-    
-    .exercise-image {
-        height: 140px;
-    }
-    
-    .exercise-info {
-        padding: 16px;
-    }
-    
-    .exercise-info h4 {
-        font-size: 14px;
-        margin-bottom: 10px;
-    }
-    
-    .tag {
-        font-size: 10px;
-        padding: 4px 10px;
-        margin-right: 4px;
-    }
-    
-    .tag-box {
-        margin-bottom: 10px;
-    }
-    
-    .exercise-info p {
-        font-size: 12px;
-    }
 }
 
 @media (max-width: 576px) {
@@ -402,33 +364,6 @@ body {
     
     .exercise-showcase-section {
         padding: 50px 20px;
-    }
-    
-    .exercise-image {
-        height: 120px;
-    }
-    
-    .exercise-info {
-        padding: 14px;
-    }
-    
-    .exercise-info h4 {
-        font-size: 13px;
-        margin-bottom: 8px;
-    }
-    
-    .tag {
-        font-size: 9px;
-        padding: 3px 8px;
-        margin-right: 3px;
-    }
-    
-    .tag-box {
-        margin-bottom: 8px;
-    }
-    
-    .exercise-info p {
-        font-size: 11px;
     }
 }
 
@@ -441,33 +376,6 @@ body {
     .exercise-showcase-section {
         padding: 40px 15px;
     }
-    
-    .exercise-image {
-        height: 100px;
-    }
-    
-    .exercise-info {
-        padding: 12px;
-    }
-    
-    .exercise-info h4 {
-        font-size: 12px;
-        margin-bottom: 6px;
-    }
-    
-    .tag {
-        font-size: 8px;
-        padding: 2px 6px;
-        margin-right: 2px;
-    }
-    
-    .tag-box {
-        margin-bottom: 6px;
-    }
-    
-    .exercise-info p {
-        font-size: 10px;
-    }
 }
 
 .exercise-item {
@@ -476,6 +384,11 @@ body {
     overflow: hidden;
     border: 1px solid #333;
     transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
 }
 
 .exercise-item:hover {
@@ -485,9 +398,10 @@ body {
 
 .exercise-image {
     width: 100%;
-    height: 220px;
+    height: calc(100% - 60px);
     background: #000;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .exercise-image img {
@@ -502,37 +416,58 @@ body {
 }
 
 .exercise-info {
-    padding: 25px;
-    text-align: left;
+    padding: 15px 10px;
+    text-align: center;
+    flex-shrink: 0;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
 }
 
 .exercise-info h4 {
     color: #ff6600;
-    margin: 0 0 12px 0;
-    font-size: 20px;
-    text-transform: capitalize;
-}
-
-.tag-box {
-    margin-bottom: 15px;
-    display: block;
-}
-
-.tag {
-    font-size: 11px;
-    background: #3d3d3d;
-    color: #bbb;
-    padding: 5px 10px;
-    border-radius: 4px;
-    margin-right: 5px;
-    text-transform: uppercase;
-}
-
-.exercise-info p {
-    font-size: 13px;
-    color: #888;
     margin: 0;
-    line-height: 1.5;
+    font-size: 16px;
+    text-transform: capitalize;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 5px;
+    line-height: 1.2;
+}
+
+/* Unified font size for all screen sizes */
+@media (max-width: 1200px) {
+    .exercise-info h4 {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 992px) {
+    .exercise-info h4 {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .exercise-info h4 {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 576px) {
+    .exercise-info h4 {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .exercise-info h4 {
+        font-size: 11px;
+    }
 }
 
 

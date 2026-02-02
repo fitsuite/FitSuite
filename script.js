@@ -111,14 +111,7 @@ function displayPage(page) {
                 <img id="${cardId}" src="https://placehold.co/400x300?text=Caricamento..." alt="${ex.name}">
             </div>
             <div class="exercise-info">
-                <div class="tag-box">
-                    <span class="tag">${ex.category}</span>
-                    <span class="tag">${ex.difficulty || 'All'}</span>
-                </div>
                 <h4>${ex.name}</h4>
-                <p style="font-size: 13px; color: #888; line-height: 1.5;">
-                    Target: ${ex.primary_muscles.join(', ')}
-                </p>
             </div>
         `;
         grid.appendChild(card);
