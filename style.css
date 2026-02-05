@@ -57,7 +57,7 @@ body {
     color: white;
     text-decoration: none;
     font-weight: 500;
-    font-size: 18px;
+    font-size: 16px;
     padding: 8px 0;
     transition: color 0.3s ease;
 }
@@ -644,6 +644,10 @@ hr {
     text-align: center;
 }
 
+.footer-column {
+    text-align: center;
+}
+
 .footer-column h3 {
     color: white;
     font-size: 24px;
@@ -661,7 +665,7 @@ hr {
     margin-bottom: 15px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: center; /* Aggiunto per centrare il contenuto */
     gap: 10px;
 }
 
@@ -683,6 +687,7 @@ hr {
     color: #ff6600;
     width: 20px;
     text-align: center;
+    font-size: 18px; /* Impostato per rendere le icone leggermente più grandi del testo */
 }
 
 .social-links {
@@ -710,6 +715,7 @@ hr {
     justify-content: center;
     border-radius: 50%;
     background-color: #222;
+    border: 1px solid #444;
 }
 
 .social-icon:hover {
@@ -727,12 +733,12 @@ hr {
 .footer-logo {
     display: inline-block;
     color: white;
-    font-size: 32px;
+    font-size: 24px; /* Ridotto da 32px */
     font-weight: 300;
     text-transform: capitalize;
-    letter-spacing: 2px;
-    border: 2px solid #ff6600;
-    padding: 10px 20px;
+    letter-spacing: 1px; /* Ridotto da 2px */
+    border: 1px solid #ff6600; /* Ridotto da 2px */
+    padding: 8px 16px; /* Adattato per la nuova dimensione del font */
     margin-bottom: 20px;
     background-color: transparent;
 }
@@ -741,6 +747,7 @@ hr {
     color: #888;
     font-size: 14px;
     margin-bottom: 15px;
+    text-align: center;
 }
 
 .footer-links {
@@ -776,16 +783,13 @@ hr {
     .footer-content {
         grid-template-columns: 1fr;
         gap: 30px;
-        text-align: center;
     }
     
     .footer-column h3 {
         font-size: 20px;
     }
     
-    .social-links {
-        justify-content: center;
-    }
+
     
     .footer-logo {
         font-size: 28px;

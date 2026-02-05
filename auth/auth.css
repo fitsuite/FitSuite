@@ -1,0 +1,150 @@
+body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: #1e1e1e;
+    color: white;
+    min-height: 100vh;
+}
+
+
+
+/* MAIN LAYOUT */
+.auth-main-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 120px 10% 80px; /* Aumentato padding-top per evitare sovrapposizioni con la navbar */
+    gap: 100px;
+}
+
+.auth-text-section {
+    flex: 1;
+    max-width: 550px;
+}
+
+.auth-text-section h1 {
+    font-size: 48px;
+    line-height: 1.1;
+    margin-bottom: 30px;
+}
+
+.fitsuite-highlight {
+    color: #ff6600;
+}
+
+.auth-text-section p {
+    font-size: 20px;
+    color: white;
+    opacity: 0.9;
+}
+
+/* FORM CONTAINER */
+.registration-form-container {
+    background-color: #262626;
+    padding: 40px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    width: 380px;
+    text-align: center;
+}
+
+.registration-form-container h2 {
+    font-size: 28px;
+    margin-bottom: 30px;
+    margin-top: 0;
+}
+
+.form-group {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.form-group input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: white;
+}
+
+.continue-btn {
+    width: 100%;
+    background-color: #ff5500;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.or-divider {
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    color: #888;
+}
+
+.or-divider::before, .or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #444;
+    margin: 0 15px;
+}
+
+.google-signin-btn {
+    width: 100%;
+    background-color: #cccccc; /* Grigio come da immagine */
+    color: black;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.google-signin-btn img {
+    width: 20px;
+}
+
+.login-link {
+    font-size: 13px;
+    margin-top: 20px;
+}
+
+.login-link a {
+    color: #ff6600;
+    text-decoration: underline;
+}
+
+.terms-privacy {
+    font-size: 11px;
+    color: #888;
+    margin-top: 30px;
+    line-height: 1.4;
+}
+
+.terms-privacy a {
+    color: #888;
+    text-decoration: underline;
+}
+
+.copyright {
+    margin-top: 10px;
+}
