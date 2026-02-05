@@ -31,7 +31,7 @@ body {
     position: absolute;
     top: 0;
     width: 100%;
-    padding: 20px 50px;
+    padding: 20px 20px; /* Reintrodotto un leggero padding orizzontale */
     box-sizing: border-box;
     background: rgba(0,0,0,0.6);
 }
@@ -40,8 +40,6 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 1200px;
-    margin: 0 auto;
     width: 100%;
 }
 
@@ -51,6 +49,8 @@ body {
     align-items: center;
     gap: 20px;
     transition: all 0.3s ease;
+    flex-grow: 1; /* Assicura che i link occupino lo spazio disponibile */
+    justify-content: flex-start; /* Allinea i link a sinistra */
 }
 
 .nav-links a {
@@ -266,6 +266,8 @@ body {
 .exercise-showcase-section .section-container {
     display: block;
     text-align: center;
+    max-width: 1200px; /* Assicurati che abbia un max-width per centrarlo */
+    margin: 0 auto; /* Centra il contenitore */
 }
 .exercise-showcase h3 { font-size: 36px; color: #ff6600; margin-bottom: 10px; }
 .subtitle { color: #888; margin-bottom: 25px; }
@@ -329,21 +331,22 @@ body {
     min-height: 300px;
     align-items: center;
     justify-items: center;
+    place-items: center; /* Centra sia orizzontalmente che verticalmente gli elementi della griglia */
     width: 100%;
+    max-width: 1200px; /* Imposta un max-width per la griglia */
+    margin: 0 auto; /* Centra la griglia */
 }
 
 /* Responsive adjustments - always 3 columns */
 @media (max-width: 1200px) {
     .exercise-grid {
         gap: 15px;
-        max-width: 900px;
     }
 }
 
 @media (max-width: 992px) {
     .exercise-grid {
         gap: 12px;
-        max-width: 700px;
     }
 }
 
@@ -351,7 +354,6 @@ body {
     .exercise-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 10px;
-        max-width: 500px;
     }
 }
 
@@ -359,7 +361,6 @@ body {
     .exercise-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 8px;
-        max-width: 400px;
     }
 }
 
@@ -367,7 +368,6 @@ body {
     .exercise-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 6px;
-        max-width: 300px;
     }
 }
 
@@ -377,7 +377,7 @@ body {
     overflow: hidden;
     transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     width: 100%;
-    max-width: 200px;
+    max-width: 200px; /* Reintrodotto per mantenere le dimensioni più piccole */
     aspect-ratio: 3 / 4;
     display: flex;
     flex-direction: column;
@@ -440,50 +440,30 @@ body {
 
 /* Unified font size for all screen sizes */
 @media (max-width: 1200px) {
-    .exercise-item {
-        max-width: 180px;
-    }
-    
     .exercise-info h4 {
         font-size: 13px;
     }
 }
 
 @media (max-width: 992px) {
-    .exercise-item {
-        max-width: 160px;
-    }
-    
     .exercise-info h4 {
         font-size: 12px;
     }
 }
 
 @media (max-width: 768px) {
-    .exercise-item {
-        max-width: 140px;
-    }
-    
     .exercise-info h4 {
         font-size: 11px;
     }
 }
 
 @media (max-width: 576px) {
-    .exercise-item {
-        max-width: 120px;
-    }
-    
     .exercise-info h4 {
         font-size: 10px;
     }
 }
 
 @media (max-width: 480px) {
-    .exercise-item {
-        max-width: 100px;
-    }
-    
     .exercise-info h4 {
         font-size: 9px;
     }
@@ -497,6 +477,7 @@ body {
     justify-content: center;
     margin-top: 50px;
     margin-bottom: 30px;
+    padding: 0 15px; /* Aggiunto padding per evitare che i pulsanti tocchino i bordi su schermi piccoli */
 }
 
 .pagination-controls {
@@ -504,6 +485,7 @@ body {
     gap: 8px;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap; /* Permette ai pulsanti di andare a capo su schermi piccoli */
 }
 
 .page-btn {
@@ -519,6 +501,13 @@ body {
     min-width: 40px;
     text-align: center;
     font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.page-ellipsis {
+    color: #888;
+    font-size: 14px;
+    padding: 10px 0;
+    user-select: none; /* Impedisce la selezione del testo */
 }
 
 .page-btn.prev-btn,
@@ -557,6 +546,29 @@ body {
     color: #666;
     box-shadow: none;
     transform: none;
+}
+
+/* Media query per la paginazione su schermi piccoli */
+@media (max-width: 576px) {
+    .pagination {
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+
+    .pagination-controls {
+        gap: 5px;
+    }
+
+    .page-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+        min-width: 35px;
+    }
+
+    .page-btn.prev-btn,
+    .page-btn.next-btn {
+        padding: 8px 15px;
+    }
 }
 
 .loading {

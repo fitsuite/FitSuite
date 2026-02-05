@@ -30,6 +30,7 @@ const loading = document.getElementById('loading');
 
 // State
 let allExercises = [];
+let originalExercises = [];
 let currentPage = 1;
 const itemsPerPage = 9; // 3x3 grid per pagina
 let totalResults = 0;
@@ -125,29 +126,61 @@ function setupPagination() {
     
     paginationContainer.appendChild(prevButton);
 
-    // Numero di pagine da mostrare (evita troppi pulsanti)
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    // Ajusta se siamo vicino alla fine
-    if (endPage - startPage + 1 < maxVisiblePages) {
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    // Logica per i numeri di pagina con puntini di sospensione
+    const pageNumbersToShow = new Set();
+
+    // Aggiungi sempre la prima pagina
+    if (totalPages > 0) {
+        pageNumbersToShow.add(1);
     }
-    
-    // Pulsanti delle pagine
-    for (let i = startPage; i <= endPage; i++) {
-        const button = document.createElement('button');
-        button.innerText = i;
-        button.className = `page-btn ${i === currentPage ? 'active' : ''}`;
-        
-        button.onclick = () => {
-            currentPage = i;
-            displayExercises();
-        };
-        
-        paginationContainer.appendChild(button);
+
+    // Aggiungi le pagine intorno alla pagina corrente
+    for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+        if (i > 1 && i < totalPages) { // Assicurati che non sia la prima o l'ultima pagina
+            pageNumbersToShow.add(i);
+        }
     }
+
+    // Aggiungi sempre l'ultima pagina (se diversa dalla prima)
+    if (totalPages > 1) {
+        pageNumbersToShow.add(totalPages);
+    }
+
+    // Converti in array e ordina
+    const sortedPageNumbers = Array.from(pageNumbersToShow).sort((a, b) => a - b);
+
+    // Costruisci la lista finale con i puntini di sospensione
+    const finalPages = [];
+    let lastPageAdded = 0;
+
+    sortedPageNumbers.forEach(page => {
+        if (page - lastPageAdded > 1) {
+            finalPages.push('...');
+        }
+        finalPages.push(page);
+        lastPageAdded = page;
+    });
+
+    // Crea i pulsanti per i numeri di pagina e i puntini di sospensione
+    finalPages.forEach(pageNumber => {
+        if (pageNumber === '...') {
+            const span = document.createElement('span');
+            span.innerText = '...';
+            span.className = 'page-ellipsis';
+            paginationContainer.appendChild(span);
+        } else {
+            const button = document.createElement('button');
+            button.innerText = pageNumber;
+            button.className = `page-btn ${pageNumber === currentPage ? 'active' : ''}`;
+            
+            button.onclick = () => {
+                currentPage = pageNumber;
+                displayExercises();
+            };
+            
+            paginationContainer.appendChild(button);
+        }
+    });
 
     // Pulsante Successivo
     const nextButton = document.createElement('button');
@@ -169,10 +202,10 @@ function setupPagination() {
 // Function to perform search
 function performSearch() {
     const query = searchInput?.value.trim().toLowerCase() || '';
-    let filteredExercises = allExercises;
+    let filteredExercises = originalExercises;
     
     if (query) {
-        filteredExercises = allExercises.filter(ex => 
+        filteredExercises = originalExercises.filter(ex => 
             ex.name.toLowerCase().includes(query)
         );
     }
@@ -194,7 +227,8 @@ async function init() {
         const response = await fetch('./backend/data/exercises.json');
         const exercises = await response.json();
         
-        allExercises = exercises;
+        originalExercises = exercises;
+        allExercises = originalExercises;
         totalResults = allExercises.length;
         
         displayExercises();
