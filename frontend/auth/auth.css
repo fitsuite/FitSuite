@@ -15,6 +15,100 @@ body {
     align-items: center;
     padding: 120px 10% 80px; /* Aumentato padding-top per evitare sovrapposizioni con la navbar */
     gap: 100px;
+    min-height: calc(100vh - 82px); /* Altezza stimata della navbar per desktop */
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .auth-main-content {
+        flex-direction: column;
+        padding: 90px 5% 50px; /* Aumentato padding-top per evitare sovrapposizioni con la navbar */
+        gap: 0; /* Rimosso il gap */
+        min-height: calc(100vh - 82px); /* Altezza stimata della navbar per desktop */
+    }
+
+    .auth-text-section {
+        display: none; /* Nasconde la sezione di testo */
+    }
+
+    .registration-form-container {
+        width: 90%;
+        max-width: 380px;
+    }
+}
+
+@media (max-width: 768px) {
+    .auth-main-content {
+        padding: 80px 5% 40px; /* Aumentato padding-top per evitare sovrapposizioni con la navbar */
+        gap: 0; /* Rimosso il gap */
+        min-height: calc(100vh - 70px); /* Altezza stimata della navbar per mobile */
+    }
+
+    .registration-form-container {
+        padding: 30px;
+    }
+
+    .registration-form-container h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-main-content {
+        padding: 70px 5% 30px; /* Aumentato padding-top per evitare sovrapposizioni con la navbar */
+        gap: 0; /* Rimosso il gap */
+        min-height: calc(100vh - 70px); /* Altezza stimata della navbar per mobile */
+    }
+
+    .registration-form-container {
+        padding: 10px; /* Ridotto ulteriormente il padding */
+        width: 90%; /* Impostato a 90% per lasciare un po' di spazio ai lati */
+        max-width: 300px; /* Ridotto il max-width per renderlo più piccolo */
+    }
+
+    .registration-form-container h2 {
+        font-size: 18px; /* Ridotto la dimensione del font */
+        margin-bottom: 8px; /* Ridotto il margine inferiore */
+    }
+
+    .form-group {
+        margin-bottom: 8px; /* Ridotto il margine inferiore */
+    }
+
+    .form-group label {
+        font-size: 12px; /* Ridotto la dimensione del font della label */
+        margin-bottom: 4px; /* Ridotto il margine inferiore della label */
+    }
+
+    .form-group input,
+    .continue-btn,
+    .google-signin-btn {
+        padding: 6px; /* Ridotto il padding */
+        font-size: 12px; /* Ridotto la dimensione del font */
+    }
+
+    .google-signin-btn img {
+        width: 14px; /* Ridotto la dimensione dell'immagine */
+    }
+
+    .or-divider {
+        margin: 10px 0; /* Ridotto il margine verticale */
+    }
+
+    .login-link {
+        font-size: 8px; /* Ridotto la dimensione del font */
+        margin-top: 10px; /* Ridotto il margine superiore */
+    }
+
+    .terms-privacy {
+        font-size: 8px; /* Ridotto la dimensione del font */
+        margin-top: 15px; /* Ridotto il margine superiore */
+    }
+
+    .copyright {
+        margin-top: 5px; /* Ridotto il margine superiore */
+    }
 }
 
 .auth-text-section {

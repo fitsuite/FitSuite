@@ -70,8 +70,13 @@ function displayExercises() {
         grid.parentNode.insertBefore(resultsInfo, grid);
     }
     
-    // Se abbiamo risultati da mostrare, li renderizziamo
-    if (itemsToShow.length > 0) {
+    // Se non abbiamo risultati per questa pagina, mostriamo un messaggio
+    if (itemsToShow.length === 0 && currentPage === 1) {
+        grid.innerHTML = `<p style="grid-column: 1/-1; color: #888; padding: 40px;">Nessun esercizio trovato per questa ricerca.</p>`;
+    } else if (itemsToShow.length === 0) {
+        grid.innerHTML = `<p style="grid-column: 1/-1; color: #888; padding: 40px;">Nessun altro esercizio trovato.</p>`;
+    } else {
+        // Se abbiamo risultati da mostrare, li renderizziamo
         itemsToShow.forEach(ex => {
             const card = document.createElement('div');
             card.className = 'exercise-item';
@@ -86,26 +91,32 @@ function displayExercises() {
             `;
             grid.appendChild(card);
         });
-    } else {
-        // Se non abbiamo risultati per questa pagina, mostriamo un messaggio
-        grid.innerHTML = `<p style="grid-column: 1/-1; color: #888; padding: 40px;">Nessun altro esercizio trovato.</p>`;
     }
 
-    setupPagination();
+
 }
 
 // Function to setup pagination
 function setupPagination() {
+    console.log('setupPagination() called.');
     // Controlla che l'elemento pagination esista
     if (!pagination) {
         console.error('Errore: Elemento pagination non trovato');
         return;
     }
     
-    pagination.innerHTML = '';
-    const totalPages = Math.ceil(allExercises.length / itemsPerPage);
+    pagination.innerHTML = ''; // Pulisci sempre la paginazione all'inizio
 
-    if (totalPages <= 1) return;
+    const totalPages = Math.ceil(allExercises.length / itemsPerPage);
+    console.log(`allExercises.length: ${allExercises.length}, totalPages: ${totalPages}`);
+
+    if (totalPages <= 1) { // Se non ci sono pagine o solo una, nascondi la paginazione
+        pagination.classList.add('hidden');
+        console.log('Pagination hidden. Current pagination classList:', pagination.classList.value);
+        return;
+    }
+    pagination.classList.remove('hidden'); // Mostra la paginazione se ci sono più pagine
+    console.log('Pagination shown. Current pagination classList:', pagination.classList.value);
 
     // Container per i pulsanti di paginazione
     const paginationContainer = document.createElement('div');
@@ -209,11 +220,17 @@ function performSearch() {
             ex.name_it.toLowerCase().includes(query) || ex.name.toLowerCase().includes(query)
         );
     }
-    
     totalResults = filteredExercises.length;
     currentPage = 1;
-    allExercises = filteredExercises;
+    allExercises = filteredExercises; // Assegna i risultati filtrati
+    
+    // Se non ci sono risultati, assicurati che allExercises sia vuoto per nascondere la paginazione
+    if (filteredExercises.length === 0) {
+        allExercises = [];
+    }
+    
     displayExercises();
+    setupPagination();
 }
 
 // Initialize the application
@@ -232,7 +249,8 @@ async function init() {
         totalResults = allExercises.length;
         
         displayExercises();
-        
+        setupPagination();
+
         // Aggiungi event listener per la ricerca
         if (searchInput) {
             searchInput.addEventListener('input', () => {
