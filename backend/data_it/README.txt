@@ -1,0 +1,1 @@
+cartella in cui ci saranno i file del dataset in italiano
