@@ -81,7 +81,7 @@ function displayExercises() {
                     <img src="${ex.gifUrl}" alt="${ex.name}">
                 </div>
                 <div class="exercise-info">
-                    <h4>${ex.name}</h4>
+                    <h4>${ex.name_it}</h4>
                 </div>
             `;
             grid.appendChild(card);
@@ -206,7 +206,7 @@ function performSearch() {
     
     if (query) {
         filteredExercises = originalExercises.filter(ex => 
-            ex.name.toLowerCase().includes(query)
+            ex.name_it.toLowerCase().includes(query) || ex.name.toLowerCase().includes(query)
         );
     }
     
@@ -224,7 +224,7 @@ async function init() {
         }
         
         // Carica i dati direttamente da exercises.json
-        const response = await fetch('./backend/data/exercises.json');
+        const response = await fetch('./backend/data_it/esercizi_DATABASE_TOTALE.json');
         const exercises = await response.json();
         
         originalExercises = exercises;
