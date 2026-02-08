@@ -1,0 +1,42 @@
+[
+  {
+    "name": "neck",
+    "name_it": "collo"
+  },
+  {
+    "name": "lower arms",
+    "name_it": " Braccia inferiori"
+  },
+  {
+    "name": "shoulders",
+    "name_it": "spalle"
+  },
+  {
+    "name": "cardio",
+    "name_it": "cardio"
+  },
+  {
+    "name": "upper arms",
+    "name_it": " Braccia superiori"
+  },
+  {
+    "name": "chest",
+    "name_it": "petto"
+  },
+  {
+    "name": "lower legs",
+    "name_it": "parte inferiore delle gambe"
+  },
+  {
+    "name": "back",
+    "name_it": "Dorso"
+  },
+  {
+    "name": "upper legs",
+    "name_it": " Gambe superiori"
+  },
+  {
+    "name": "waist",
+    "name_it": "Addominali"
+  }
+]
