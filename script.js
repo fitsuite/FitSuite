@@ -132,6 +132,7 @@ function setupPagination() {
         if (currentPage > 1) {
             currentPage--;
             displayExercises();
+            setupPagination();
         }
     };
     
@@ -187,6 +188,7 @@ function setupPagination() {
             button.onclick = () => {
                 currentPage = pageNumber;
                 displayExercises();
+                setupPagination();
             };
             
             paginationContainer.appendChild(button);
@@ -203,6 +205,7 @@ function setupPagination() {
         if (currentPage < totalPages) {
             currentPage++;
             displayExercises();
+            setupPagination();
         }
     };
     
