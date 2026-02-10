@@ -93,7 +93,7 @@ function displayExercises() {
         });
     }
 
-
+    setupPagination(); // Aggiunto per aggiornare la paginazione dopo aver visualizzato gli esercizi
 }
 
 // Function to setup pagination
