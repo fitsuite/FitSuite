@@ -22,8 +22,22 @@
       // Initialize Firebase
       firebase.initializeApp(firebaseConfig);
     </script>
+    <!-- Logout script -->
+    <script src="../../backend/function/logout.js"></script>
 </head>
 <body>
     <h1>ciao</h1>
+    <button id="logout-button">Logout</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', async () => {
+                    await logout(); // Call the global logout function
+                });
+            }
+        });
+    </script>
 </body>
 </html>
