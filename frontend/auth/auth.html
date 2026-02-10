@@ -7,6 +7,24 @@
     <link rel="stylesheet" href="../../style.css">
     <link rel="stylesheet" href="./auth.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script>
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyCEgbB9rBBKOov3aDma0DMn-EuU0bGMMYo",
+        authDomain: "fitsuite-a7b6c.firebaseapp.com",
+        projectId: "fitsuite-a7b6c",
+        storageBucket: "fitsuite-a7b6c.firebasestorage.app",
+        messagingSenderId: "721614273457",
+        appId: "1:721614273457:web:195f48279fafd01a1f5b90",
+        measurementId: "G-W4ME455MH5"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+    </script>
 </head>
 <body>
     <nav class="navbar">
@@ -22,7 +40,9 @@
                 <a href="../../index.html#esercizi">Esercizi</a>
                 <a href="../../index.html#trailer">Trailer</a>
             </div>
+
             <a href="#" id="navbar-login-btn"><button class="login-btn">Accedi</button></a>
+        
         </div>
     </nav>
 
