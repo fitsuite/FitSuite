@@ -185,10 +185,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearMessages('forgot-password-success-message');
                 await auth.sendPasswordResetEmail(email);
                 displayMessage('forgot-password-success-message', 'Link per il reset della password inviato alla tua email!', false);
-                // Optionally, switch back to login form
-                forgotPasswordContainer.style.display = 'none';
-                loginFormContainer.style.display = 'block';
-                navbarLoginButton.innerText = 'Registrati';
+                // Store success message in session storage and redirect to login
+                sessionStorage.setItem('passwordResetSuccess', 'true');
+                sessionStorage.setItem('passwordResetEmail', email);
+                setTimeout(() => {
+                    window.location.href = 'auth.html'; // Redirect to auth.html
+                }, 3000); // 3 seconds delay
             } catch (error) {
                 displayMessage('forgot-password-error-message', getFirebaseErrorMessage(error.code));
             }
@@ -208,6 +210,27 @@ document.addEventListener('DOMContentLoaded', () => {
             // Stay on the auth page or redirect to login if needed
         }
     });
+
+    // Check for password reset success message in session storage
+    const passwordResetSuccess = sessionStorage.getItem('passwordResetSuccess');
+    const passwordResetEmail = sessionStorage.getItem('passwordResetEmail');
+
+    if (passwordResetSuccess === 'true' && passwordResetEmail) {
+        // Display success message in the login form
+        displayMessage('login-error-message', `Link per il reset della password inviato a ${passwordResetEmail}! Controlla la tua casella di posta.`, false);
+        // Clear the session storage items
+        sessionStorage.removeItem('passwordResetSuccess');
+        sessionStorage.removeItem('passwordResetEmail');
+        // Switch to login form if not already there
+        if (loginFormContainer.style.display === 'none') {
+            registrationFormContainer.style.display = 'none';
+            loginFormContainer.style.display = 'block';
+            forgotPasswordContainer.style.display = 'none';
+            if (navbarLoginButton) {
+                navbarLoginButton.innerText = 'Registrati';
+            }
+        }
+    }
 
     // Helper function to display messages
     function displayMessage(elementId, message, isError = true) {
