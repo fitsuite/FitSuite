@@ -228,6 +228,19 @@ body {
     text-decoration: underline;
 }
 
+.forgot-password-link {
+    display: block;
+    text-align: right;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #ff6600;
+    text-decoration: none;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
+
 .terms-privacy {
     font-size: 11px;
     color: #888;
@@ -242,4 +255,18 @@ body {
 
 .copyright {
     margin-top: 10px;
+}
+
+.error-message {
+    color: #ff4d4d; /* Red color for errors */
+    font-size: 14px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.success-message {
+    color: #4CAF50; /* Green color for success */
+    font-size: 14px;
+    margin-top: 10px;
+    text-align: center;
 }

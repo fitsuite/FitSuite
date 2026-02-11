@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginFormContainer = document.getElementById('login-form-container');
     const showLoginLink = document.getElementById('show-login');
     const showRegisterLink = document.getElementById('show-register');
+    const forgotPasswordLink = document.getElementById('forgot-password-link');
+    const forgotPasswordContainer = document.getElementById('forgot-password-container');
+    const showLoginFromForgotLink = document.getElementById('show-login-from-forgot');
     const navbarLoginBtn = document.getElementById('navbar-login-btn');
     const navbarLoginButton = navbarLoginBtn ? navbarLoginBtn.querySelector('.login-btn') : null;
 
@@ -27,16 +30,30 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('loginFormContainer:', loginFormContainer);
     console.log('showLoginLink:', showLoginLink);
     console.log('showRegisterLink:', showRegisterLink);
+    console.log('forgotPasswordLink:', forgotPasswordLink);
+    console.log('forgotPasswordContainer:', forgotPasswordContainer);
+    console.log('showLoginFromForgotLink:', showLoginFromForgotLink);
     console.log('navbarLoginBtn:', navbarLoginBtn);
     console.log('navbarLoginButton:', navbarLoginButton);
 
+    // Initialize form display states
+    if (registrationFormContainer && loginFormContainer && forgotPasswordContainer) {
+        registrationFormContainer.style.display = 'block';
+        loginFormContainer.style.display = 'none';
+        forgotPasswordContainer.style.display = 'none';
+        if (navbarLoginButton) {
+            navbarLoginButton.innerText = 'Accedi'; // Initial state for navbar button
+        }
+    }
 
-    if (registrationFormContainer && loginFormContainer && showLoginLink && showRegisterLink && navbarLoginButton) {
+
+    if (registrationFormContainer && loginFormContainer && showLoginLink && showRegisterLink && navbarLoginButton && forgotPasswordLink && forgotPasswordContainer && showLoginFromForgotLink) {
         showLoginLink.addEventListener('click', (e) => {
             e.preventDefault();
             console.log('showLoginLink clicked');
             registrationFormContainer.style.display = 'none';
             loginFormContainer.style.display = 'block';
+            forgotPasswordContainer.style.display = 'none';
             navbarLoginButton.innerText = 'Registrati'; // Cambia il testo del pulsante della navbar
         });
 
@@ -45,26 +62,55 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('showRegisterLink clicked');
             loginFormContainer.style.display = 'none';
             registrationFormContainer.style.display = 'block';
+            forgotPasswordContainer.style.display = 'none';
             navbarLoginButton.innerText = 'Accedi'; // Cambia il testo del pulsante della navbar
+        });
+
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('forgotPasswordLink clicked');
+            loginFormContainer.style.display = 'none';
+            registrationFormContainer.style.display = 'none';
+            forgotPasswordContainer.style.display = 'block';
+            navbarLoginButton.innerText = 'Accedi'; // Il pulsante della navbar dovrebbe mostrare "Accedi" per tornare al login
+        });
+
+        showLoginFromForgotLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('showLoginFromForgotLink clicked');
+            forgotPasswordContainer.style.display = 'none';
+            loginFormContainer.style.display = 'block';
+            navbarLoginButton.innerText = 'Registrati'; // Il pulsante della navbar dovrebbe mostrare "Registrati" per tornare alla registrazione
         });
     }
 
-    if (navbarLoginBtn && registrationFormContainer && loginFormContainer && navbarLoginButton) {
+    if (navbarLoginBtn && registrationFormContainer && loginFormContainer && navbarLoginButton && forgotPasswordContainer) {
         navbarLoginBtn.addEventListener('click', (e) => {
             e.preventDefault();
             console.log('navbarLoginBtn clicked');
-            // Check if the login form is currently displayed
-            if (loginFormContainer.style.display === 'block') {
-                // If login form is visible, switch to registration form
+
+            // Determine current active form
+            const isLoginFormActive = loginFormContainer.style.display === 'block';
+            const isRegistrationFormActive = registrationFormContainer.style.display === 'block';
+            const isForgotPasswordFormActive = forgotPasswordContainer.style.display === 'block';
+
+            if (isLoginFormActive || isForgotPasswordFormActive) {
+                // If login or forgot password is active, switch to registration
                 loginFormContainer.style.display = 'none';
+                forgotPasswordContainer.style.display = 'none';
                 registrationFormContainer.style.display = 'block';
                 navbarLoginButton.innerText = 'Accedi';
-            } else {
-                // If registration form is visible (or initially), switch to login form
+            } else if (isRegistrationFormActive) {
+                // If registration is active, switch to login
                 registrationFormContainer.style.display = 'none';
                 loginFormContainer.style.display = 'block';
                 navbarLoginButton.innerText = 'Registrati';
             }
+            // Clear any messages when switching forms
+            clearMessages('registration-error-message');
+            clearMessages('login-error-message');
+            clearMessages('forgot-password-error-message');
+            clearMessages('forgot-password-success-message');
         });
     }
 
@@ -78,17 +124,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const confirmPassword = registrationForm.querySelector('#confirm-password').value;
 
             if (password !== confirmPassword) {
-                alert('Le password non corrispondono!');
+                displayMessage('registration-error-message', 'Le password inserite non corrispondono.');
                 return;
             }
 
             try {
+                clearMessages('registration-error-message');
                 await auth.createUserWithEmailAndPassword(email, password);
-                // alert('Registrazione avvenuta con successo!'); // Rimosso l'alert di successo
-                // Redirect or update UI (handled by onAuthStateChanged)
             } catch (error) {
-                console.error('Errore durante la registrazione:', error.message);
-                alert('Errore durante la registrazione: ' + error.message);
+                displayMessage('registration-error-message', getFirebaseErrorMessage(error.code));
             }
         });
     }
@@ -105,12 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Attempting login with:', { email, password });
 
             try {
+                clearMessages('login-error-message');
                 await auth.signInWithEmailAndPassword(email, password);
-                // alert('Accesso effettuato con successo!'); // Rimosso l'alert di successo
-                // Redirect or update UI (handled by onAuthStateChanged)
             } catch (error) {
-                console.error('Errore durante l\'accesso:', error.message);
-                alert('Errore durante l\'accesso: ' + error.message);
+                displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
             }
         });
     }
@@ -122,14 +164,34 @@ document.addEventListener('DOMContentLoaded', () => {
             googleSignInBtn.addEventListener('click', async () => {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 try {
+                    clearMessages('login-error-message'); // Clear login errors before Google sign-in
                     await auth.signInWithPopup(provider);
-                    // alert('Accesso con Google effettuato con successo!'); // Rimosso l'alert di successo
-                    // Redirect is handled by onAuthStateChanged
                 } catch (error) {
-                    console.error('Errore durante l\'accesso con Google:', error.message);
-                    alert('Errore durante l\'accesso con Google: ' + error.message);
+                    displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
                 }
             });
+        });
+    }
+
+    // Password Reset
+    const forgotPasswordForm = document.querySelector('.forgot-password-form');
+    if (forgotPasswordForm) {
+        forgotPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = forgotPasswordForm.querySelector('#reset-email').value;
+
+            try {
+                clearMessages('forgot-password-error-message');
+                clearMessages('forgot-password-success-message');
+                await auth.sendPasswordResetEmail(email);
+                displayMessage('forgot-password-success-message', 'Link per il reset della password inviato alla tua email!', false);
+                // Optionally, switch back to login form
+                forgotPasswordContainer.style.display = 'none';
+                loginFormContainer.style.display = 'block';
+                navbarLoginButton.innerText = 'Registrati';
+            } catch (error) {
+                displayMessage('forgot-password-error-message', getFirebaseErrorMessage(error.code));
+            }
         });
     }
 
@@ -146,4 +208,57 @@ document.addEventListener('DOMContentLoaded', () => {
             // Stay on the auth page or redirect to login if needed
         }
     });
+
+    // Helper function to display messages
+    function displayMessage(elementId, message, isError = true) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = message;
+            element.style.display = 'block';
+            if (isError) {
+                element.classList.add('error-message');
+                element.classList.remove('success-message');
+            } else {
+                element.classList.add('success-message');
+                element.classList.remove('error-message');
+            }
+        }
+    }
+
+    // Helper function to clear messages
+    function clearMessages(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = '';
+            element.style.display = 'none';
+        }
+    }
+
+    // Helper function to translate Firebase error codes
+    function getFirebaseErrorMessage(errorCode) {
+        switch (errorCode) {
+            case 'auth/email-already-in-use':
+                return 'Questa email è già registrata. Prova ad accedere o usa un\'altra email.';
+            case 'auth/invalid-email':
+                return 'L\'indirizzo email non è valido.';
+            case 'auth/operation-not-allowed':
+                return 'Operazione non consentita. Contatta il supporto.';
+            case 'auth/weak-password':
+                return 'La password deve essere di almeno 6 caratteri.';
+            case 'auth/user-disabled':
+                return 'Questo account è stato disabilitato.';
+            case 'auth/user-not-found':
+                return 'Nessun utente trovato con questa email.';
+            case 'auth/wrong-password':
+                return 'Password errata. Riprova.';
+            case 'auth/popup-closed-by-user':
+                return 'Accesso annullato dall\'utente.';
+            case 'auth/cancelled-popup-request':
+                return 'Richiesta di accesso annullata.';
+            case 'auth/too-many-requests':
+                return 'Troppi tentativi di accesso falliti. Riprova più tardi.';
+            default:
+                return 'Si è verificato un errore sconosciuto. Riprova.';
+        }
+    }
 });
