@@ -116,18 +116,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Google Sign-In
-    const googleSignInBtn = document.querySelector('.google-signin-btn');
-    if (googleSignInBtn) {
-        googleSignInBtn.addEventListener('click', async () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            try {
-                await auth.signInWithPopup(provider);
-                alert('Accesso con Google effettuato con successo!');
-                // Redirect is handled by onAuthStateChanged
-            } catch (error) {
-                console.error('Errore durante l\'accesso con Google:', error.message);
-                alert('Errore durante l\'accesso con Google: ' + error.message);
-            }
+    const googleSignInBtns = document.querySelectorAll('.google-signin-btn');
+    if (googleSignInBtns.length > 0) {
+        googleSignInBtns.forEach(googleSignInBtn => {
+            googleSignInBtn.addEventListener('click', async () => {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                try {
+                    await auth.signInWithPopup(provider);
+                    // alert('Accesso con Google effettuato con successo!'); // Rimosso l'alert di successo
+                    // Redirect is handled by onAuthStateChanged
+                } catch (error) {
+                    console.error('Errore durante l\'accesso con Google:', error.message);
+                    alert('Errore durante l\'accesso con Google: ' + error.message);
+                }
+            });
         });
     }
 
