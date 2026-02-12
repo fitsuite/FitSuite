@@ -121,13 +121,13 @@
                     </div>
                     <div class="card-row">
                         <div class="row-info">
-                            <i class="fas fa-flag row-icon"></i>
+                            <span id="language-flag-icon" class="row-icon"></span>
                             <div>
                                 <span class="row-label">Lingua predefinita esercizi</span>
                                 <span class="row-value" id="user-language">Italiano</span>
                             </div>
                         </div>
-                        <button class="card-btn">Cambia Preferenze</button>
+                        <button class="card-btn" id="change-language-btn">Cambia Preferenze</button>
                     </div>
                     <div class="card-row">
                         <div class="row-info">
@@ -137,13 +137,13 @@
                                 <span class="row-value" id="user-notifications">Consenti tutti</span>
                             </div>
                         </div>
-                        <button class="card-btn">Cambia Preferenze</button>
+                        <button class="card-btn" id="change-notifications-btn">Cambia Preferenze</button>
                     </div>
                 </section>
 
                 <!-- Abbonamento Section -->
                 <section class="settings-card glow-card">
-                    <h2 class="card-title">ABBONAMENTO</h2>
+                    <h2 class="card-title">Abbonamento</h2>
                     <div class="card-row">
                         <div class="row-info">
                             <i class="fas fa-calendar-alt row-icon"></i>
@@ -172,7 +172,7 @@
                                 <a href="#" class="row-value-link" id="billing-history-link">Visualizza</a>
                             </div>
                         </div>
-                        <button class="card-btn primary">Visualizza</button>
+                        <button class="card-btn primary" id="view-billing-history-btn">Visualizza</button>
                     </div>
                     <div class="card-footer-action">
                         <button class="delete-account-btn-styled" id="cancel-subscription-btn">Annulla Abbonamento</button>
@@ -190,7 +190,7 @@
                                 <span class="row-value">Fitsuite.company@gmail.com</span>
                             </div>
                         </div>
-                        <button class="card-btn primary">Contattaci</button>
+                        <button class="card-btn primary" id="contact-us-btn">Contattaci</button>
                     </div>
 
                     <div class="card-row">
@@ -201,7 +201,7 @@
                                 <span class="row-value">Come possiamo migliorare?</span>
                             </div>
                         </div>
-                        <button class="card-btn primary">Dicci la Tua!</button>
+                        <button class="card-btn primary" id="give-feedback-btn">Dicci la Tua!</button>
                     </div>
                 </section>
             </div>
@@ -223,11 +223,136 @@
     <!-- Modal di modifica abbonamento -->
     <div id="subscription-edit-modal" class="modal">
         <div class="modal-content">
-            <h3>Modifica Dati Sensibili</h3>
-            <p>Per procedere con la modifica dei dati sensibili, ti invieremo una mail di sicurezza all'indirizzo associato al tuo account.</p>
+            <h3>Modifica Abbonamento</h3>
+            <div class="modal-form-group">
+                <label for="subscription-type">Tipo di Abbonamento:</label>
+                <select id="subscription-type" class="modal-input">
+                    <option value="Nessuno">Nessuno</option>
+                    <option value="Base">Base</option>
+                    <option value="Premium">Premium</option>
+                    <option value="VIP">VIP</option>
+                </select>
+            </div>
+            <div class="modal-form-group">
+                <label for="subscription-start-date">Data Inizio:</label>
+                <input type="date" id="subscription-start-date" class="modal-input">
+            </div>
+            <div class="modal-form-group">
+                <label for="subscription-end-date">Data Scadenza:</label>
+                <input type="date" id="subscription-end-date" class="modal-input">
+            </div>
+            <div class="modal-form-group">
+                <label for="payment-method-input">Metodo di Pagamento:</label>
+                <input type="text" id="payment-method-input" class="modal-input" placeholder="Es. **** **** **** 1234">
+            </div>
+            <div class="modal-form-group">
+                <label for="auto-renew-input">Rinnovo Automatico:</label>
+                <input type="checkbox" id="auto-renew-input" class="modal-checkbox">
+            </div>
+            <div class="modal-form-group">
+                <label for="last-payment-date-input">Ultimo Pagamento:</label>
+                <input type="date" id="last-payment-date-input" class="modal-input">
+            </div>
+            <div class="modal-form-group">
+                <label for="next-payment-date-input">Prossimo Pagamento:</label>
+                <input type="date" id="next-payment-date-input" class="modal-input">
+            </div>
             <div class="modal-actions">
                 <button id="cancel-subscription-edit" class="modal-btn-secondary">Annulla</button>
-                <button id="send-security-email" class="modal-btn-primary">Invia Email</button>
+                <button id="save-subscription-changes" class="modal-btn-primary">Salva</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale per Cambia Password -->
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content">
+            <h3>Cambia Password</h3>
+            <p>Ti invieremo un'email per reimpostare la tua password all'indirizzo associato al tuo account.</p>
+            <div class="modal-actions">
+                <button id="cancel-password-change" class="modal-btn-secondary">Annulla</button>
+                <button id="send-password-reset-email" class="modal-btn-primary">Invia Email</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale per Cambia Telefono -->
+    <div id="change-phone-modal" class="modal">
+        <div class="modal-content">
+            <h3>Cambia Numero di Telefono</h3>
+            <p>Inserisci il nuovo numero di telefono:</p>
+            <input type="tel" id="new-phone-input" placeholder="+39 123 456 7890" class="modal-input">
+            <div class="modal-actions">
+                <button id="cancel-phone-change" class="modal-btn-secondary">Annulla</button>
+                <button id="confirm-phone-change" class="modal-btn-primary">Conferma</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale per Cambia Lingua -->
+    <div id="change-language-modal" class="modal">
+        <div class="modal-content">
+            <h3>Seleziona Lingua</h3>
+            <div class="language-options">
+                <button class="lang-option" data-lang="Italiano">🇮🇹 Italiano</button>
+                <button class="lang-option" data-lang="English">🇬🇧 English</button>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-language-change" class="modal-btn-secondary">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale per Cambia Notifiche -->
+    <div id="change-notifications-modal" class="modal">
+        <div class="modal-content">
+            <h3>Gestisci Notifiche</h3>
+            <p>Seleziona le tue preferenze per le comunicazioni:</p>
+            <div class="notification-options">
+                <label><input type="radio" name="notifications" value="Consenti tutti" checked> Consenti tutti</label>
+                <label><input type="radio" name="notifications" value="Solo importanti"> Solo importanti</label>
+                <label><input type="radio" name="notifications" value="Nessuna"> Nessuna</label>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-notifications-change" class="modal-btn-secondary">Annulla</button>
+                <button id="confirm-notifications-change" class="modal-btn-primary">Salva</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale per Contattaci -->
+    <div id="contact-us-modal" class="modal">
+        <div class="modal-content">
+            <h3>Contattaci</h3>
+            <p>Per assistenza, invia una mail a:</p>
+            <p><a href="mailto:Fitsuite.company@gmail.com" class="email-link">Fitsuite.company@gmail.com</a></p>
+            <div class="modal-actions">
+                <button id="close-contact-modal" class="modal-btn-primary">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale per Dicci la Tua! -->
+    <div id="give-feedback-modal" class="modal">
+        <div class="modal-content">
+            <h3>Dicci la Tua!</h3>
+            <p>Aiutaci a migliorare. Lascia il tuo feedback:</p>
+            <textarea id="feedback-text" class="modal-textarea" placeholder="Scrivi qui il tuo feedback..."></textarea>
+            <div class="modal-actions">
+                <button id="cancel-feedback" class="modal-btn-secondary">Annulla</button>
+                <button id="submit-feedback" class="modal-btn-primary">Invia Feedback</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale per Storico Fatturazione -->
+    <div id="billing-history-modal" class="modal">
+        <div class="modal-content">
+            <h3>Storico Fatturazione</h3>
+            <p>Qui potrai visualizzare lo storico delle tue fatture.</p>
+            <!-- Contenuto dinamico per lo storico fatturazione -->
+            <div class="modal-actions">
+                <button id="close-billing-history-modal" class="modal-btn-primary">Chiudi</button>
             </div>
         </div>
     </div>
