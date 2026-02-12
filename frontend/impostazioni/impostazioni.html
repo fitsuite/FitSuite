@@ -141,6 +141,44 @@
                     </div>
                 </section>
 
+                <!-- Abbonamento Section -->
+                <section class="settings-card glow-card">
+                    <h2 class="card-title">ABBONAMENTO</h2>
+                    <div class="card-row">
+                        <div class="row-info">
+                            <i class="fas fa-calendar-alt row-icon"></i>
+                            <div>
+                                <span class="row-label">Scadenza Abbonamento</span>
+                                <span class="row-value" id="subscription-expiry">24/12/2024</span>
+                            </div>
+                        </div>
+                        <button class="card-btn" id="edit-subscription-expiry">Modifica</button>
+                    </div>
+                    <div class="card-row">
+                        <div class="row-info">
+                            <i class="fas fa-credit-card row-icon"></i>
+                            <div>
+                                <span class="row-label">Metodo di Pagamento</span>
+                                <span class="row-value" id="payment-method">**** **** **** 1234</span>
+                            </div>
+                        </div>
+                        <button class="card-btn" id="edit-payment-method">Modifica</button>
+                    </div>
+                    <div class="card-row">
+                        <div class="row-info">
+                            <i class="fas fa-history row-icon"></i>
+                            <div>
+                                <span class="row-label">Storico Fatturazione</span>
+                                <a href="#" class="row-value-link" id="billing-history-link">Visualizza</a>
+                            </div>
+                        </div>
+                        <button class="card-btn primary">Visualizza</button>
+                    </div>
+                    <div class="card-footer-action">
+                        <button class="delete-account-btn-styled" id="cancel-subscription-btn">Annulla Abbonamento</button>
+                    </div>
+                </section>
+
                 <!-- Supporto Section -->
                 <section class="settings-card glow-card">
                     <h2 class="card-title">Supporto</h2>
@@ -154,16 +192,7 @@
                         </div>
                         <button class="card-btn primary">Contattaci</button>
                     </div>
-                    <div class="card-row">
-                        <div class="row-info">
-                            <i class="fas fa-ticket-alt row-icon"></i>
-                            <div>
-                                <span class="row-label">Invia una segnalazione</span>
-                                <span class="row-value">Apri un ticket</span>
-                            </div>
-                        </div>
-                        <button class="card-btn primary">Assistenza</button>
-                    </div>
+
                     <div class="card-row">
                         <div class="row-info">
                             <i class="fas fa-comment-alt row-icon"></i>
@@ -187,6 +216,18 @@
             <div class="modal-actions">
                 <button id="cancel-delete" class="modal-btn-secondary">Annulla</button>
                 <button id="confirm-delete" class="modal-btn-danger">Sì, elimina</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal di modifica abbonamento -->
+    <div id="subscription-edit-modal" class="modal">
+        <div class="modal-content">
+            <h3>Modifica Dati Sensibili</h3>
+            <p>Per procedere con la modifica dei dati sensibili, ti invieremo una mail di sicurezza all'indirizzo associato al tuo account.</p>
+            <div class="modal-actions">
+                <button id="cancel-subscription-edit" class="modal-btn-secondary">Annulla</button>
+                <button id="send-security-email" class="modal-btn-primary">Invia Email</button>
             </div>
         </div>
     </div>

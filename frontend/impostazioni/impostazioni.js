@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const userEmailMain = document.getElementById('user-email-main');
     const userPhone = document.getElementById('user-phone');
 
+    // DOM Elements - Subscription
+    const subscriptionExpiry = document.getElementById('subscription-expiry');
+    const paymentMethod = document.getElementById('payment-method');
+
     // DOM Elements - Preferences
     const currentColorLabel = document.getElementById('current-color');
     const userLanguage = document.getElementById('user-language');
@@ -21,10 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements - Actions
     const changePasswordBtn = document.getElementById('change-password-btn');
     const changePhoneBtn = document.getElementById('change-phone-btn');
-    const deleteAccountTrigger = document.getElementById('delete-account-trigger');
     const deleteModal = document.getElementById('delete-confirm-modal');
     const confirmDeleteBtn = document.getElementById('confirm-delete');
     const cancelDeleteBtn = document.getElementById('cancel-delete');
+
+    // DOM Elements - Subscription
+    const editSubscriptionExpiryBtn = document.getElementById('edit-subscription-expiry');
+    const editPaymentMethodBtn = document.getElementById('edit-payment-method');
+    const cancelSubscriptionBtn = document.getElementById('cancel-subscription-btn');
+    const subscriptionEditModal = document.getElementById('subscription-edit-modal');
+    const cancelSubscriptionEditBtn = document.getElementById('cancel-subscription-edit');
+    const sendSecurityEmailBtn = document.getElementById('send-security-email');
 
     // State
     let currentUser = null;
@@ -60,6 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Update Phone
                 userPhone.textContent = data.phoneNumber || "Non impostato";
+
+                // Update Subscription Info
+                subscriptionExpiry.textContent = data.subscriptionExpiry || "Nessun abbonamento attivo";
+                paymentMethod.textContent = data.paymentMethod || "Non impostato";
                 
                 // Update Preferences
                 if (data.preferences) {
@@ -183,6 +198,65 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 alert("Errore durante l'eliminazione: " + error.message);
             }
+        }
+    });
+
+    // Subscription Edit Modal Logic
+    editSubscriptionExpiryBtn.addEventListener('click', () => {
+        subscriptionEditModal.classList.add('active');
+    });
+
+    editPaymentMethodBtn.addEventListener('click', () => {
+        subscriptionEditModal.classList.add('active');
+    });
+
+    cancelSubscriptionBtn.addEventListener('click', () => {
+        subscriptionEditModal.classList.add('active');
+    });
+
+    cancelSubscriptionEditBtn.addEventListener('click', () => {
+        subscriptionEditModal.classList.remove('active');
+    });
+
+    sendSecurityEmailBtn.addEventListener('click', async () => {
+        if (currentUser && currentUser.email) {
+            try {
+                // In a real application, you would send a real email here
+                // For now, we simulate it and show a success message
+                console.log(`Simulazione invio email di sicurezza a: ${currentUser.email}`);
+                
+                const modalContent = subscriptionEditModal.querySelector('.modal-content');
+                modalContent.innerHTML = `
+                    <h3>Email Inviata!</h3>
+                    <p>Un'email di sicurezza è stata inviata a <strong>${currentUser.email}</strong>. Segui le istruzioni per modificare i tuoi dati.</p>
+                    <div class="modal-actions">
+                        <button id="close-success-modal" class="modal-btn-primary">Chiudi</button>
+                    </div>
+                `;
+                document.getElementById('close-success-modal').addEventListener('click', () => {
+                    subscriptionEditModal.classList.remove('active');
+                    // Reset modal content for next time
+                    modalContent.innerHTML = `
+                        <h3>Modifica Dati Sensibili</h3>
+                        <p>Per procedere con la modifica dei dati sensibili, ti invieremo una mail di sicurezza all'indirizzo associato al tuo account.</p>
+                        <div class="modal-actions">
+                            <button id="cancel-subscription-edit" class="modal-btn-secondary">Annulla</button>
+                            <button id="send-security-email" class="modal-btn-primary">Invia Email</button>
+                        </div>
+                    `;
+                    // Re-attach event listeners for the reset buttons
+                    document.getElementById('cancel-subscription-edit').addEventListener('click', () => {
+                        subscriptionEditModal.classList.remove('active');
+                    });
+                    document.getElementById('send-security-email').addEventListener('click', sendSecurityEmailBtn.onclick); // Re-attach original handler
+                });
+
+            } catch (error) {
+                alert("Errore durante l'invio dell'email di sicurezza: " + error.message);
+                console.error("Errore invio email di sicurezza:", error);
+            }
+        } else {
+            alert("Nessun utente loggato o email non disponibile.");
         }
     });
 
