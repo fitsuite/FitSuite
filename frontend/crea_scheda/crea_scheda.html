@@ -4,6 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #222; /* Dark background */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .spinner {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid #fff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        .progress-bar-container {
+            width: 200px;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #fff;
+            border-radius: 5px;
+            animation: progress 2s linear forwards;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        .logo {
+            margin-bottom: 20px;
+        }
+        .footer-logo {
+            display: inline-block;
+            color: white;
+            font-size: 24px; /* Ridotto da 32px */
+            font-weight: 300;
+            text-transform: capitalize;
+            letter-spacing: 1px; /* Ridotto da 2px */
+            border: 1px solid #ff6600; /* Ridotto da 2px */
+            padding: 8px 16px; /* Adattato per la nuova dimensione del font */
+            background-color: transparent;
+        }
+    </style>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
@@ -26,6 +88,14 @@
     <script src="../../backend/function/logout.js"></script>
 </head>
 <body>
+    <div id="loading-screen">
+        <div class="logo footer-logo">FitSuite</div> <!-- FitSuite logo from footer -->
+        <div class="spinner"></div>
+        <div class="progress-bar-container">
+            <div class="progress-bar"></div>
+        </div>
+        <p>Caricamento...</p>
+    </div>
     <nav style="padding: 10px; background: #2c3e50; color: white; display: flex; justify-content: space-between;">
         <div>FitSuite Dashboard</div>
         <div>
@@ -43,6 +113,20 @@
                     await logout(); // Call the global logout function
                 });
             }
+
+            // Firebase Auth check
+            const auth = firebase.auth();
+            const loadingScreen = document.getElementById('loading-screen');
+
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // User is signed in, hide loading screen
+                    loadingScreen.style.display = 'none';
+                } else {
+                    // No user is signed in, redirect to login page
+                    window.location.href = '../auth/auth.html';
+                }
+            });
         });
     </script>
 </body>
