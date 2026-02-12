@@ -40,15 +40,19 @@
                 <i class="fas fa-plus"></i> Nuova Scheda
             </button>
 
+            <hr class="sidebar-divider">
+
+            <button class="view-routines-btn" onclick="window.location.href='../lista_schede/lista_scheda.html'">
+                <i class="fas fa-eye"></i> Visualizza Schede
+            </button>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">
-                        <i class="fas fa-list-ul"></i> Schede di base
+                        <i class="fas fa-list-ul"></i> Le Tue Schede
                     </div>
-                    <ul class="routine-list" id="routine-list-sidebar">
-                        <li>Scheda Mario</li>
-                        <li>Scheda Mario</li>
-                        <li>Scheda Mario</li>
+                    <ul class="routine-list" id="user-routine-list-sidebar">
+                        <!-- Le schede dell'utente verranno caricate qui -->
                     </ul>
                 </div>
             </nav>

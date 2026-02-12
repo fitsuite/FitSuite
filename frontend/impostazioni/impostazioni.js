@@ -193,9 +193,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch User Routines (Placeholder logic for now)
     async function fetchUserRoutines(uid) {
-        // This will be expanded later when the routines collection is ready
-        // For now, we use the static list in HTML or clear it if needed
-        console.log("Fetching routines for user:", uid);
+        const userRoutineListSidebar = document.getElementById('user-routine-list-sidebar');
+        userRoutineListSidebar.innerHTML = ''; // Clear existing routines
+
+        try {
+            const routinesSnapshot = await db.collection('routines')
+                                             .where('userId', '==', uid)
+                                             .orderBy('createdAt', 'desc')
+                                             .get();
+
+            if (routinesSnapshot.empty) {
+                const noRoutinesItem = document.createElement('li');
+                noRoutinesItem.textContent = 'Nessuna scheda creata.';
+                noRoutinesItem.style.fontStyle = 'italic';
+                noRoutinesItem.style.color = '#888';
+                userRoutineListSidebar.appendChild(noRoutinesItem);
+            } else {
+                routinesSnapshot.forEach(doc => {
+                    const routine = doc.data();
+                    const routineItem = document.createElement('li');
+                    routineItem.textContent = routine.name || 'Scheda senza nome';
+                    routineItem.classList.add('routine-item'); // Add a class for styling
+                    routineItem.dataset.routineId = doc.id; // Store routine ID
+
+                    routineItem.addEventListener('click', () => {
+                        window.location.href = `../visualizza_scheda/visualizza_scheda.html?id=${doc.id}`;
+                    });
+                    userRoutineListSidebar.appendChild(routineItem);
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching user routines:", error);
+            const errorItem = document.createElement('li');
+            errorItem.textContent = 'Errore nel caricamento delle schede.';
+            errorItem.style.color = 'red';
+            userRoutineListSidebar.appendChild(errorItem);
+        }
     }
 
     // Set Active Color Dot

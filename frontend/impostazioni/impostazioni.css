@@ -92,6 +92,33 @@ body.settings-body {
     transform: scale(1.02);
 }
 
+.sidebar-divider {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 20px 0;
+}
+
+.view-routines-btn {
+    background-color: #333; /* Darker background for contrast */
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    margin-bottom: 30px;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.view-routines-btn:hover {
+    transform: scale(1.02);
+    background-color: #555;
+}
+
 .sidebar-nav {
     flex-grow: 1;
 }
@@ -119,6 +146,18 @@ body.settings-body {
 
 .routine-list li:hover {
     color: white;
+}
+
+.routine-item {
+    padding: 8px 0;
+    color: var(--text-gray);
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.routine-item:hover {
+    color: var(--primary-color);
 }
 
 .sidebar-footer {
