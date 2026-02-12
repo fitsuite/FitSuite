@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impostazioni | FitSuite</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../auth/auth.css">
+    <link rel="stylesheet" href="./impostazioni.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCEgbB9rBBKOov3aDma0DMn-EuU0bGMMYo",
+        authDomain: "fitsuite-a7b6c.firebaseapp.com",
+        projectId: "fitsuite-a7b6c",
+        storageBucket: "fitsuite-a7b6c.firebasestorage.app",
+        messagingSenderId: "721614273457",
+        appId: "1:721614273457:web:195f48279fafd01a1f5b90",
+        measurementId: "G-W4ME455MH5"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-links">
+                <a href="../crea_scheda/crea_scheda.html">Torna alla Dashboard</a>
+            </div>
+            <div class="footer-logo" style="color: white; font-weight: bold; font-size: 1.5rem;">FitSuite</div>
+        </div>
+    </nav>
+
+    <main class="auth-main-content">
+        <div class="auth-text-section">
+            <h1>Gestisci il tuo <span class="fitsuite-highlight">Account</span></h1>
+            <p>Qui puoi gestire le tue preferenze e i tuoi dati.</p>
+        </div>
+
+        <div class="auth-form-section">
+            <div class="registration-form-container">
+                <h2>Elimina Account</h2>
+                <p style="color: #666; margin-bottom: 20px;">Attenzione: l'eliminazione dell'account è permanente e tutti i tuoi dati andranno persi.</p>
+                
+                <button id="delete-account-btn" class="continue-btn" style="background-color: #e74c3c;">Elimina il mio Account</button>
+                
+                <div id="settings-error-message" class="error-message"></div>
+                <div id="settings-success-message" class="success-message"></div>
+
+                <div class="terms-privacy" style="margin-top: 30px;">
+                    <p><a href="../legal/terms.html">Termini e Condizioni</a> | <a href="../legal/privacy.html">Privacy Policy</a></p>
+                    <p class="copyright">© 2025 - FitSuite</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal di conferma eliminazione -->
+    <div id="delete-confirm-modal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+        <div class="modal-content" style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 80%; max-width: 400px; text-align: center;">
+            <h3>Sei sicuro?</h3>
+            <p>Questa azione non può essere annullata. Dovrai effettuare nuovamente l'accesso per confermare l'identità se è passato molto tempo dall'ultimo login.</p>
+            <div style="margin-top: 20px; display: flex; justify-content: space-around;">
+                <button id="cancel-delete" style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Annulla</button>
+                <button id="confirm-delete" style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; background-color: #e74c3c; color: white;">Sì, elimina</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./impostazioni.js"></script>
+</body>
+</html>
