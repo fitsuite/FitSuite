@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Content Loaded');
-    // Firebase Auth
+    // Firebase Auth and Firestore
     const auth = firebase.auth();
+    const db = firebase.firestore();
 
     // Navbar functionality
     const hamburger = document.getElementById('hamburger');
@@ -130,7 +131,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 clearMessages('registration-error-message');
-                await auth.createUserWithEmailAndPassword(email, password);
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // Crea il profilo utente nel database con campi predefiniti
+                await db.collection('users').doc(user.uid).set({
+                    email: email,
+                    phoneNumber: "",
+                    preferences: {
+                        color: "Arancione",
+                        language: "Italiano",
+                        notifications: "Consenti tutti"
+                    },
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                console.log('User document created in Firestore');
             } catch (error) {
                 displayMessage('registration-error-message', getFirebaseErrorMessage(error.code));
             }
@@ -165,7 +181,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 try {
                     clearMessages('login-error-message'); // Clear login errors before Google sign-in
-                    await auth.signInWithPopup(provider);
+                    const result = await auth.signInWithPopup(provider);
+                    const user = result.user;
+
+                    // Controlla se il documento utente esiste già, altrimenti crealo
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (!userDoc.exists) {
+                        await db.collection('users').doc(user.uid).set({
+                            email: user.email,
+                            phoneNumber: user.phoneNumber || "",
+                            preferences: {
+                                color: "Arancione",
+                                language: "Italiano",
+                                notifications: "Consenti tutti"
+                            },
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        console.log('User document created for Google user');
+                    }
                 } catch (error) {
                     displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
                 }
