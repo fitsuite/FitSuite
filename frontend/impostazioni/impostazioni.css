@@ -146,26 +146,29 @@ body.settings-body {
 .main-content {
     margin-left: var(--sidebar-width);
     flex-grow: 1;
-    padding: 40px;
+    padding: 60px 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    background: linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%); /* Slight brown tint like image */
 }
 
 .content-header {
     width: 100%;
-    max-width: 800px;
-    margin-bottom: 40px;
+    max-width: 600px;
+    margin-bottom: 30px;
+    text-align: left;
 }
 
 .content-header h1 {
     color: var(--primary-color);
     font-size: 32px;
+    font-weight: 600;
 }
 
 .settings-container {
     width: 100%;
-    max-width: 800px;
+    max-width: 600px; /* Narrower like in the image */
 }
 
 .user-profile-large {
@@ -176,47 +179,50 @@ body.settings-body {
 }
 
 .user-avatar-large {
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
     background-color: #2d5a27;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 32px;
+    font-size: 36px;
     font-weight: bold;
     margin-bottom: 15px;
+    color: #1a1a1a;
 }
 
 .user-email-main {
-    font-size: 18px;
+    font-size: 16px;
     color: white;
+    font-weight: 400;
 }
 
 /* Cards */
 .settings-card {
     background-color: var(--bg-card);
-    border-radius: 25px;
-    padding: 30px;
+    border-radius: 20px; /* Slightly tighter radius */
+    padding: 25px;
     margin-bottom: 30px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .glow-card {
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
 }
 
 .card-title {
     color: var(--primary-color);
-    font-size: 28px;
-    margin-bottom: 25px;
+    font-size: 32px; /* Bigger titles like in image */
+    margin-bottom: 20px;
+    font-weight: 600;
 }
 
 .card-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 0;
+    padding: 12px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -232,36 +238,42 @@ body.settings-body {
 
 .row-icon {
     color: var(--primary-color);
-    font-size: 20px;
+    font-size: 22px;
+    width: 25px; /* Fixed width for alignment */
+    text-align: center;
 }
 
 .row-label {
     display: block;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-gray);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    text-transform: none;
 }
 
 .row-value {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 500;
+    color: #ffffff;
 }
 
 .card-btn {
     background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 8px 20px;
-    border-radius: 20px;
+    padding: 8px 22px;
+    border-radius: 18px;
     cursor: pointer;
-    font-size: 14px;
-    transition: opacity 0.2s;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
 }
 
 .card-btn.primary {
-    padding: 12px 30px;
+    padding: 12px 35px;
     border-radius: 25px;
-    min-width: 150px;
+    min-width: 160px;
+    font-size: 14px;
 }
 
 .card-btn:hover {
