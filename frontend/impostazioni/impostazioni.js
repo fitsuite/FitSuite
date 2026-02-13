@@ -1,4 +1,7 @@
+console.log('impostazioni.js caricato e in esecuzione');
+
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Content Loaded - impostazioni.js');
     const auth = firebase.auth();
     const db = firebase.firestore();
 
@@ -10,10 +13,19 @@ document.addEventListener('DOMContentLoaded', () => {
         'Rosa': '#f472b6'
     };
 
+    const gradientMap = {
+        'Arancione': 'linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%)',
+        'Verde': 'linear-gradient(135deg, #1a2b16 0%, #1a1a1a 100%)',
+        'Blu': 'linear-gradient(135deg, #161d2b 0%, #1a1a1a 100%)',
+        'Rosa': 'linear-gradient(135deg, #2b1625 0%, #1a1a1a 100%)'
+    };
+
     // Set initial primary color based on user preferences
     function setPrimaryColor(colorName) {
         const hex = colorMap[colorName] || colorMap['Arancione']; // Default to orange
+        const gradient = gradientMap[colorName] || gradientMap['Arancione']; // Default to orange gradient
         document.documentElement.style.setProperty('--primary-color', hex);
+        document.documentElement.style.setProperty('--background-gradient', gradient);
     }
 
     // DOM Elements - Sidebar
@@ -43,6 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteModal = document.getElementById('delete-confirm-modal');
     const confirmDeleteBtn = document.getElementById('confirm-delete');
     const cancelDeleteBtn = document.getElementById('cancel-delete');
+    const logoutTrigger = document.getElementById('logout-trigger');
+    const logoutConfirmModal = document.getElementById('logout-confirm-modal');
+    const cancelLogoutBtn = document.getElementById('cancel-logout');
+    const confirmLogoutBtn = document.getElementById('confirm-logout');
 
     // DOM Elements - New Modals and Buttons
     const changeLanguageBtn = document.getElementById('change-language-btn');
@@ -80,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const billingHistoryModal = document.getElementById('billing-history-modal');
     const closeBillingHistoryModalBtn = document.getElementById('close-billing-history-modal');
 
-    // DOM Elements - Subscription
+    // DOM Elements - SubscriptionDOM Elements - Subscription
     const editSubscriptionExpiryBtn = document.getElementById('edit-subscription-expiry');
     const editPaymentMethodBtn = document.getElementById('edit-payment-method');
     const cancelSubscriptionBtn = document.getElementById('cancel-subscription-btn');
@@ -454,6 +470,34 @@ document.addEventListener('DOMContentLoaded', () => {
         billingHistoryModal.classList.remove('active');
     });
 
+    // Logout functionality
+    logoutTrigger.addEventListener('click', () => {
+        console.log('Logout button clicked - Event Listener Triggered');
+        logoutConfirmModal.classList.add('active');
+    });
+
+    cancelLogoutBtn.addEventListener('click', () => {
+        console.log('Cancel Logout button clicked - Event Listener Triggered');
+        logoutConfirmModal.classList.remove('active');
+    });
+
+    confirmLogoutBtn.addEventListener('click', async () => {
+        console.log('Confirm Logout button clicked - Event Listener Triggered');
+        try {
+            console.log('Attempting to sign out...');
+            await auth.signOut();
+            console.log("User signed out successfully.");
+            window.location.href = '../auth/auth.html'; // Redirect to login page
+        } catch (error) {
+            console.error("Error during logout:", error);
+            alert("Errore durante il logout: " + error.message);
+        }
+    });
+
+    closeBillingHistoryModalBtn.addEventListener('click', () => {
+        billingHistoryModal.classList.remove('active');
+    });
+
     // Subscription Edit Modal Logic
     const openSubscriptionEditModal = async () => {
         if (!currentUser) {
@@ -544,6 +588,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
+
+
+
     // Close modal on click outside
     window.addEventListener('click', (event) => {
         if (event.target === deleteModal) {
@@ -572,6 +620,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (event.target === subscriptionEditModal) {
             subscriptionEditModal.classList.remove('active');
+        }
+        if (event.target === logoutConfirmModal) {
+            logoutConfirmModal.classList.remove('active');
         }
     });
 });

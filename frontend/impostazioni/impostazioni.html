@@ -67,6 +67,7 @@
         <main class="main-content">
             <header class="content-header">
                 <h1>Impostazioni</h1>
+                <button class="logout-btn" id="logout-trigger">Logout</button>
             </header>
 
             <div class="settings-container">
@@ -172,7 +173,6 @@
                             <i class="fas fa-history row-icon"></i>
                             <div>
                                 <span class="row-label">Storico Fatturazione</span>
-                                <a href="#" class="row-value-link" id="billing-history-link">Visualizza</a>
                             </div>
                         </div>
                         <button class="card-btn primary" id="view-billing-history-btn">Visualizza</button>
@@ -297,8 +297,8 @@
         <div class="modal-content">
             <h3>Seleziona Lingua</h3>
             <div class="language-options">
-                <button class="lang-option" data-lang="Italiano">🇮🇹 Italiano</button>
-                <button class="lang-option" data-lang="English">🇬🇧 English</button>
+                <button class="lang-option modal-btn-primary" data-lang="Italiano">🇮🇹 Italiano</button>
+                <button class="lang-option modal-btn-primary" data-lang="English">🇬🇧 English</button>
             </div>
             <div class="modal-actions">
                 <button id="cancel-language-change" class="modal-btn-secondary">Annulla</button>
@@ -356,6 +356,18 @@
             <!-- Contenuto dinamico per lo storico fatturazione -->
             <div class="modal-actions">
                 <button id="close-billing-history-modal" class="modal-btn-primary">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale di conferma Logout -->
+    <div id="logout-confirm-modal" class="modal">
+        <div class="modal-content">
+            <h3>Conferma Logout</h3>
+            <p>Sei sicuro di voler effettuare il logout?</p>
+            <div class="modal-actions">
+                <button id="cancel-logout" class="modal-btn-secondary">Annulla</button>
+                <button id="confirm-logout" class="modal-btn-danger">Logout</button>
             </div>
         </div>
     </div>
