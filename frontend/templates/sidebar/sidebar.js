@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userEmailSidebar = document.getElementById('user-email-sidebar');
 
                 if (userEmailSidebar) {
-                    userEmailSidebar.textContent = user.email;
+                    userEmailSidebar.textContent = user.email.split('@')[0];
                 }
                 
                 if (userInitialSidebar) {
