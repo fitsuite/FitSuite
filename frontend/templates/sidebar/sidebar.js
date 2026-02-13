@@ -2,28 +2,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // DOM Elements - Sidebar
-    const userInitialSidebar = document.getElementById('user-initial-sidebar');
-    const userNameSidebar = document.getElementById('user-name-sidebar');
-    const userRoutineListSidebar = document.getElementById('user-routine-list-sidebar');
-
     // Check Auth State and populate sidebar
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             console.log('User is signed in for sidebar:', user.email);
-            userNameSidebar.textContent = user.displayName || user.email.split('@')[0];
-            const initial = (user.displayName || user.email).charAt(0).toUpperCase();
-            userInitialSidebar.textContent = initial;
-            fetchUserRoutines(user.uid);
+            
+            // Function to update sidebar elements
+            const updateSidebar = () => {
+                const userInitialSidebar = document.getElementById('user-initial-sidebar');
+                const userRoutineListSidebar = document.getElementById('user-routine-list-sidebar');
+                const userEmailSidebar = document.getElementById('user-email-sidebar');
+
+                if (userEmailSidebar) {
+                    userEmailSidebar.textContent = user.email;
+                }
+                
+                if (userInitialSidebar) {
+                    const initial = (user.displayName || user.email).charAt(0).toUpperCase();
+                    userInitialSidebar.textContent = initial;
+                }
+
+                if (userRoutineListSidebar) {
+                    fetchUserRoutines(user.uid, userRoutineListSidebar);
+                } else {
+                    // If sidebar not loaded yet, try again in 100ms
+                    setTimeout(updateSidebar, 100);
+                }
+            };
+
+            updateSidebar();
         } else {
-            console.log('No user signed in for sidebar.');
-            // Optionally clear sidebar or redirect if needed
+            console.log('No user signed in, redirecting to login...');
+            window.location.href = '../auth/auth.html';
         }
     });
 
+
     // Fetch User Routines
-    async function fetchUserRoutines(uid) {
-        userRoutineListSidebar.innerHTML = ''; // Clear existing routines
+    async function fetchUserRoutines(uid, container) {
+        container.innerHTML = ''; // Clear existing routines
 
         try {
             const routinesSnapshot = await db.collection('routines')
@@ -31,12 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                              .orderBy('createdAt', 'desc')
                                              .get();
 
-            if (routinesSnapshot.empty) {
+                if (routinesSnapshot.empty) {
                 const noRoutinesItem = document.createElement('li');
                 noRoutinesItem.textContent = 'Nessuna scheda creata.';
                 noRoutinesItem.style.fontStyle = 'italic';
                 noRoutinesItem.style.color = '#888';
-                userRoutineListSidebar.appendChild(noRoutinesItem);
+                container.appendChild(noRoutinesItem);
             } else {
                 routinesSnapshot.forEach(doc => {
                     const routine = doc.data();
@@ -48,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     routineItem.addEventListener('click', () => {
                         window.location.href = `../visualizza_scheda/visualizza_scheda.html?id=${doc.id}`;
                     });
-                    userRoutineListSidebar.appendChild(routineItem);
+                    container.appendChild(routineItem);
                 });
             }
         } catch (error) {
@@ -56,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const errorItem = document.createElement('li');
             errorItem.textContent = 'Errore nel caricamento delle schede.';
             errorItem.style.color = 'red';
-            userRoutineListSidebar.appendChild(errorItem);
+            container.appendChild(errorItem);
         }
     }
 });
