@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutConfirmModal = document.getElementById('logout-confirm-modal');
     const cancelLogoutBtn = document.getElementById('cancel-logout');
     const confirmLogoutBtn = document.getElementById('confirm-logout');
+    const deleteAccountTrigger = document.getElementById('delete-account-trigger');
 
     // DOM Elements - New Modals and Buttons
     const changeLanguageBtn = document.getElementById('change-language-btn');
