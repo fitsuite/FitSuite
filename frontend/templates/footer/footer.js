@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 basePath = currentScript.src.substring(0, currentScript.src.lastIndexOf('/') + 1);
             } else {
                 // Fallback se currentScript fallisce: usiamo il percorso relativo alla root
-                basePath = 'frontend/templates/';
+                basePath = 'frontend/templates/footer/';
             }
 
             console.log('--- DEBUG FOOTER ---');
