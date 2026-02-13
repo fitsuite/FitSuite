@@ -1,0 +1,74 @@
+:root {
+    --primary-color: #ff6600;
+    --bg-dark: #1a1a1a;
+    --bg-card: #262626;
+    --text-white: #ffffff;
+    --text-gray: #a0a0a0;
+    --sidebar-width: 280px;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-white);
+    margin: 0;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    flex-grow: 1;
+    padding: 60px 40px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-dark);
+}
+
+.content-header {
+    width: 100%;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.content-header h1 {
+    color: var(--primary-color);
+    font-size: 32px;
+    font-weight: 500;
+}
+
+.logout-btn {
+    background-color: transparent;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+    padding: 8px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.logout-btn:hover {
+    background-color: #ff4444;
+    color: white;
+}
+
+.crea-scheda-container {
+    background: var(--bg-card);
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+    }
+}

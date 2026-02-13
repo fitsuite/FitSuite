@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="./crea_scheda.css">
+    <link rel="stylesheet" href="../templates/sidebar/sidebar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         #loading-screen {
             position: fixed;
@@ -69,6 +73,7 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script>
       // Your web app's Firebase configuration
       const firebaseConfig = {
@@ -96,16 +101,36 @@
         </div>
         <p>Caricamento...</p>
     </div>
-    <nav style="padding: 10px; background: #2c3e50; color: white; display: flex; justify-content: space-between;">
-        <div>FitSuite Dashboard</div>
-        <div>
-            <a href="../impostazioni/impostazioni.html" style="color: white; margin-right: 15px;">Impostazioni</a>
-            <button id="logout-button">Logout</button>
-        </div>
-    </nav>
-    <h1>ciao</h1>
 
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div id="sidebar-placeholder"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Crea Scheda</h1>
+                <button class="logout-btn" id="logout-button">Logout</button>
+            </header>
+            
+            <!-- Qui andrà il contenuto per creare la scheda -->
+            <div class="crea-scheda-container">
+                <h2>Benvenuto nella creazione scheda</h2>
+                <p>Inizia a configurare la tua nuova routine di allenamento.</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="../templates/sidebar/sidebar.js"></script>
     <script>
+        // Load sidebar.html into the sidebar-placeholder div
+        fetch('../templates/sidebar/sidebar.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('sidebar-placeholder').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading sidebar:', error));
+
         document.addEventListener('DOMContentLoaded', () => {
             const logoutButton = document.getElementById('logout-button');
             if (logoutButton) {

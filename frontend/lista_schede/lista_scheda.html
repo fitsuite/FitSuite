@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Mie Schede | FitSuite</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="./lista_schede.css">
+    <link rel="stylesheet" href="../templates/sidebar/sidebar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCEgbB9rBBKOov3aDma0DMn-EuU0bGMMYo",
+        authDomain: "fitsuite-a7b6c.firebaseapp.com",
+        projectId: "fitsuite-a7b6c",
+        storageBucket: "fitsuite-a7b6c.firebasestorage.app",
+        messagingSenderId: "721614273457",
+        appId: "1:721614273457:web:195f48279fafd01a1f5b90",
+        measurementId: "G-W4ME455MH5"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
+    <!-- Logout script -->
+    <script src="../../backend/function/logout.js"></script>
+</head>
+<body class="list-body">
+    <div id="loading-screen">
+        <div class="logo footer-logo">FitSuite</div>
+        <div class="spinner"></div>
+        <p>Caricamento schede...</p>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div id="sidebar-placeholder"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Le Mie Schede</h1>
+                <button class="logout-btn" id="logout-button">Logout</button>
+            </header>
+
+            <div class="routines-grid" id="routines-container">
+                <!-- Le schede verranno caricate qui -->
+            </div>
+        </main>
+    </div>
+
+    <script src="../templates/sidebar/sidebar.js"></script>
+    <script src="./lista_schede.js"></script>
+    <script>
+        // Load sidebar.html into the sidebar-placeholder div
+        fetch('../templates/sidebar/sidebar.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('sidebar-placeholder').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading sidebar:', error));
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', async () => {
+                    await logout();
+                });
+            }
+
+            // Firebase Auth check
+            const auth = firebase.auth();
+            const loadingScreen = document.getElementById('loading-screen');
+
+            auth.onAuthStateChanged(user => {
+                if (!user) {
+                    window.location.href = '../auth/auth.html';
+                } else {
+                    loadingScreen.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
