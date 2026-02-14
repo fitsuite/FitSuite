@@ -2,11 +2,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Color Map for dynamic styling
+    const colorMap = {
+        'Arancione': '#ff6600',
+        'Verde': '#4ade80',
+        'Blu': '#3b82f6',
+        'Rosa': '#f472b6'
+    };
+
+    const gradientMap = {
+        'Arancione': 'linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%)',
+        'Verde': 'linear-gradient(135deg, #1a2b16 0%, #1a1a1a 100%)',
+        'Blu': 'linear-gradient(135deg, #161d2b 0%, #1a1a1a 100%)',
+        'Rosa': 'linear-gradient(135deg, #2b1625 0%, #1a1a1a 100%)'
+    };
+
+    // Set initial primary color based on user preferences
+    function setPrimaryColor(colorName) {
+        const hex = colorMap[colorName] || colorMap['Arancione'];
+        const gradient = gradientMap[colorName] || gradientMap['Arancione'];
+        document.documentElement.style.setProperty('--primary-color', hex);
+        document.documentElement.style.setProperty('--background-gradient', gradient);
+    }
+
     // Check Auth State and populate sidebar
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             console.log('User is signed in for sidebar:', user.email);
             
+            // Fetch user preferences and apply theme
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const data = userDoc.data();
+                    if (data.preferences && data.preferences.color) {
+                        setPrimaryColor(data.preferences.color);
+                    } else {
+                        setPrimaryColor('Arancione');
+                    }
+                } else {
+                    setPrimaryColor('Arancione');
+                }
+            } catch (error) {
+                console.error("Error fetching user preferences for theme:", error);
+                setPrimaryColor('Arancione');
+            }
+
             // Function to update sidebar elements
             const updateSidebar = () => {
                 const userInitialSidebar = document.getElementById('user-initial-sidebar');

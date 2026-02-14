@@ -30,49 +30,60 @@ body.settings-body {
 .main-content {
     margin-left: var(--sidebar-width);
     flex-grow: 1;
-    padding: 60px 40px;
+    padding: 60px 0; /* Rimossa padding laterale per gestire il header a piena larghezza */
     display: flex;
     flex-direction: column;
     align-items: center;
     background: var(--background-gradient);
+    min-height: 100vh;
 }
 
 .content-header {
     width: 100%;
-    max-width: 600px;
-    margin-bottom: 30px;
-    text-align: left;
-    display: flex; /* Aggiunto per allineare gli elementi */
-    justify-content: space-between; /* Aggiunto per allineare a destra */
-    align-items: center; /* Aggiunto per centrare verticalmente */
+    margin-bottom: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    padding: 0 5%; /* Fallback padding */
 }
 
+/* Posizionamento specifico per h1 e logout richiesto dall'utente */
 .content-header h1 {
     color: var(--primary-color);
     font-size: 32px;
     font-weight: 500;
+    position: absolute;
+    left: calc((100% - 600px) / 4);
+    transform: translateX(-50%);
 }
 
 .logout-btn {
     background-color: transparent;
     color: #ff4444;
     border: 1px solid #ff4444;
-    padding: 8px 20px; /* Leggermente più piccolo di elimina account */
+    padding: 12px 35px; /* Stessa dimensione di contattaci */
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 14px;
     font-weight: 500;
+    position: absolute;
+    right: calc((100% - 600px) / 4);
+    transform: translateX(50%);
+    min-width: 160px; /* Come contattaci */
 }
 
 .logout-btn:hover {
     background-color: #ff4444;
     color: white;
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
 }
 
 .settings-container {
     width: 100%;
-    max-width: 600px; /* Narrower like in the image */
+    max-width: 600px;
+    padding: 0 20px; /* Padding interno per mobile */
 }
 
 .user-profile-large {
@@ -94,6 +105,7 @@ body.settings-body {
     font-weight: 500;
     margin-bottom: 15px;
     color: #1a1a1a;
+    box-shadow: 0 0 20px rgba(45, 90, 39, 0.3);
 }
 
 .user-email-main {
@@ -105,10 +117,16 @@ body.settings-body {
 /* Cards */
 .settings-card {
     background-color: var(--bg-card);
-    border-radius: 20px; /* Slightly tighter radius */
+    border-radius: 20px;
     padding: 25px;
     margin-bottom: 30px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.settings-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .glow-card {
@@ -117,7 +135,7 @@ body.settings-body {
 
 .card-title {
     color: var(--primary-color);
-    font-size: 32px; /* Bigger titles like in image */
+    font-size: 32px;
     margin-bottom: 20px;
     font-weight: 500;
 }
@@ -126,7 +144,7 @@ body.settings-body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
+    padding: 15px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -143,7 +161,7 @@ body.settings-body {
 .row-icon {
     color: var(--primary-color);
     font-size: 22px;
-    width: 25px; /* Fixed width for alignment */
+    width: 25px;
     text-align: center;
 }
 
@@ -152,7 +170,6 @@ body.settings-body {
     font-size: 11px;
     color: var(--text-gray);
     margin-bottom: 2px;
-    text-transform: none;
 }
 
 .row-value {
@@ -161,27 +178,57 @@ body.settings-body {
     color: #ffffff;
 }
 
+/* Buttons */
 .card-btn {
     background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 8px 22px;
-    border-radius: 18px;
+    padding: 12px 35px; /* Dimensione standard (contattaci) */
+    border-radius: 25px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     transition: all 0.2s;
-}
-
-.card-btn.primary {
-    padding: 12px 35px;
-    border-radius: 25px;
     min-width: 160px;
-    font-size: 14px;
+    text-align: center;
 }
 
 .card-btn:hover {
     opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px color-mix(in srgb, var(--primary-color), transparent 60%);
+}
+
+/* Classe specifica per i bottoni "Modifica" (piccoli) - Aggiornata per uniformare altezza */
+.card-btn-edit {
+    min-width: 160px;
+    padding: 12px 35px;
+    border-radius: 25px;
+    font-size: 14px;
+}
+
+.card-btn.primary {
+    /* Già coperto da .card-btn ora, ma manteniamo per compatibilità */
+}
+
+/* Delete/Cancel Buttons */
+.delete-account-btn-styled {
+    background-color: transparent;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+    padding: 12px 35px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 160px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.delete-account-btn-styled:hover {
+    background-color: #ff4444;
+    color: white;
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
 }
 
 /* Color dots */
@@ -196,10 +243,16 @@ body.settings-body {
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid transparent;
+    transition: transform 0.2s;
+}
+
+.color-dot:hover {
+    transform: scale(1.2);
 }
 
 .color-dot.active {
     border-color: white;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 .color-dot.orange { background-color: #ff6600; }
@@ -209,7 +262,7 @@ body.settings-body {
 
 /* Delete Action */
 .card-footer-action {
-    margin-top: 20px;
+    margin-top: 25px;
     text-align: center;
 }
 
@@ -219,22 +272,7 @@ body.settings-body {
     margin-bottom: 15px;
 }
 
-.delete-account-btn-styled {
-    background-color: transparent;
-    color: #ff4444;
-    border: 1px solid #ff4444;
-    padding: 10px 40px;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.delete-account-btn-styled:hover {
-    background-color: #ff4444;
-    color: white;
-}
-
-/* Modal */
+/* Modals */
 .modal {
     display: none;
     position: fixed;
@@ -242,45 +280,80 @@ body.settings-body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
     z-index: 1000;
     justify-content: center;
     align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .modal.active {
     display: flex;
+    opacity: 1;
 }
 
 .modal-content {
-    background: var(--bg-card);
-    padding: 30px;
-    border-radius: 20px;
-    max-width: 400px;
+    background: #1f1f1f;
+    padding: 40px;
+    border-radius: 30px;
+    max-width: 450px;
     width: 90%;
     text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px color-mix(in srgb, var(--primary-color), transparent 80%);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.email-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+
+.email-link:hover {
+    opacity: 0.8;
+}
+
+.modal.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-content h3 {
+    color: var(--primary-color);
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.modal-content p {
+    color: var(--text-gray);
+    line-height: 1.6;
+    margin-bottom: 25px;
 }
 
 .modal-actions {
     display: flex;
     gap: 15px;
-    margin-top: 25px;
+    margin-top: 30px;
     justify-content: center;
 }
 
 .modal-btn-secondary {
     background: transparent;
-    border: 1px solid var(--primary-color);
-    color: var(--primary-color);
-    padding: 10px 20px;
-    border-radius: 10px;
+    border: 1px solid var(--text-gray);
+    color: var(--text-gray);
+    padding: 12px 25px;
+    border-radius: 25px;
     cursor: pointer;
     transition: all 0.2s;
+    font-weight: 500;
 }
 
 .modal-btn-secondary:hover {
-    background: var(--primary-color);
+    border-color: white;
     color: white;
 }
 
@@ -288,32 +361,87 @@ body.settings-body {
     background: var(--primary-color);
     border: none;
     color: white;
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 12px 30px;
+    border-radius: 25px;
     cursor: pointer;
     transition: all 0.2s;
+    font-weight: 600;
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--primary-color), transparent 70%);
 }
 
 .modal-btn-primary:hover {
-    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--primary-color), transparent 60%);
 }
 
 .modal-btn-danger {
     background: #ff4444;
     border: none;
     color: white;
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 12px 30px;
+    border-radius: 25px;
     cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.modal-btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 68, 68, 0.4);
+}
+
+/* Form elements in modals */
+.modal-input, .modal-select, .modal-textarea {
+    width: 100%;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 12px 15px;
+    color: white;
+    margin-bottom: 15px;
+    outline: none;
+    transition: border-color 0.3s;
+    font-size: 14px;
+}
+
+#new-phone-input {
+    font-size: 20px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.modal-input:focus {
+    border-color: var(--primary-color);
 }
 
 /* Responsive */
-@media (max-width: 768px) {
-    .sidebar {
-        display: none; /* In a real app we would add a hamburger menu */
+@media (max-width: 1024px) {
+    .content-header h1 {
+        left: 5%;
+        transform: none;
     }
+    .logout-btn {
+        right: 5%;
+        transform: none;
+    }
+}
+
+@media (max-width: 768px) {
     .main-content {
         margin-left: 0;
-        padding: 20px;
+        padding: 40px 20px;
+    }
+    
+    .content-header {
+        flex-direction: column;
+        gap: 20px;
+        position: static;
+        text-align: center;
+    }
+    
+    .content-header h1, .logout-btn {
+        position: static;
+        transform: none;
+        width: 100%;
     }
 }

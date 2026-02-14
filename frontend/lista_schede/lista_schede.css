@@ -5,6 +5,7 @@
     --text-white: #ffffff;
     --text-gray: #a0a0a0;
     --sidebar-width: 280px;
+    --background-gradient: linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%);
 }
 
 body.list-body {
@@ -12,6 +13,7 @@ body.list-body {
     color: var(--text-white);
     margin: 0;
     font-family: 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
 }
 
 .app-container {
@@ -22,35 +24,47 @@ body.list-body {
 .main-content {
     margin-left: var(--sidebar-width);
     flex-grow: 1;
-    padding: 60px 40px;
+    padding: 60px 0;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    background: var(--background-gradient);
+    min-height: 100vh;
 }
 
 .content-header {
     width: 100%;
-    margin-bottom: 30px;
+    margin-bottom: 50px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative;
+    padding: 0 5%;
 }
 
 .content-header h1 {
     color: var(--primary-color);
     font-size: 32px;
     font-weight: 500;
+    position: absolute;
+    left: calc((100% - 600px) / 4);
+    transform: translateX(-50%);
 }
 
 .logout-btn {
     background-color: transparent;
     color: #ff4444;
     border: 1px solid #ff4444;
-    padding: 8px 20px;
+    padding: 12px 35px;
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 14px;
     font-weight: 500;
+    position: absolute;
+    right: calc((100% - 600px) / 4);
+    transform: translateX(50%);
+    min-width: 160px;
 }
 
 .logout-btn:hover {
@@ -59,6 +73,9 @@ body.list-body {
 }
 
 .routines-grid {
+    width: 100%;
+    max-width: 800px; /* Un po' più largo di 600px per accomodare meglio la griglia, ma comunque centrato */
+    padding: 0 20px;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
@@ -119,9 +136,33 @@ body.list-body {
     100% { transform: rotate(360deg); }
 }
 
+@media (max-width: 1024px) {
+    .content-header h1 {
+        left: 5%;
+        transform: none;
+    }
+    .logout-btn {
+        right: 5%;
+        transform: none;
+    }
+}
+
 @media (max-width: 768px) {
     .main-content {
         margin-left: 0;
-        padding: 20px;
+        padding: 40px 20px;
+    }
+    
+    .content-header {
+        flex-direction: column;
+        gap: 20px;
+        position: static;
+        text-align: center;
+    }
+    
+    .content-header h1, .logout-btn {
+        position: static;
+        transform: none;
+        width: 100%;
     }
 }

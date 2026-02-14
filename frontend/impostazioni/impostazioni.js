@@ -258,7 +258,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     confirmPhoneChangeBtn.addEventListener('click', async () => {
         const newPhone = newPhoneInput.value.trim();
+        
+        // Regola di validazione: almeno 10 cifre, opzionale + all'inizio
+        const phoneRegex = /^\+?[0-9]{10,15}$/;
+
         if (newPhone) {
+            if (!phoneRegex.test(newPhone.replace(/\s/g, ''))) {
+                alert("Per favore inserisci un numero di telefono valido (es. +39 333 1234567 o 3331234567). Deve contenere almeno 10 cifre.");
+                return;
+            }
+
             try {
                 await db.collection('users').doc(currentUser.uid).update({
                     phoneNumber: newPhone

@@ -34,7 +34,7 @@
         <main class="main-content">
             <header class="content-header">
                 <h1>Impostazioni</h1>
-                <button class="logout-btn" id="logout-trigger">Logout</button>
+                <button class="logout-btn" id="logout-trigger">Log out</button>
             </header>
 
             <div class="settings-container">
@@ -123,7 +123,7 @@
                                 <span class="row-value" id="subscription-expiry">24/12/2024</span>
                             </div>
                         </div>
-                        <button class="card-btn" id="edit-subscription-expiry">Modifica</button>
+                        <button class="card-btn card-btn-edit" id="edit-subscription-expiry">Modifica</button>
                     </div>
                     <div class="card-row">
                         <div class="row-info">
@@ -133,7 +133,7 @@
                                 <span class="row-value" id="payment-method">**** **** **** 1234</span>
                             </div>
                         </div>
-                        <button class="card-btn" id="edit-payment-method">Modifica</button>
+                        <button class="card-btn card-btn-edit" id="edit-payment-method">Modifica</button>
                     </div>
                     <div class="card-row">
                         <div class="row-info">
@@ -330,11 +330,11 @@
     <!-- Modale di conferma Logout -->
     <div id="logout-confirm-modal" class="modal">
         <div class="modal-content">
-            <h3>Conferma Logout</h3>
-            <p>Sei sicuro di voler effettuare il logout?</p>
+            <h3>Conferma Log out</h3>
+            <p>Sei sicuro di voler effettuare il log out?</p>
             <div class="modal-actions">
                 <button id="cancel-logout" class="modal-btn-secondary">Annulla</button>
-                <button id="confirm-logout" class="modal-btn-danger">Logout</button>
+                <button id="confirm-logout" class="modal-btn-danger">Log out</button>
             </div>
         </div>
     </div>
