@@ -8,6 +8,13 @@
     --background-gradient: linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%);
 }
 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
 body {
     background-color: var(--bg-dark);
     color: var(--text-white);
@@ -34,52 +41,414 @@ body {
 
 .content-header {
     width: 100%;
+    max-width: 800px;
     margin-bottom: 50px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: relative;
-    padding: 0 5%;
+    padding: 0 20px;
 }
 
 .content-header h1 {
     color: var(--primary-color);
     font-size: 32px;
     font-weight: 500;
-    position: absolute;
-    left: calc((100% - 600px) / 4);
-    transform: translateX(-50%);
 }
 
-.logout-btn {
-    background-color: transparent;
-    color: #ff4444;
-    border: 1px solid #ff4444;
+.save-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
     padding: 12px 35px;
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 14px;
     font-weight: 500;
-    position: absolute;
-    right: calc((100% - 600px) / 4);
-    transform: translateX(50%);
     min-width: 160px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-.logout-btn:hover {
-    background-color: #ff4444;
+.save-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.crea-scheda-wrapper {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 0 20px;
+}
+
+.card-section {
+    background: var(--bg-card);
+    padding: 10px 20px 20px 20px; /* Even smaller padding for a tighter look */
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.section-label {
+    color: var(--primary-color);
+    font-size: 18px; /* Slightly smaller */
+    font-weight: 700;
+    margin-bottom: 10px; /* Reduced margin */
+}
+
+.header-inputs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    position: relative;
+    min-height: 50px;
+}
+
+.input-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.logo-upload-group {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
+
+.scheda-input {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 18px;
+    width: 100%;
+    outline: none;
+}
+
+.upload-btn, .add-exercise-btn, .add-seduta-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+}
+
+.upload-btn:hover, .add-exercise-btn:hover, .add-seduta-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
+
+.date-group {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    color: white;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background 0.2s;
+    min-width: 200px;
+}
+
+#date-range-display {
+    color: var(--text-gray); /* Same color as placeholder initially */
+}
+
+#date-range-display.date-set {
     color: white;
 }
 
-.crea-scheda-container {
+.date-group:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.date-group i {
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+.seduta-card {
+    margin-bottom: 40px;
+}
+
+.seduta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.seduta-title-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.drag-handle {
+    color: var(--text-gray);
+    cursor: grab;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.drag-handle:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.drag-handle i {
+    opacity: 0.5;
+}
+
+.seduta-header .section-label {
+    margin-bottom: 0;
+    outline: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.seduta-header .section-label[contenteditable="true"] {
+    border-bottom-color: var(--primary-color);
+    padding-bottom: 2px;
+}
+
+.seduta-menu-trigger {
+    background: transparent;
+    border: none;
+    color: var(--text-gray);
+    cursor: pointer;
+    font-size: 20px;
+    padding: 5px;
+    transition: color 0.2s;
+}
+
+.seduta-menu-trigger:hover {
+    color: white;
+}
+
+.seduta-menu-dropdown {
+    position: absolute;
+    top: 45px;
+    right: 15px;
+    background: #333;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    display: none;
+    flex-direction: column;
+    z-index: 100;
+    overflow: hidden;
+}
+
+.seduta-menu-dropdown.active {
+    display: flex;
+}
+
+.menu-item {
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    text-align: left;
+    transition: background 0.2s;
+}
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.menu-item.delete {
+    color: #ff4444;
+}
+
+.seduta-content {
+    display: flex;
+    justify-content: center;
+    padding: 60px 0 30px 0; /* Further increased top padding to move button lower */
+}
+
+.add-seduta-btn {
+    align-self: flex-start; /* Aligned to the left */
+    padding: 15px 30px;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    max-width: 600px;
-    background: var(--bg-card);
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #262626;
     padding: 30px;
     border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--primary-color);
+    width: 400px;
+    text-align: center;
+}
+
+.modal-content h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 22px;
+}
+
+.modal-content p {
+    color: var(--text-gray);
+    margin-bottom: 25px;
+}
+
+.calendar-content {
+    width: 320px; /* Smaller calendar */
+    text-align: left;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.calendar-header h3 {
+    color: var(--primary-color);
+    font-size: 18px;
+    margin-bottom: 0;
+}
+
+.calendar-header button {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    color: var(--text-gray);
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 20px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 13px;
+}
+
+.calendar-day:hover:not(.empty) {
+    background: var(--primary-color) !important;
+    color: white !important;
+}
+
+.calendar-day.selected {
+    background: var(--primary-color) !important;
+    color: white !important;
+}
+
+.calendar-day.in-range {
+    background: color-mix(in srgb, var(--primary-color), transparent 80%);
+}
+
+.calendar-day.today {
+    border: 1px solid var(--primary-color);
+}
+
+.calendar-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--text-gray);
+    color: var(--text-gray);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.modal-btn-primary {
+    background: var(--primary-color);
+    border: none;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.modal-btn-danger {
+    background: #ff4444;
+    border: none;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.modal-btn-danger:hover {
+    background: #cc0000;
 }
 
 @media (max-width: 1024px) {
@@ -87,7 +456,7 @@ body {
         left: 5%;
         transform: none;
     }
-    .logout-btn {
+    .save-btn {
         right: 5%;
         transform: none;
     }
@@ -105,10 +474,18 @@ body {
         position: static;
         text-align: center;
     }
-    
-    .content-header h1, .logout-btn {
-        position: static;
-        transform: none;
+
+    .header-inputs {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .scheda-input {
         width: 100%;
+    }
+
+    .calendar-content {
+        width: 90%;
+        margin: 0 5%;
     }
 }

@@ -74,6 +74,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
     <script>
       // Your web app's Firebase configuration
       const firebaseConfig = {
@@ -110,18 +111,108 @@
         <main class="main-content">
             <header class="content-header">
                 <h1>Crea Scheda</h1>
-                <button class="logout-btn" id="logout-button">Logout</button>
+                <button class="save-btn" id="save-button">Salva</button>
             </header>
             
-            <!-- Qui andrà il contenuto per creare la scheda -->
-            <div class="crea-scheda-container">
-                <h2>Benvenuto nella creazione scheda</h2>
-                <p>Inizia a configurare la tua nuova routine di allenamento.</p>
+            <div class="crea-scheda-wrapper">
+                <!-- Sezione Intestazione -->
+                <div class="card-section">
+                    <h3 class="section-label">Intestazione</h3>
+                    <div class="header-inputs">
+                        <div class="input-group">
+                            <input type="text" id="nome-scheda" placeholder="Nome scheda" class="scheda-input">
+                        </div>
+                        
+                        <div class="logo-upload-group">
+                            <input type="file" id="logo-input" hidden accept="image/*">
+                            <button class="upload-btn" onclick="document.getElementById('logo-input').click()">
+                                <i class="fas fa-upload"></i> Carica il tuo logo
+                            </button>
+                        </div>
+
+                        <div class="date-group" id="date-picker-trigger">
+                            <i class="far fa-calendar-alt"></i>
+                            <span id="date-range-display">Seleziona date</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Container per le Sedute -->
+                <div id="sedute-container">
+                    <div class="card-section seduta-card" data-seduta-id="1">
+                        <div class="seduta-header">
+                            <div class="seduta-title-container">
+                                <div class="drag-handle">
+                                    <i class="fas fa-grip-lines"></i>
+                                </div>
+                                <h3 class="section-label" contenteditable="false">Seduta 1</h3>
+                            </div>
+                            <button class="seduta-menu-trigger">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <div class="seduta-menu-dropdown">
+                                <button class="menu-item rename-seduta">
+                                    <i class="fas fa-edit"></i> Rinomina Seduta
+                                </button>
+                                <button class="menu-item copy-seduta">
+                                    <i class="far fa-copy"></i> Copia Seduta
+                                </button>
+                                <button class="menu-item delete delete-seduta">
+                                    <i class="far fa-trash-alt"></i> Elimina Seduta
+                                </button>
+                            </div>
+                        </div>
+                        <div class="seduta-content">
+                            <button class="add-exercise-btn">
+                                <i class="fas fa-plus"></i> Aggiungi Esercizio
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottone Aggiungi Seduta -->
+                <button class="add-seduta-btn" id="add-seduta-button">
+                    <i class="fas fa-plus"></i> Aggiungi Seduta
+                </button>
             </div>
         </main>
     </div>
 
+    <!-- Calendar Modal -->
+    <div id="calendar-modal" class="modal">
+        <div class="modal-content calendar-content">
+            <div class="calendar-header">
+                <button id="prev-month"><i class="fas fa-chevron-left"></i></button>
+                <h3 id="current-month-year">Dicembre 2025</h3>
+                <button id="next-month"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="calendar-days">
+                <span>Lun</span><span>Mar</span><span>Mer</span><span>Gio</span><span>Ven</span><span class="weekend">Sab</span><span class="weekend">Dom</span>
+            </div>
+            <div id="calendar-grid" class="calendar-grid">
+                <!-- Days will be generated here -->
+            </div>
+            <div class="calendar-actions">
+                <button class="modal-btn-secondary" id="close-calendar">Annulla</button>
+                <button class="modal-btn-primary" id="confirm-date">Conferma</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Seduta Confirmation Modal -->
+    <div id="delete-confirm-modal" class="modal">
+        <div class="modal-content">
+            <h3>Elimina Seduta</h3>
+            <p>Sei sicuro di voler eliminare questa seduta? Questa azione non può essere annullata.</p>
+            <div class="calendar-actions">
+                <button id="cancel-delete" class="modal-btn-secondary">Annulla</button>
+                <button id="confirm-delete" class="modal-btn-danger">Elimina</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../templates/sidebar/sidebar.js"></script>
+    <script src="./crea_scheda.js"></script>
     <script>
         // Load sidebar.html into the sidebar-placeholder div
         fetch('../templates/sidebar/sidebar.html')
@@ -130,29 +221,6 @@
                 document.getElementById('sidebar-placeholder').innerHTML = html;
             })
             .catch(error => console.error('Error loading sidebar:', error));
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const logoutButton = document.getElementById('logout-button');
-            if (logoutButton) {
-                logoutButton.addEventListener('click', async () => {
-                    await logout(); // Call the global logout function
-                });
-            }
-
-            // Firebase Auth check
-            const auth = firebase.auth();
-            const loadingScreen = document.getElementById('loading-screen');
-
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    // User is signed in, hide loading screen
-                    loadingScreen.style.display = 'none';
-                } else {
-                    // No user is signed in, redirect to login page
-                    window.location.href = '../auth/auth.html';
-                }
-            });
-        });
     </script>
 </body>
 </html>

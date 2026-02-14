@@ -1,5 +1,6 @@
 /* Sidebar Styling */
 .sidebar {
+    box-sizing: border-box;
     width: var(--sidebar-width);
     background-color: #1a1a1a;
     border-right: 1px solid rgba(255, 255, 255, 0.1);

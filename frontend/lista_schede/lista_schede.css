@@ -8,6 +8,13 @@
     --background-gradient: linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%);
 }
 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
 body.list-body {
     background-color: var(--bg-dark);
     color: var(--text-white);
