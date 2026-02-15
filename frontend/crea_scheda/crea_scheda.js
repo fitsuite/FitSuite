@@ -238,6 +238,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     </button>
                 </div>
             </div>
+            <div class="seduta-exercises-header">
+                <span class="header-col col-name">Esercizio</span>
+                <span class="header-col col-rep">Rep</span>
+                <span class="header-col col-set">Serie</span>
+                <span class="header-col col-rest">Recupero</span>
+                <span class="header-col col-weight">Peso (kg)</span>
+                <span class="header-col col-note">Nota</span>
+                <span class="header-col col-photo">Foto</span>
+                <span class="header-col col-actions"></span>
+            </div>
             <div class="seduta-content">
                 <button class="add-exercise-btn">
                     <i class="fas fa-plus"></i> Aggiungi Esercizio
@@ -457,96 +467,78 @@ document.addEventListener('DOMContentLoaded', () => {
         const content = sedutaCard.querySelector('.seduta-content');
         const addBtn = content.querySelector('.add-exercise-btn');
         
-        // Create exercise element
-        const exerciseEl = document.createElement('div');
-        exerciseEl.className = 'exercise-item'; 
-        exerciseEl.innerHTML = `
-            <div class="exercise-preview">
-                <img src="${exercise.gifUrl}" alt="${exercise.name}">
-                <div class="exercise-details">
-                    <h4>${exercise.name_it || exercise.name}</h4>
-                    <div class="exercise-sets">
-                        <input type="number" placeholder="Serie" min="1" value="3">
-                        <span>x</span>
-                        <input type="number" placeholder="Reps" min="1" value="10">
-                    </div>
+        // Create the exercise row directly
+        const exerciseRow = document.createElement('div');
+        exerciseRow.className = 'exercise-row';
+        exerciseRow.dataset.exerciseId = exercise.exerciseId;
+
+        exerciseRow.innerHTML = `
+            <div class="col-drag"><i class="fas fa-bars"></i></div>
+            <div class="col-bullet">•</div>
+            <div class="col-name">
+                <input type="text" class="exercise-input name-input" value="${exercise.name_it || exercise.name}" readonly title="${exercise.name_it || exercise.name}">
+            </div>
+            <div class="col-rep">
+                <input type="text" class="exercise-input center-text" value="7">
+            </div>
+            <div class="col-set">
+                <input type="text" class="exercise-input center-text" value="8">
+            </div>
+            <div class="col-rest">
+                <input type="text" class="exercise-input center-text" value="30 Sec">
+            </div>
+            <div class="col-weight">
+                <input type="text" class="exercise-input center-text" value="8 Kg">
+            </div>
+            <div class="col-note">
+                <textarea class="exercise-input note-input">Aumentato di 2kg rispetto alla scorsa settimana</textarea>
+            </div>
+            <div class="col-photo">
+                <img src="${exercise.gifUrl}" alt="${exercise.name}" loading="lazy">
+            </div>
+            <div class="col-actions">
+                <button class="exercise-menu-trigger">
+                    <i class="fas fa-ellipsis-h"></i>
+                </button>
+                <div class="exercise-menu-dropdown">
+                    <button class="menu-item duplicate-exercise">
+                        <i class="far fa-copy"></i> Duplica
+                    </button>
+                    <button class="menu-item delete delete-exercise">
+                        <i class="far fa-trash-alt"></i> Elimina
+                    </button>
                 </div>
             </div>
-            <button class="remove-exercise-btn"><i class="fas fa-trash"></i></button>
         `;
         
-        // Style adjustments for the added exercise
-        exerciseEl.style.cssText = `
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        `;
-        
-        const preview = exerciseEl.querySelector('.exercise-preview');
-        preview.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        `;
-        
-        const img = exerciseEl.querySelector('img');
-        img.style.cssText = `
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 4px;
-            background: white;
-        `;
+        // Insert the exercise row before the add button
+        content.insertBefore(exerciseRow, addBtn);
 
-        const details = exerciseEl.querySelector('.exercise-details h4');
-        details.style.cssText = `
-            margin: 0 0 5px 0;
-            font-size: 14px;
-            color: white;
-        `;
+        // Add event listeners for the new row
+        const menuTrigger = exerciseRow.querySelector('.exercise-menu-trigger');
+        const dropdown = exerciseRow.querySelector('.exercise-menu-dropdown');
+        const deleteBtn = exerciseRow.querySelector('.delete-exercise');
+        const duplicateBtn = exerciseRow.querySelector('.duplicate-exercise');
 
-        const sets = exerciseEl.querySelector('.exercise-sets');
-        sets.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #888;
-            font-size: 12px;
-        `;
-
-        const inputs = exerciseEl.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.style.cssText = `
-                width: 40px;
-                background: transparent;
-                border: 1px solid #444;
-                color: white;
-                border-radius: 4px;
-                padding: 2px 5px;
-                text-align: center;
-            `;
+        menuTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Close other dropdowns
+            document.querySelectorAll('.exercise-menu-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.remove('active');
+            });
+            dropdown.classList.toggle('active');
         });
 
-        const removeBtn = exerciseEl.querySelector('.remove-exercise-btn');
-        removeBtn.style.cssText = `
-            background: transparent;
-            border: none;
-            color: #ff4444;
-            cursor: pointer;
-            padding: 5px;
-        `;
-        
-        removeBtn.addEventListener('click', () => {
-            exerciseEl.remove();
+        deleteBtn.addEventListener('click', () => {
+            exerciseRow.remove();
         });
 
-        // Insert before the add button
-        content.insertBefore(exerciseEl, addBtn);
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target) && !menuTrigger.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
     });
 
     // Delegate click for Add Exercise buttons
