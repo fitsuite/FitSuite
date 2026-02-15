@@ -429,4 +429,143 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.textContent = 'Salva';
         }
     });
+
+    // --- ADD EXERCISE LOGIC START ---
+    
+    // Load Add Exercise Modal HTML
+    fetch('../templates/aggiungi_esercizio/aggiungi_esercizio.html')
+        .then(response => response.text())
+        .then(html => {
+            document.body.insertAdjacentHTML('beforeend', html);
+            if (window.AddExerciseModal) {
+                window.AddExerciseModal.init();
+            }
+        })
+        .catch(err => console.error('Failed to load add exercise modal:', err));
+
+    // Handle exercise selection from modal
+    document.addEventListener('exercise-selected', (e) => {
+        const { exercise, sedutaId } = e.detail;
+        
+        // Find the seduta card
+        const sedutaCard = document.querySelector(`.seduta-card[data-seduta-id="${sedutaId}"]`);
+        if (!sedutaCard) {
+            console.error('Seduta card not found for ID:', sedutaId);
+            return;
+        }
+
+        const content = sedutaCard.querySelector('.seduta-content');
+        const addBtn = content.querySelector('.add-exercise-btn');
+        
+        // Create exercise element
+        const exerciseEl = document.createElement('div');
+        exerciseEl.className = 'exercise-item'; 
+        exerciseEl.innerHTML = `
+            <div class="exercise-preview">
+                <img src="${exercise.gifUrl}" alt="${exercise.name}">
+                <div class="exercise-details">
+                    <h4>${exercise.name_it || exercise.name}</h4>
+                    <div class="exercise-sets">
+                        <input type="number" placeholder="Serie" min="1" value="3">
+                        <span>x</span>
+                        <input type="number" placeholder="Reps" min="1" value="10">
+                    </div>
+                </div>
+            </div>
+            <button class="remove-exercise-btn"><i class="fas fa-trash"></i></button>
+        `;
+        
+        // Style adjustments for the added exercise
+        exerciseEl.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        `;
+        
+        const preview = exerciseEl.querySelector('.exercise-preview');
+        preview.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        `;
+        
+        const img = exerciseEl.querySelector('img');
+        img.style.cssText = `
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            background: white;
+        `;
+
+        const details = exerciseEl.querySelector('.exercise-details h4');
+        details.style.cssText = `
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            color: white;
+        `;
+
+        const sets = exerciseEl.querySelector('.exercise-sets');
+        sets.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #888;
+            font-size: 12px;
+        `;
+
+        const inputs = exerciseEl.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.style.cssText = `
+                width: 40px;
+                background: transparent;
+                border: 1px solid #444;
+                color: white;
+                border-radius: 4px;
+                padding: 2px 5px;
+                text-align: center;
+            `;
+        });
+
+        const removeBtn = exerciseEl.querySelector('.remove-exercise-btn');
+        removeBtn.style.cssText = `
+            background: transparent;
+            border: none;
+            color: #ff4444;
+            cursor: pointer;
+            padding: 5px;
+        `;
+        
+        removeBtn.addEventListener('click', () => {
+            exerciseEl.remove();
+        });
+
+        // Insert before the add button
+        content.insertBefore(exerciseEl, addBtn);
+    });
+
+    // Delegate click for Add Exercise buttons
+    if (seduteContainer) {
+        seduteContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.add-exercise-btn');
+            if (btn) {
+                const card = btn.closest('.seduta-card');
+                if (card) {
+                    const sedutaId = card.dataset.sedutaId;
+                    if (window.AddExerciseModal) {
+                        window.AddExerciseModal.open(sedutaId);
+                    } else {
+                        console.error("AddExerciseModal not available");
+                    }
+                }
+            }
+        });
+    }
+
+    // --- ADD EXERCISE LOGIC END ---
 });
