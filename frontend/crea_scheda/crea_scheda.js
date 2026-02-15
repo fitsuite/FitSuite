@@ -12,6 +12,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const seduteContainer = document.getElementById('sedute-container');
     const addSedutaBtn = document.getElementById('add-seduta-button');
 
+    // Initialize SortableJS for sedute
+    if (typeof Sortable !== 'undefined') {
+        new Sortable(seduteContainer, {
+            animation: 150,
+            handle: '.drag-handle',
+            ghostClass: 'sortable-ghost',
+            onEnd: () => {
+                updateSeduteNumbers();
+            }
+        });
+    }
+
     // Calendar elements
     const calendarModal = document.getElementById('calendar-modal');
     const calendarGrid = document.getElementById('calendar-grid');
@@ -206,11 +218,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createSedutaHTML(id) {
         return `
+            <div class="drag-handle">
+                <i class="fas fa-grip-lines"></i>
+                <i class="fas fa-grip-lines"></i>
+            </div>
             <div class="seduta-header">
                 <div class="seduta-title-container">
-                    <div class="drag-handle">
-                        <i class="fas fa-grip-lines"></i>
-                    </div>
                     <h3 class="section-label" contenteditable="false">Seduta ${id}</h3>
                 </div>
                 <button class="seduta-menu-trigger">
@@ -219,6 +232,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="seduta-menu-dropdown">
                     <button class="menu-item rename-seduta">
                         <i class="fas fa-edit"></i> Rinomina Seduta
+                    </button>
+                    <button class="menu-item move-up">
+                        <i class="fas fa-arrow-up"></i> Sposta in su
+                    </button>
+                    <button class="menu-item move-down">
+                        <i class="fas fa-arrow-down"></i> Sposta in giù
                     </button>
                     <button class="menu-item copy-seduta">
                         <i class="far fa-copy"></i> Copia Seduta
@@ -240,6 +259,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const menuTrigger = card.querySelector('.seduta-menu-trigger');
         const dropdown = card.querySelector('.seduta-menu-dropdown');
         const renameBtn = card.querySelector('.rename-seduta');
+        const moveUpBtn = card.querySelector('.move-up');
+        const moveDownBtn = card.querySelector('.move-down');
         const copyBtn = card.querySelector('.copy-seduta');
         const deleteBtn = card.querySelector('.delete-seduta');
         const label = card.querySelector('.section-label');
@@ -254,18 +275,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         renameBtn.addEventListener('click', () => {
+            const oldName = label.textContent.trim();
             label.contentEditable = "true";
             label.focus();
-            // Select all text
+            
+            // Place cursor at the end instead of selecting everything
             const range = document.createRange();
             range.selectNodeContents(label);
+            range.collapse(false); // false means collapse to end
             const selection = window.getSelection();
             selection.removeAllRanges();
             selection.addRange(range);
             
-            label.addEventListener('blur', () => {
+            const handleBlur = () => {
                 label.contentEditable = "false";
-            }, { once: true });
+                const newName = label.textContent.trim();
+                if (newName === "") {
+                    label.textContent = oldName;
+                }
+            };
+
+            label.addEventListener('blur', handleBlur, { once: true });
 
             label.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
@@ -273,6 +303,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     label.blur();
                 }
             });
+            dropdown.classList.remove('active');
+        });
+
+        moveUpBtn.addEventListener('click', () => {
+            const prev = card.previousElementSibling;
+            if (prev && prev.classList.contains('seduta-card')) {
+                seduteContainer.insertBefore(card, prev);
+                updateSeduteNumbers();
+            }
+            dropdown.classList.remove('active');
+        });
+
+        moveDownBtn.addEventListener('click', () => {
+            const next = card.nextElementSibling;
+            if (next && next.classList.contains('seduta-card')) {
+                seduteContainer.insertBefore(next, card);
+                updateSeduteNumbers();
+            }
             dropdown.classList.remove('active');
         });
 
@@ -307,7 +355,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const cards = seduteContainer.querySelectorAll('.seduta-card');
         cards.forEach((card, index) => {
             const label = card.querySelector('.section-label');
-            label.textContent = `Seduta ${index + 1}`;
+            const currentName = label.textContent.trim();
+            // Solo se il nome è del tipo "Seduta N" o vuoto, lo aggiorniamo
+            if (/^Seduta \d+$/.test(currentName) || currentName === "") {
+                label.textContent = `Seduta ${index + 1}`;
+            }
             card.dataset.sedutaId = index + 1;
         });
         seduteCount = cards.length;

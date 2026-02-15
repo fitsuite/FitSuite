@@ -92,6 +92,8 @@
     </script>
     <!-- Logout script -->
     <script src="../../backend/function/logout.js"></script>
+    <!-- SortableJS for drag and drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body>
     <div id="loading-screen">
@@ -140,11 +142,12 @@
                 <!-- Container per le Sedute -->
                 <div id="sedute-container">
                     <div class="card-section seduta-card" data-seduta-id="1">
+                        <div class="drag-handle">
+                            <i class="fas fa-grip-lines"></i>
+                            <i class="fas fa-grip-lines"></i>
+                        </div>
                         <div class="seduta-header">
                             <div class="seduta-title-container">
-                                <div class="drag-handle">
-                                    <i class="fas fa-grip-lines"></i>
-                                </div>
                                 <h3 class="section-label" contenteditable="false">Seduta 1</h3>
                             </div>
                             <button class="seduta-menu-trigger">
@@ -153,6 +156,12 @@
                             <div class="seduta-menu-dropdown">
                                 <button class="menu-item rename-seduta">
                                     <i class="fas fa-edit"></i> Rinomina Seduta
+                                </button>
+                                <button class="menu-item move-up">
+                                    <i class="fas fa-arrow-up"></i> Sposta in su
+                                </button>
+                                <button class="menu-item move-down">
+                                    <i class="fas fa-arrow-down"></i> Sposta in giù
                                 </button>
                                 <button class="menu-item copy-seduta">
                                     <i class="far fa-copy"></i> Copia Seduta
