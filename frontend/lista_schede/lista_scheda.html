@@ -43,11 +43,24 @@
         <main class="main-content">
             <header class="content-header">
                 <h1>Le Mie Schede</h1>
+                <div class="search-wrapper">
+                    <input type="text" id="search-bar" placeholder="Cerca schede...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
                 <button class="logout-btn" id="logout-button">Logout</button>
             </header>
 
-            <div class="routines-grid" id="routines-container">
-                <!-- Le schede verranno caricate qui -->
+            <div class="routines-list-container">
+                <div class="list-header">
+                    <span class="col-menu"></span> <!-- Placeholder for alignment -->
+                    <span class="col-name">Nome</span>
+                    <span class="col-sessions">Sedute</span>
+                    <span class="col-date">Periodo</span>
+                    <span class="col-actions">Azioni</span>
+                </div>
+                <div class="routines-list" id="routines-container">
+                    <!-- Le schede verranno caricate qui -->
+                </div>
             </div>
         </main>
     </div>

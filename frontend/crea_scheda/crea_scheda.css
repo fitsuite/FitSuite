@@ -5,7 +5,8 @@
     --text-white: #ffffff;
     --text-gray: #a0a0a0;
     --sidebar-width: 280px;
-    --background-gradient: linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%);
+    /* Neutral fallback gradient until JS loads user preference */
+    --background-gradient: linear-gradient(135deg, #262626 0%, #1a1a1a 100%);
 }
 
 * {

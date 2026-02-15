@@ -27,7 +27,7 @@
 .user-avatar-small {
     width: 35px;
     height: 35px;
-    background-color: #2d5a27; /* Green as in image */
+    background-color: var(--primary-color);
     border-radius: 50%;
     display: flex;
     align-items: center;

@@ -21,7 +21,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function setPrimaryColor(colorName) {
         const hex = colorMap[colorName] || colorMap['Arancione'];
         const gradient = gradientMap[colorName] || gradientMap['Arancione'];
+        
+        // Convert hex to rgb for opacity usage
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        const rgb = `${r}, ${g}, ${b}`;
+
         document.documentElement.style.setProperty('--primary-color', hex);
+        document.documentElement.style.setProperty('--primary-color-rgb', rgb);
         document.documentElement.style.setProperty('--background-gradient', gradient);
     }
 

@@ -1,11 +1,14 @@
 :root {
+    /* Fallback defaults if JS is slow, matching Arancione */
     --primary-color: #ff6600;
+    --primary-color-rgb: 255, 102, 0;
     --bg-dark: #1a1a1a;
     --bg-card: #262626;
     --text-white: #ffffff;
     --text-gray: #a0a0a0;
     --sidebar-width: 280px;
-    --background-gradient: linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%);
+    /* Neutral fallback gradient until JS loads user preference */
+    --background-gradient: linear-gradient(135deg, #262626 0%, #1a1a1a 100%);
 }
 
 * {
@@ -41,37 +44,71 @@ body.list-body {
 
 .content-header {
     width: 100%;
-    margin-bottom: 50px;
+    margin-bottom: 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
     padding: 0 5%;
+    gap: 20px;
 }
 
 .content-header h1 {
     color: var(--primary-color);
     font-size: 32px;
     font-weight: 500;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.search-wrapper {
+    position: relative;
+    flex-grow: 1;
+    max-width: 600px;
+    margin: 0 20px;
+}
+
+#search-bar {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    padding: 12px 20px 12px 45px;
+    color: white;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+#search-bar:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+.search-icon {
     position: absolute;
-    left: calc((100% - 600px) / 4);
-    transform: translateX(-50%);
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-gray);
+    pointer-events: none;
 }
 
 .logout-btn {
     background-color: transparent;
     color: #ff4444;
     border: 1px solid #ff4444;
-    padding: 12px 35px;
+    padding: 8px 25px;
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 14px;
     font-weight: 500;
-    position: absolute;
-    right: calc((100% - 600px) / 4);
-    transform: translateX(50%);
-    min-width: 160px;
+    white-space: nowrap;
+    position: static;
+    transform: none;
+    min-width: auto;
 }
 
 .logout-btn:hover {
@@ -79,39 +116,164 @@ body.list-body {
     color: white;
 }
 
-.routines-grid {
+.routines-list-container {
     width: 100%;
-    max-width: 800px; /* Un po' più largo di 600px per accomodare meglio la griglia, ma comunque centrato */
+    max-width: 1200px;
     padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.list-header {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-}
-
-.routine-card {
-    background: var(--bg-card);
-    padding: 20px;
-    border-radius: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-}
-
-.routine-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(255, 102, 0, 0.2);
-    border-color: var(--primary-color);
-}
-
-.routine-name {
-    color: var(--primary-color);
-    font-size: 18px;
+    grid-template-columns: 50px 2fr 1fr 1.5fr 150px;
+    padding: 0 20px;
+    color: var(--text-gray);
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
     margin-bottom: 10px;
 }
 
-.routine-date {
+.routines-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.routine-list-row {
+    display: grid;
+    grid-template-columns: 50px 2fr 1fr 1.5fr 150px;
+    align-items: center;
+    background: var(--bg-card);
+    padding: 15px 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s;
+    position: relative; /* Ensure stacking context */
+    z-index: 1;
+}
+
+.routine-list-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-color: rgba(var(--primary-color-rgb), 0.3);
+    background: rgba(38, 38, 38, 0.8);
+    z-index: 100; /* Bring above other rows when interacting */
+}
+
+/* Ensure the active row (with open menu) stays on top even if not hovered */
+.routine-list-row:has(.menu-dropdown.active) {
+    z-index: 100;
+}
+
+.col-menu {
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+.menu-trigger {
+    background: transparent;
+    border: none;
     color: var(--text-gray);
-    font-size: 12px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.menu-trigger:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.col-name {
+    color: white;
+    font-weight: 500;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.col-sessions, .col-date {
+    color: var(--text-gray);
+    font-size: 14px;
+}
+
+.col-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.view-btn {
+    background: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    padding: 6px 15px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.view-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Dropdown Menu */
+.menu-dropdown {
+    position: absolute;
+    top: 35px; /* Fixed position relative to button */
+    left: 10px; /* Slight offset */
+    background: #333;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    display: none;
+    flex-direction: column;
+    z-index: 9999; /* Very high z-index */
+    min-width: 180px;
+    padding: 5px 0;
+    pointer-events: auto; /* Ensure clicks work */
+}
+
+.menu-dropdown.active {
+    display: flex;
+}
+
+.menu-item {
+    padding: 10px 15px;
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    text-align: left;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.menu-item.delete {
+    color: #ff4444;
+}
+
+.menu-item i {
+    width: 20px;
+    text-align: center;
 }
 
 #loading-screen {
