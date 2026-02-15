@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="seduta-header">
                 <div class="seduta-title-container">
-                    <h3 class="section-label" contenteditable="false">Seduta ${id}</h3>
+                    <h3 class="section-label" contenteditable="false" data-custom-name="false">Seduta ${id}</h3>
                 </div>
                 <button class="seduta-menu-trigger">
                     <i class="fas fa-ellipsis-v"></i>
@@ -292,6 +292,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newName = label.textContent.trim();
                 if (newName === "") {
                     label.textContent = oldName;
+                } else {
+                    if (/^Seduta \d+$/.test(newName)) {
+                        label.dataset.customName = "false";
+                    } else {
+                        label.dataset.customName = "true";
+                    }
                 }
             };
 
@@ -356,8 +362,10 @@ document.addEventListener('DOMContentLoaded', () => {
         cards.forEach((card, index) => {
             const label = card.querySelector('.section-label');
             const currentName = label.textContent.trim();
-            // Solo se il nome è del tipo "Seduta N" o vuoto, lo aggiorniamo
-            if (/^Seduta \d+$/.test(currentName) || currentName === "") {
+            const isCustom = label.dataset.customName === "true";
+
+            // Solo se il nome è del tipo "Seduta N" (e non custom) o vuoto, lo aggiorniamo
+            if (!isCustom && (/^Seduta \d+$/.test(currentName) || currentName === "")) {
                 label.textContent = `Seduta ${index + 1}`;
             }
             card.dataset.sedutaId = index + 1;
