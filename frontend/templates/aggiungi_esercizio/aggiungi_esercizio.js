@@ -1,8 +1,9 @@
 const AddExerciseModal = {
     allExercises: [],
     filteredExercises: [],
-    selectedMuscles: new Set(),
-    selectedTypes: new Set(),
+    selectedBodyParts: new Set(),
+    selectedEquipments: new Set(),
+    selectedTargetMuscles: new Set(),
     targetSedutaId: null,
 
     init: async function() {
@@ -17,12 +18,114 @@ const AddExerciseModal = {
             this.allExercises = await response.json();
             this.filteredExercises = this.allExercises;
             console.log(`Loaded ${this.allExercises.length} exercises.`);
+            this.generateFilters();
             this.renderExercises();
         } catch (error) {
             console.error('Error loading exercises:', error);
             const grid = document.getElementById('exercises-grid');
             if(grid) grid.innerHTML = '<p style="color:red; text-align:center;">Errore nel caricamento degli esercizi.</p>';
         }
+    },
+
+    generateFilters: function() {
+        const filtersContainer = document.getElementById('dynamic-filters');
+        if (!filtersContainer) return;
+
+        // Extract unique values
+        const bodyParts = new Set();
+        const equipments = new Set();
+        const targetMuscles = new Set();
+
+        this.allExercises.forEach(ex => {
+            if (ex.bodyParts_it) ex.bodyParts_it.forEach(bp => bodyParts.add(bp));
+            if (ex.equipments_it) ex.equipments_it.forEach(eq => equipments.add(eq));
+            if (ex.targetMuscles_it) ex.targetMuscles_it.forEach(tm => targetMuscles.add(tm));
+        });
+
+        // Helper to create filter group
+        const createFilterGroup = (title, items, type) => {
+            const group = document.createElement('div');
+            group.className = 'filter-group';
+            
+            // Header container
+            const header = document.createElement('div');
+            header.className = 'filter-header';
+            
+            const h3 = document.createElement('h3');
+            h3.textContent = title;
+            
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-chevron-down filter-toggle-icon';
+            
+            header.appendChild(h3);
+            header.appendChild(icon);
+            group.appendChild(header);
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'filter-options';
+
+            // Sort items alphabetically
+            const sortedItems = Array.from(items).sort((a, b) => a.localeCompare(b));
+
+            sortedItems.forEach(item => {
+                const label = document.createElement('label');
+                label.className = 'toggle-switch';
+                
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.value = item;
+                input.dataset.type = type; // 'bodyPart', 'equipment', 'targetMuscle'
+
+                const slider = document.createElement('span');
+                slider.className = 'slider round';
+
+                const text = document.createElement('span');
+                text.className = 'label-text';
+                text.textContent = item;
+
+                label.appendChild(input);
+                label.appendChild(slider);
+                label.appendChild(text);
+                optionsDiv.appendChild(label);
+            });
+
+            group.appendChild(optionsDiv);
+            
+            // Toggle functionality
+            header.addEventListener('click', () => {
+                group.classList.toggle('collapsed');
+            });
+            
+            return group;
+        };
+
+        filtersContainer.innerHTML = '';
+        filtersContainer.appendChild(createFilterGroup('Parti del Corpo', bodyParts, 'bodyPart'));
+        filtersContainer.appendChild(createFilterGroup('Attrezzatura', equipments, 'equipment'));
+        filtersContainer.appendChild(createFilterGroup('Muscoli', targetMuscles, 'targetMuscle'));
+
+        // Add event listeners to new checkboxes
+        const checkboxes = filtersContainer.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                const type = e.target.dataset.type;
+                const value = e.target.value;
+                const checked = e.target.checked;
+
+                if (type === 'bodyPart') {
+                    if (checked) this.selectedBodyParts.add(value);
+                    else this.selectedBodyParts.delete(value);
+                } else if (type === 'equipment') {
+                    if (checked) this.selectedEquipments.add(value);
+                    else this.selectedEquipments.delete(value);
+                } else if (type === 'targetMuscle') {
+                    if (checked) this.selectedTargetMuscles.add(value);
+                    else this.selectedTargetMuscles.delete(value);
+                }
+
+                this.filterExercises();
+            });
+        });
     },
 
     renderExercises: function() {
@@ -81,7 +184,7 @@ const AddExerciseModal = {
         const searchInput = document.getElementById('exercise-search');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
-                this.filterExercises(e.target.value);
+                this.filterExercises();
             });
         }
 
@@ -101,73 +204,41 @@ const AddExerciseModal = {
                 }
             });
         }
-
-        const muscleCheckboxes = document.querySelectorAll('#muscle-filters input[type="checkbox"]');
-        muscleCheckboxes.forEach(cb => {
-            cb.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    this.selectedMuscles.add(e.target.value);
-                } else {
-                    this.selectedMuscles.delete(e.target.value);
-                }
-                this.filterExercises(searchInput ? searchInput.value : '');
-            });
-        });
-
-        const typeCheckboxes = document.querySelectorAll('#type-filters input[type="checkbox"]');
-        typeCheckboxes.forEach(cb => {
-            cb.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    this.selectedTypes.add(e.target.value);
-                } else {
-                    this.selectedTypes.delete(e.target.value);
-                }
-                this.filterExercises(searchInput ? searchInput.value : '');
-            });
-        });
     },
 
-    filterExercises: function(searchTerm) {
-        searchTerm = searchTerm.toLowerCase();
+    filterExercises: function() {
+        const searchInput = document.getElementById('exercise-search');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
 
         this.filteredExercises = this.allExercises.filter(ex => {
+            // Search Text
             const matchesSearch = (ex.name_it && ex.name_it.toLowerCase().includes(searchTerm)) || 
                                   (ex.name && ex.name.toLowerCase().includes(searchTerm));
 
             if (!matchesSearch) return false;
 
-            let matchesMuscle = true;
-            if (this.selectedMuscles.size > 0) {
-                 matchesMuscle = Array.from(this.selectedMuscles).some(muscle => {
-                    const bodyParts = (ex.bodyParts_it || []).map(bp => bp.toLowerCase());
-                    
-                    if (muscle === 'Spalle') return bodyParts.includes('spalle');
-                    if (muscle === 'Petto') return bodyParts.includes('petto');
-                    if (muscle === 'Schiena') return bodyParts.includes('dorso') || bodyParts.includes('back');
-                    if (muscle === 'Braccia') return bodyParts.some(bp => bp.includes('braccia') || bp.includes('arms'));
-                    if (muscle === 'Addominali') return bodyParts.includes('addominali') || bodyParts.includes('waist');
-                    if (muscle === 'Gambe') return bodyParts.some(bp => bp.includes('gambe') || bp.includes('legs') || bp.includes('calves'));
-                    return false;
-                 });
+            // Filter by Body Part
+            let matchesBodyPart = true;
+            if (this.selectedBodyParts.size > 0) {
+                const exBodyParts = (ex.bodyParts_it || []);
+                matchesBodyPart = exBodyParts.some(bp => this.selectedBodyParts.has(bp));
             }
 
-            let matchesType = true;
-            if (this.selectedTypes.size > 0) {
-                const isCardio = (ex.bodyParts_it || []).includes('cardio') || (ex.bodyParts || []).includes('cardio');
-                
-                const showCardio = this.selectedTypes.has('Cardio');
-                const showMassa = this.selectedTypes.has('Massa');
-
-                if (showCardio && showMassa) {
-                    matchesType = true;
-                } else if (showCardio) {
-                    matchesType = isCardio;
-                } else if (showMassa) {
-                    matchesType = !isCardio;
-                }
+            // Filter by Equipment
+            let matchesEquipment = true;
+            if (this.selectedEquipments.size > 0) {
+                const exEquipments = (ex.equipments_it || []);
+                matchesEquipment = exEquipments.some(eq => this.selectedEquipments.has(eq));
             }
 
-            return matchesMuscle && matchesType;
+            // Filter by Target Muscle
+            let matchesTargetMuscle = true;
+            if (this.selectedTargetMuscles.size > 0) {
+                const exTargetMuscles = (ex.targetMuscles_it || []);
+                matchesTargetMuscle = exTargetMuscles.some(tm => this.selectedTargetMuscles.has(tm));
+            }
+
+            return matchesBodyPart && matchesEquipment && matchesTargetMuscle;
         });
 
         this.renderExercises();
@@ -193,5 +264,3 @@ const AddExerciseModal = {
 };
 
 window.AddExerciseModal = AddExerciseModal;
-
-
