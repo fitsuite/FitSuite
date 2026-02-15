@@ -122,15 +122,31 @@
 }
 
 .routine-item {
-    padding: 8px 0;
-    color: var(--text-gray);
-    font-size: 14px;
+    padding: 10px 0;
     cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background-color 0.2s;
+}
+
+.routine-item:last-child {
+    border-bottom: none;
+}
+
+.routine-item:hover .routine-name {
+    color: var(--primary-color);
+}
+
+.routine-name {
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
     transition: color 0.2s;
 }
 
-.routine-item:hover {
-    color: var(--primary-color);
+.routine-details {
+    color: var(--text-gray);
+    font-size: 12px;
 }
 
 .sidebar-footer {

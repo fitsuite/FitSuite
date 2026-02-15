@@ -86,25 +86,63 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const routinesSnapshot = await db.collection('routines')
                                              .where('userId', '==', uid)
-                                             .orderBy('createdAt', 'desc')
                                              .get();
 
-                if (routinesSnapshot.empty) {
+            if (routinesSnapshot.empty) {
                 const noRoutinesItem = document.createElement('li');
                 noRoutinesItem.textContent = 'Nessuna scheda creata.';
                 noRoutinesItem.style.fontStyle = 'italic';
                 noRoutinesItem.style.color = '#888';
                 container.appendChild(noRoutinesItem);
             } else {
+                let routines = [];
                 routinesSnapshot.forEach(doc => {
-                    const routine = doc.data();
+                    routines.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort client-side by createdAt descending
+                routines.sort((a, b) => {
+                    const dateA = a.createdAt ? a.createdAt.toDate() : new Date(0);
+                    const dateB = b.createdAt ? b.createdAt.toDate() : new Date(0);
+                    return dateB - dateA;
+                });
+
+                routines.forEach(routine => {
                     const routineItem = document.createElement('li');
-                    routineItem.textContent = routine.name || 'Scheda senza nome';
                     routineItem.classList.add('routine-item'); // Add a class for styling
-                    routineItem.dataset.routineId = doc.id; // Store routine ID
+                    routineItem.dataset.routineId = routine.id; // Store routine ID
+
+                    // Name
+                    const nameDiv = document.createElement('div');
+                    nameDiv.classList.add('routine-name');
+                    nameDiv.textContent = routine.name || 'Scheda senza nome';
+                    routineItem.appendChild(nameDiv);
+
+                    // Details (Sessions & Period)
+                    const detailsDiv = document.createElement('div');
+                    detailsDiv.classList.add('routine-details');
+                    
+                    const seduteText = `${routine.sedute || 0} sedute`;
+                    
+                    let periodText = '';
+                    if (routine.startDate && routine.endDate) {
+                        try {
+                            const start = routine.startDate.toDate();
+                            const end = routine.endDate.toDate();
+                            const options = { day: '2-digit', month: '2-digit', year: '2-digit' };
+                            const startStr = start.toLocaleDateString('it-IT', options);
+                            const endStr = end.toLocaleDateString('it-IT', options);
+                            periodText = `${startStr} - ${endStr}`;
+                        } catch (e) {
+                            console.error("Error formatting dates", e);
+                        }
+                    }
+
+                    detailsDiv.textContent = periodText ? `${seduteText} • ${periodText}` : seduteText;
+                    routineItem.appendChild(detailsDiv);
 
                     routineItem.addEventListener('click', () => {
-                        window.location.href = `../visualizza_scheda/visualizza_scheda.html?id=${doc.id}`;
+                        window.location.href = `../visualizza_scheda/visualizza_scheda.html?id=${routine.id}`;
                     });
                     container.appendChild(routineItem);
                 });
