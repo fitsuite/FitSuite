@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingScreen = document.getElementById('loading-screen');
     const saveBtn = document.getElementById('save-button');
     const nomeSchedaInput = document.getElementById('nome-scheda');
-    const logoInput = document.getElementById('logo-input');
+
     const datePickerTrigger = document.getElementById('date-picker-trigger');
     const dateRangeDisplay = document.getElementById('date-range-display');
     const seduteContainer = document.getElementById('sedute-container');
@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedEndDate = null;
     let currentCalendarDate = new Date();
     let seduteCount = 1;
-    let selectedLogoFile = null;
 
     const colorMap = {
         'Arancione': '#ff6600',
@@ -86,15 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--background-gradient', gradient);
     }
 
-    // --- Logo Upload ---
-    logoInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files[0]) {
-            selectedLogoFile = e.target.files[0];
-            const uploadBtn = document.querySelector('.upload-btn');
-            uploadBtn.innerHTML = `<i class="fas fa-check"></i> Logo Caricato`;
-            uploadBtn.style.background = '#2d5a27'; // Success green
-        }
-    });
+
 
     // --- Calendar Logic ---
     datePickerTrigger.addEventListener('click', (e) => {
@@ -417,17 +408,11 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.textContent = 'Salvataggio...';
 
         try {
-            let logoUrl = '';
-            if (selectedLogoFile && storage) {
-                const logoRef = storage.ref(`logos/${currentUser.uid}/${Date.now()}_${selectedLogoFile.name}`);
-                const uploadTask = await logoRef.put(selectedLogoFile);
-                logoUrl = await uploadTask.ref.getDownloadURL();
-            }
+
 
             const routineData = {
                 userId: currentUser.uid,
                 name: nome,
-                logoUrl: logoUrl,
                 startDate: selectedStartDate ? firebase.firestore.Timestamp.fromDate(selectedStartDate) : null,
                 endDate: selectedEndDate ? firebase.firestore.Timestamp.fromDate(selectedEndDate) : null,
                 sedute: seduteCount,
