@@ -415,14 +415,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     submitFeedbackBtn.addEventListener('click', async () => {
         const feedback = feedbackTextarea.value.trim();
-        if (feedback) {
-            // In a real application, send feedback to Firestore or a backend service
-            console.log("Feedback submitted:", feedback);
-            alert("Grazie per il tuo feedback!");
+        
+        if (!feedback) {
+            alert("Il campo feedback non può essere vuoto.");
+            return;
+        }
+
+        if (!currentUser) {
+            alert("Errore: Utente non identificato. Riprova a effettuare il login.");
+            return;
+        }
+
+        try {
+            // Feedback visivo durante l'invio
+            const originalBtnText = submitFeedbackBtn.textContent;
+            submitFeedbackBtn.disabled = true;
+            submitFeedbackBtn.textContent = "Invio...";
+
+            // Salvataggio su Firestore nella raccolta 'feedback'
+            await db.collection('feedback').add({
+                uid: currentUser.uid,
+                email: currentUser.email,
+                message: feedback,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                read: false // Campo utile per segnare se il feedback è stato letto dagli admin
+            });
+
+            console.log("Feedback submitted successfully");
+            alert("Grazie per il tuo feedback! La tua opinione è importante per noi.");
+            
             giveFeedbackModal.classList.remove('active');
             feedbackTextarea.value = ''; // Clear textarea after submission
-        } else {
-            alert("Il campo feedback non può essere vuoto.");
+
+        } catch (error) {
+            console.error("Error submitting feedback:", error);
+            alert("Si è verificato un errore durante l'invio del feedback: " + error.message);
+        } finally {
+            // Ripristina il bottone
+            submitFeedbackBtn.disabled = false;
+            submitFeedbackBtn.textContent = "Invia Feedback";
         }
     });
 
