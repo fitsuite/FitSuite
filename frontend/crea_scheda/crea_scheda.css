@@ -42,21 +42,23 @@ body {
 
 .content-header {
     width: 100%;
-    margin-bottom: 50px;
+    margin-bottom: 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
     padding: 0 5%;
+    gap: 20px;
 }
 
 .content-header h1 {
     color: var(--primary-color);
     font-size: 32px;
     font-weight: 500;
-    position: absolute;
-    left: calc((100% - 800px) / 4);
-    transform: translateX(-50%);
+    margin: 0;
+    white-space: nowrap;
+    position: static;
+    transform: none;
 }
 
 .save-btn {
@@ -69,23 +71,22 @@ body {
     transition: all 0.2s;
     font-size: 14px;
     font-weight: 500;
-    position: absolute;
-    right: calc((100% - 800px) / 4);
-    transform: translateX(50%);
+    position: static;
+    transform: none;
     min-width: 160px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .save-btn:hover {
     filter: brightness(1.1);
-    transform: translateX(50%) translateY(-2px);
+    transform: translateY(-2px);
 }
 
 
 
 .crea-scheda-wrapper {
     width: 100%;
-    max-width: 800px;
+    max-width: 1200px;
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -94,11 +95,12 @@ body {
 
 .card-section {
     background: var(--bg-card);
-    padding: 10px 20px; /* Uniform 10px top/bottom padding */
+    padding: 20px; /* Increased padding to match lista schede */
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     margin-bottom: 40px;
+    width: 100%; /* Ensure full width */
 }
 
 .section-label {
@@ -199,15 +201,20 @@ body {
 
 .seduta-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center; /* Center content */
     align-items: center;
     margin-bottom: 20px;
+    position: relative; /* For absolute positioning of menu */
+    width: 100%;
 }
 
 .seduta-title-container {
     display: flex;
     align-items: center;
     gap: 15px;
+    justify-content: center;
+    flex: 1;
+    margin: 0 auto; /* Ensure centering */
 }
 
 .drag-handle {
@@ -260,6 +267,8 @@ body {
     font-size: 20px;
     padding: 5px;
     transition: color 0.2s;
+    position: absolute; /* Position absolute to not affect centering */
+    right: 0;
 }
 
 .seduta-menu-trigger:hover {
@@ -308,8 +317,14 @@ body {
 
 .seduta-content {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
     padding: 20px 0 0 0; /* Minimal bottom padding, relying on card-section padding */
+}
+
+.seduta-content .add-exercise-btn {
+    align-self: center;
+    margin-top: 5px;
 }
 
 .add-seduta-btn {
@@ -471,13 +486,9 @@ body {
 }
 
 @media (max-width: 1024px) {
-    .content-header h1 {
-        left: 5%;
-        transform: none;
-    }
-    .save-btn {
-        right: 5%;
-        transform: none;
+    /* Removed absolute positioning overrides to fix responsive behavior */
+    .content-header {
+        padding: 0 5%;
     }
 }
 
@@ -515,45 +526,78 @@ body {
     }
 }
 
-/* Header Row Styles */
+/* Modified grid for larger photos and better weight column */
 .seduta-exercises-header {
-    display: none; /* Hide header as per the "orange" design which seems to be self-contained or implies no header row */
+    display: grid;
+    /* Updated columns: Drag, Name, Rep, Set, Rest, Weight, Note, Photo, Actions */
+    grid-template-columns: 40px 2.5fr 0.6fr 0.6fr 1fr 1fr 2.5fr 100px 40px;
+    gap: 15px; /* Increased gap for spacing */
+    padding: 0 15px;
+    margin-bottom: 5px;
+    align-items: center;
+}
+
+.header-col {
+    color: var(--text-gray);
+    font-size: 14px;
+    text-align: center;
+    white-space: nowrap; /* Prevent wrapping */
+}
+
+.header-col.col-name, .header-col.col-note {
+    text-align: left;
 }
 
 /* Exercise Row Styles */
 .exercise-row {
     display: grid !important;
-    grid-template-columns: 30px 20px 2fr 0.6fr 0.6fr 0.8fr 0.8fr 2fr 60px 40px;
-    gap: 10px;
+    grid-template-columns: 40px 2.5fr 0.6fr 0.6fr 1fr 1fr 2.5fr 100px 40px;
+    gap: 15px; /* Increased gap for spacing */
     padding: 15px;
-    background: transparent;
-    border: 1px solid var(--primary-color);
+    background: #333; /* Darker background distinct from seduta card */
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     align-items: center;
     margin-bottom: 15px !important;
     position: relative;
 }
 
-.col-drag {
-    color: #666;
+.exercise-drag-handle {
+    color: var(--text-gray);
     cursor: grab;
     display: flex;
+    flex-direction: column; /* Stack vertically like session handle */
     justify-content: center;
     align-items: center;
+    gap: 3px; /* Space between lines */
+    font-size: 14px;
 }
 
-.col-bullet {
-    color: #fff;
-    font-size: 20px;
+.exercise-drag-handle i {
+    opacity: 0.5;
+}
+
+.exercise-drag-handle:hover i {
+    opacity: 1;
+    color: white;
+}
+
+.input-with-unit {
     display: flex;
-    justify-content: center;
     align-items: center;
+    gap: 5px;
+    justify-content: center;
+}
+
+.unit-label {
+    color: var(--text-gray);
+    font-size: 14px;
+    white-space: nowrap;
 }
 
 .exercise-input {
-    background: #333;
-    border: 1px solid #555; /* Darker border initially */
-    border: 1px solid var(--primary-color); /* Orange border as requested */
+    background: #222; /* Darker input background */
+    border: 1px solid #444; 
     color: white;
     border-radius: 6px;
     padding: 8px;
@@ -564,31 +608,64 @@ body {
 }
 
 .exercise-input:focus {
+    border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.2);
+}
+
+.exercise-input.empty-placeholder::placeholder {
+    color: var(--text-gray);
+    opacity: 0.5;
+}
+
+.col-name {
+    min-width: 0; /* Allows ellipsis to work in grid */
 }
 
 .name-input {
     text-align: left;
     font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 100%;
+    display: block;
+    background: transparent;
+    border: 1px solid #555;
 }
 
 .center-text {
     text-align: center;
 }
 
+/* Restrict input widths to create space */
+.col-rep .exercise-input,
+.col-set .exercise-input {
+    width: 100%;
+    max-width: 60px; /* Restrict width */
+    margin: 0 auto;
+    display: block;
+}
+
+.col-rest .exercise-input,
+.col-weight .exercise-input {
+    width: 100%;
+    max-width: 60px; /* Restrict width */
+}
+
 .note-input {
     resize: none;
-    height: 50px; /* Taller for notes */
+    height: 90px; /* Increased height */
     font-family: inherit;
     overflow: hidden;
+    background: #2a2a2a;
 }
 
 .col-photo img {
-    width: 50px;
-    height: 50px;
+    width: 90px; /* Increased size */
+    height: 90px; /* Increased size */
     object-fit: cover;
     border-radius: 6px;
-    border: 1px solid #fff; /* White border for photo as seen in image */
+    border: 1px solid #555;
     display: block;
     margin: 0 auto;
 }
@@ -597,7 +674,7 @@ body {
 .exercise-menu-trigger {
     background: transparent;
     border: none;
-    color: var(--primary-color); /* Orange dots */
+    color: var(--text-gray); /* Default gray */
     cursor: pointer;
     font-size: 20px;
     padding: 5px;
@@ -605,10 +682,11 @@ body {
     justify-content: center;
     align-items: center;
     width: 100%;
+    transition: color 0.2s;
 }
 
 .exercise-menu-trigger:hover {
-    color: #ff8533;
+    color: white; /* White on hover */
 }
 
 /* Remove old group styles */
