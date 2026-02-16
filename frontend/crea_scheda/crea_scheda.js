@@ -430,7 +430,43 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.textContent = 'Salvataggio...';
 
         try {
+            // Collect sedute and exercises data
+            const seduteData = [];
+            const sedutaCards = document.querySelectorAll('.seduta-card');
 
+            sedutaCards.forEach((card, index) => {
+                const sedutaLabel = card.querySelector('.section-label').textContent.trim();
+                const exercises = [];
+                const exerciseRows = card.querySelectorAll('.exercise-row');
+
+                exerciseRows.forEach(row => {
+                    const name = row.querySelector('.col-name input').value;
+                    const reps = row.querySelector('.col-rep input').value;
+                    const sets = row.querySelector('.col-set input').value;
+                    const rest = row.querySelector('.col-rest input').value;
+                    const weight = row.querySelector('.col-weight input').value;
+                    const note = row.querySelector('.col-note textarea').value;
+                    const photo = row.querySelector('.col-photo img').src;
+                    const exerciseId = row.dataset.exerciseId;
+
+                    exercises.push({
+                        exerciseId: exerciseId,
+                        name: name,
+                        reps: reps,
+                        sets: sets,
+                        rest: rest,
+                        weight: weight,
+                        note: note,
+                        photo: photo
+                    });
+                });
+
+                seduteData.push({
+                    id: index + 1, // Or card.dataset.sedutaId
+                    name: sedutaLabel,
+                    exercises: exercises
+                });
+            });
 
             const routineData = {
                 userId: currentUser.uid,
@@ -438,6 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 startDate: selectedStartDate ? firebase.firestore.Timestamp.fromDate(selectedStartDate) : null,
                 endDate: selectedEndDate ? firebase.firestore.Timestamp.fromDate(selectedEndDate) : null,
                 sedute: seduteCount,
+                seduteData: seduteData, // Add the detailed data here
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -492,20 +529,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="text" class="exercise-input name-input" value="${exercise.name_it || exercise.name}" readonly title="${exercise.name_it || exercise.name}">
             </div>
             <div class="col-rep">
-                <input type="text" class="exercise-input center-text empty-placeholder" value="" placeholder="-">
+                <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
             </div>
             <div class="col-set">
-                <input type="text" class="exercise-input center-text empty-placeholder" value="" placeholder="-">
+                <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
             </div>
             <div class="col-rest">
                 <div class="input-with-unit">
-                    <input type="text" class="exercise-input center-text" value="30">
+                    <input type="number" min="0" class="exercise-input center-text" value="30" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
                     <span class="unit-label">Sec</span>
                 </div>
             </div>
             <div class="col-weight">
                 <div class="input-with-unit">
-                    <input type="text" class="exercise-input center-text empty-placeholder" value="" placeholder="-">
+                    <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.key === '.'">
                     <span class="unit-label">kg</span>
                 </div>
             </div>

@@ -272,7 +272,7 @@ body {
 }
 
 .seduta-menu-trigger:hover {
-    color: white;
+    color: var(--primary-color);
 }
 
 .seduta-menu-dropdown {
@@ -609,7 +609,7 @@ body {
 
 .exercise-input:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.2);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color), transparent 80%);
 }
 
 .exercise-input.empty-placeholder::placeholder {
@@ -686,7 +686,7 @@ body {
 }
 
 .exercise-menu-trigger:hover {
-    color: white; /* White on hover */
+    color: var(--primary-color); /* Primary color on hover */
 }
 
 /* Remove old group styles */
