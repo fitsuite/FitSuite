@@ -203,18 +203,175 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Sessions Logic ---
     let sedutaToDelete = null;
+    let exerciseToReplace = null; // Global variable to track exercise replacement
+
     const deleteConfirmModal = document.getElementById('delete-confirm-modal');
     const confirmDeleteBtn = document.getElementById('confirm-delete');
     const cancelDeleteBtn = document.getElementById('cancel-delete');
 
-    function createSedutaHTML(id) {
+    function createExerciseRowHTML(exercise) {
         return `
-            <div class="drag-handle">
+            <div class="col-drag exercise-drag-handle">
                 <i class="fas fa-grip-lines"></i>
                 <i class="fas fa-grip-lines"></i>
             </div>
+            <div class="col-name">
+                <input type="text" class="exercise-input name-input" value="${exercise.name_it || exercise.name}" readonly title="${exercise.name_it || exercise.name}">
+            </div>
+            <div class="col-rep">
+                <div class="number-input-wrapper">
+                    <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
+                    <div class="spin-btns">
+                        <button class="spin-btn spin-up"><i class="fas fa-chevron-up"></i></button>
+                        <button class="spin-btn spin-down"><i class="fas fa-chevron-down"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-set">
+                <div class="number-input-wrapper">
+                    <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
+                    <div class="spin-btns">
+                        <button class="spin-btn spin-up"><i class="fas fa-chevron-up"></i></button>
+                        <button class="spin-btn spin-down"><i class="fas fa-chevron-down"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-rest">
+                <div class="input-with-unit">
+                    <div class="number-input-wrapper">
+                        <input type="number" min="0" class="exercise-input center-text" value="30" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
+                        <div class="spin-btns">
+                            <button class="spin-btn spin-up"><i class="fas fa-chevron-up"></i></button>
+                            <button class="spin-btn spin-down"><i class="fas fa-chevron-down"></i></button>
+                        </div>
+                    </div>
+                    <span class="unit-label">Sec</span>
+                </div>
+            </div>
+            <div class="col-weight">
+                <div class="input-with-unit">
+                    <div class="number-input-wrapper">
+                        <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.key === '.'">
+                        <div class="spin-btns">
+                            <button class="spin-btn spin-up"><i class="fas fa-chevron-up"></i></button>
+                            <button class="spin-btn spin-down"><i class="fas fa-chevron-down"></i></button>
+                        </div>
+                    </div>
+                    <span class="unit-label">kg</span>
+                </div>
+            </div>
+            <div class="col-note">
+                <textarea class="exercise-input note-input"></textarea>
+            </div>
+            <div class="col-photo">
+                <img src="${exercise.gifUrl}" alt="${exercise.name}" loading="lazy">
+            </div>
+            <div class="col-actions">
+                <button class="exercise-menu-trigger">
+                    <i class="fas fa-ellipsis-h"></i>
+                </button>
+                <div class="exercise-menu-dropdown">
+                    <button class="menu-item create-superset">
+                        <i class="fas fa-layer-group"></i> Crea Superset
+                    </button>
+                    <button class="menu-item move-exercise-up">
+                        <i class="fas fa-arrow-up"></i> Sposta in su
+                    </button>
+                    <button class="menu-item move-exercise-down">
+                        <i class="fas fa-arrow-down"></i> Sposta in giù
+                    </button>
+                    <button class="menu-item duplicate-exercise">
+                        <i class="far fa-copy"></i> Duplica
+                    </button>
+                    <button class="menu-item delete delete-exercise">
+                        <i class="far fa-trash-alt"></i> Elimina
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function initExerciseRowEvents(exerciseRow, exerciseData) {
+        const nameInput = exerciseRow.querySelector('.name-input');
+        const menuTrigger = exerciseRow.querySelector('.exercise-menu-trigger');
+        const dropdown = exerciseRow.querySelector('.exercise-menu-dropdown');
+        const deleteBtn = exerciseRow.querySelector('.delete-exercise');
+        const duplicateBtn = exerciseRow.querySelector('.duplicate-exercise');
+        const moveUpBtn = exerciseRow.querySelector('.move-exercise-up');
+        const moveDownBtn = exerciseRow.querySelector('.move-exercise-down');
+
+        // Task 2: Click on name opens modal to replace exercise
+        nameInput.addEventListener('click', () => {
+             exerciseToReplace = exerciseRow;
+             const sedutaCard = exerciseRow.closest('.seduta-card');
+             const sedutaId = sedutaCard ? sedutaCard.dataset.sedutaId : null;
+             
+             if (window.AddExerciseModal && sedutaId) {
+                 window.AddExerciseModal.open(sedutaId);
+             } else {
+                 console.error("Cannot open modal: missing modal or sedutaId");
+             }
+        });
+
+        menuTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Close other dropdowns
+            document.querySelectorAll('.exercise-menu-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.remove('active');
+            });
+            dropdown.classList.toggle('active');
+        });
+        
+        // Fix hover color bug via CSS, but ensure click works
+        menuTrigger.addEventListener('mouseenter', () => {
+            // Logic handled in CSS
+        });
+
+        deleteBtn.addEventListener('click', () => {
+            exerciseRow.remove();
+        });
+
+        duplicateBtn.addEventListener('click', () => {
+             const clone = exerciseRow.cloneNode(true);
+             // Ensure dropdown is closed in clone
+             const cloneDropdown = clone.querySelector('.exercise-menu-dropdown');
+             if (cloneDropdown) cloneDropdown.classList.remove('active');
+             
+             exerciseRow.parentNode.insertBefore(clone, exerciseRow.nextSibling);
+             
+             // Close original dropdown
+             dropdown.classList.remove('active');
+             
+             // Re-initialize events for clone
+             initExerciseRowEvents(clone, null);
+        });
+
+        moveUpBtn.addEventListener('click', () => {
+            const prev = exerciseRow.previousElementSibling;
+            if (prev) {
+                exerciseRow.parentNode.insertBefore(exerciseRow, prev);
+            }
+            dropdown.classList.remove('active');
+        });
+
+        moveDownBtn.addEventListener('click', () => {
+            const next = exerciseRow.nextElementSibling;
+            if (next) {
+                exerciseRow.parentNode.insertBefore(next, exerciseRow);
+            }
+            dropdown.classList.remove('active');
+        });
+    }
+
+    function createSedutaHTML(id) {
+        return `
             <div class="seduta-header">
                 <div class="seduta-title-container">
+                    <button class="collapse-seduta-btn"><i class="fas fa-chevron-down"></i></button>
+                    <div class="drag-handle">
+                        <i class="fas fa-grip-lines"></i>
+                        <i class="fas fa-grip-lines"></i>
+                    </div>
                     <h3 class="section-label" contenteditable="false" data-custom-name="false">Seduta ${id}</h3>
                 </div>
                 <button class="seduta-menu-trigger">
@@ -238,22 +395,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     </button>
                 </div>
             </div>
-            <div class="seduta-exercises-header">
-                <span class="header-col col-drag-spacer"></span>
-                <span class="header-col col-name">Esercizio</span>
-                <span class="header-col col-rep">Rep</span>
-                <span class="header-col col-set">Serie</span>
-                <span class="header-col col-rest">Recupero</span>
-                <span class="header-col col-weight">Peso (kg)</span>
-                <span class="header-col col-note">Nota</span>
-                <span class="header-col col-photo">Foto</span>
-                <span class="header-col col-actions"></span>
-            </div>
-            <div class="seduta-content">
-                <div class="exercises-list"></div>
-                <button class="add-exercise-btn">
-                    <i class="fas fa-plus"></i> Aggiungi Esercizio
-                </button>
+            <div class="seduta-body">
+                <div class="seduta-exercises-header">
+                    <span class="header-col col-drag-spacer"></span>
+                    <span class="header-col col-name">Esercizio</span>
+                    <span class="header-col col-rep">Rep</span>
+                    <span class="header-col col-set">Serie</span>
+                    <span class="header-col col-rest">Recupero</span>
+                    <span class="header-col col-weight">Peso (kg)</span>
+                    <span class="header-col col-note">Nota</span>
+                    <span class="header-col col-photo">Foto</span>
+                    <span class="header-col col-actions"></span>
+                </div>
+                <div class="seduta-content">
+                    <div class="exercises-list"></div>
+                    <button class="add-exercise-btn">
+                        <i class="fas fa-plus"></i> Aggiungi Esercizio
+                    </button>
+                </div>
             </div>
         `;
     }
@@ -267,6 +426,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const copyBtn = card.querySelector('.copy-seduta');
         const deleteBtn = card.querySelector('.delete-seduta');
         const label = card.querySelector('.section-label');
+        const collapseBtn = card.querySelector('.collapse-seduta-btn');
+        const sedutaBody = card.querySelector('.seduta-body');
         
         // Initialize Sortable for exercises in this session
         const exercisesList = card.querySelector('.exercises-list');
@@ -275,6 +436,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 animation: 150,
                 handle: '.exercise-drag-handle',
                 ghostClass: 'sortable-ghost'
+            });
+        }
+
+        if (collapseBtn && sedutaBody) {
+            collapseBtn.addEventListener('click', () => {
+                collapseBtn.classList.toggle('collapsed');
+                if (sedutaBody.style.display === 'none') {
+                    sedutaBody.style.display = 'block';
+                } else {
+                    sedutaBody.style.display = 'none';
+                }
             });
         }
 
@@ -515,142 +687,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const exercisesList = sedutaCard.querySelector('.exercises-list');
         
-        // Create the exercise row directly
+        // Create the exercise row
         const exerciseRow = document.createElement('div');
         exerciseRow.className = 'exercise-row';
-        exerciseRow.dataset.exerciseId = exercise.exerciseId;
-
-        exerciseRow.innerHTML = `
-            <div class="col-drag exercise-drag-handle">
-                <i class="fas fa-grip-lines"></i>
-                <i class="fas fa-grip-lines"></i>
-            </div>
-            <div class="col-name">
-                <input type="text" class="exercise-input name-input" value="${exercise.name_it || exercise.name}" readonly title="${exercise.name_it || exercise.name}">
-            </div>
-            <div class="col-rep">
-                <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
-            </div>
-            <div class="col-set">
-                <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
-            </div>
-            <div class="col-rest">
-                <div class="input-with-unit">
-                    <input type="number" min="0" class="exercise-input center-text" value="30" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
-                    <span class="unit-label">Sec</span>
-                </div>
-            </div>
-            <div class="col-weight">
-                <div class="input-with-unit">
-                    <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.key === '.'">
-                    <span class="unit-label">kg</span>
-                </div>
-            </div>
-            <div class="col-note">
-                <textarea class="exercise-input note-input"></textarea>
-            </div>
-            <div class="col-photo">
-                <img src="${exercise.gifUrl}" alt="${exercise.name}" loading="lazy">
-            </div>
-            <div class="col-actions">
-                <button class="exercise-menu-trigger">
-                    <i class="fas fa-ellipsis-h"></i>
-                </button>
-                <div class="exercise-menu-dropdown">
-                    <button class="menu-item move-exercise-up">
-                        <i class="fas fa-arrow-up"></i> Sposta in su
-                    </button>
-                    <button class="menu-item move-exercise-down">
-                        <i class="fas fa-arrow-down"></i> Sposta in giù
-                    </button>
-                    <button class="menu-item duplicate-exercise">
-                        <i class="far fa-copy"></i> Duplica
-                    </button>
-                    <button class="menu-item delete delete-exercise">
-                        <i class="far fa-trash-alt"></i> Elimina
-                    </button>
-                </div>
-            </div>
-        `;
+        exerciseRow.dataset.exerciseId = exercise.exerciseId; // Use ID from exercise data
         
-        // Append to the list
-        exercisesList.appendChild(exerciseRow);
+        // Use the shared function to generate HTML
+        exerciseRow.innerHTML = createExerciseRowHTML(exercise);
 
-        // Add event listeners for the new row
-        const menuTrigger = exerciseRow.querySelector('.exercise-menu-trigger');
-        const dropdown = exerciseRow.querySelector('.exercise-menu-dropdown');
-        const deleteBtn = exerciseRow.querySelector('.delete-exercise');
-        const duplicateBtn = exerciseRow.querySelector('.duplicate-exercise');
-        const moveUpBtn = exerciseRow.querySelector('.move-exercise-up');
-        const moveDownBtn = exerciseRow.querySelector('.move-exercise-down');
+        if (exerciseToReplace && exerciseToReplace.closest('.seduta-card') === sedutaCard) {
+            // Replace existing exercise
+            exerciseToReplace.replaceWith(exerciseRow);
+            exerciseToReplace = null; // Reset
+        } else {
+            // Append new exercise
+            exercisesList.appendChild(exerciseRow);
+        }
 
-        menuTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // Close other dropdowns
-            document.querySelectorAll('.exercise-menu-dropdown').forEach(d => {
-                if (d !== dropdown) d.classList.remove('active');
-            });
-            dropdown.classList.toggle('active');
-        });
-        
-        // Fix hover color bug via CSS, but ensure click works
-        menuTrigger.addEventListener('mouseenter', () => {
-            // Logic handled in CSS
-        });
-
-        deleteBtn.addEventListener('click', () => {
-            exerciseRow.remove();
-        });
-
-        duplicateBtn.addEventListener('click', () => {
-             // Logic to duplicate (simple clone for now, or re-trigger)
-             // Ideally we should clone the row and attach events
-             const clone = exerciseRow.cloneNode(true);
-             exercisesList.insertBefore(clone, exerciseRow.nextSibling);
-             // Re-attach events for clone (simplified by just not implementing full clone logic here, 
-             // but user didn't explicitly ask for duplicate logic fix, just structure. 
-             // However, duplication needs to work.
-             // Better to extract row creation logic or just re-run the creation with same data.
-             // For now, let's just leave it as is or fix it properly if requested.
-             // The user asked to ADD "sposta in su/giu", not fix duplicate.
-             // But I'll leave duplicate functionality as is, just updating the event listener structure.
-             // Actually, I should probably just copy the logic for attaching events.
-             // To keep it simple, I'll assume duplication logic was already there or I'll fix it if I broke it.
-             // The previous code had a duplicate button.
-             // I'll skip implementing full duplicate logic inline to save space, but I should probably make it work.
-             // Let's just make it work by recursively calling a setup function? No.
-             // I'll just skip detailed implementation of duplicate for now to focus on the requested changes.
-             // Wait, the previous code had a duplicate handler that wasn't fully implemented either? 
-             // "duplicateBtn.addEventListener('click', ...)" was empty in previous code? No, I see it in line 521 but logic inside?
-             // Ah, I see: "duplicateBtn" variable was defined but no event listener logic in the snippet I read?
-             // Let me check the previous `read` output.
-             // Line 521: `const duplicateBtn = ...`
-             // Only `deleteBtn` had a listener attached in lines 532-534. Duplicate button did nothing!
-             // So I don't need to worry about breaking it, it was broken/empty.
-        });
-
-        moveUpBtn.addEventListener('click', () => {
-            const prev = exerciseRow.previousElementSibling;
-            if (prev) {
-                exercisesList.insertBefore(exerciseRow, prev);
-            }
-            dropdown.classList.remove('active');
-        });
-
-        moveDownBtn.addEventListener('click', () => {
-            const next = exerciseRow.nextElementSibling;
-            if (next) {
-                exercisesList.insertBefore(next, exerciseRow);
-            }
-            dropdown.classList.remove('active');
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!dropdown.contains(e.target) && !menuTrigger.contains(e.target)) {
-                dropdown.classList.remove('active');
-            }
-        });
+        // Initialize events
+        initExerciseRowEvents(exerciseRow, exercise);
     });
 
     // Delegate click for Add Exercise buttons
@@ -670,6 +725,43 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- SPIN BUTTONS DELEGATION ---
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.spin-btn');
+        if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const wrapper = btn.closest('.number-input-wrapper');
+            if (!wrapper) return;
+            
+            const input = wrapper.querySelector('input');
+            if (!input) return;
+
+            const step = input.step && input.step !== 'any' ? parseFloat(input.step) : 1;
+            const min = input.min ? parseFloat(input.min) : -Infinity;
+            const max = input.max ? parseFloat(input.max) : Infinity;
+            
+            let val = parseFloat(input.value);
+            if (isNaN(val)) val = 0;
+            
+            if (btn.classList.contains('spin-up')) {
+                val += step;
+            } else {
+                val -= step;
+            }
+            
+            // Clamp
+            if (val < min) val = min;
+            if (val > max) val = max;
+            
+            input.value = val;
+            
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
 
     // --- ADD EXERCISE LOGIC END ---
 });

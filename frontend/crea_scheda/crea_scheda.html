@@ -140,12 +140,13 @@
                 <!-- Container per le Sedute -->
                 <div id="sedute-container">
                     <div class="card-section seduta-card" data-seduta-id="1">
-                        <div class="drag-handle">
-                            <i class="fas fa-grip-lines"></i>
-                            <i class="fas fa-grip-lines"></i>
-                        </div>
                         <div class="seduta-header">
                             <div class="seduta-title-container">
+                                <button class="collapse-seduta-btn"><i class="fas fa-chevron-down"></i></button>
+                                <div class="drag-handle">
+                                    <i class="fas fa-grip-lines"></i>
+                                    <i class="fas fa-grip-lines"></i>
+                                </div>
                                 <h3 class="section-label" contenteditable="false">Seduta 1</h3>
                             </div>
                             <button class="seduta-menu-trigger">
@@ -169,22 +170,24 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="seduta-exercises-header">
-                            <span class="header-col col-drag-spacer"></span>
-                            <span class="header-col col-name">Esercizio</span>
-                            <span class="header-col col-rep">Rep</span>
-                            <span class="header-col col-set">Serie</span>
-                            <span class="header-col col-rest">Recupero</span>
-                            <span class="header-col col-weight">Peso (kg)</span>
-                            <span class="header-col col-note">Nota</span>
-                            <span class="header-col col-photo">Foto</span>
-                            <span class="header-col col-actions"></span>
-                        </div>
-                        <div class="seduta-content">
-                            <div class="exercises-list"></div>
-                            <button class="add-exercise-btn">
-                                <i class="fas fa-plus"></i> Aggiungi Esercizio
-                            </button>
+                        <div class="seduta-body">
+                            <div class="seduta-exercises-header">
+                                <span class="header-col col-drag-spacer"></span>
+                                <span class="header-col col-name">Esercizio</span>
+                                <span class="header-col col-rep">Rep</span>
+                                <span class="header-col col-set">Serie</span>
+                                <span class="header-col col-rest">Recupero</span>
+                                <span class="header-col col-weight">Peso (kg)</span>
+                                <span class="header-col col-note">Nota</span>
+                                <span class="header-col col-photo">Foto</span>
+                                <span class="header-col col-actions"></span>
+                            </div>
+                            <div class="seduta-content">
+                                <div class="exercises-list"></div>
+                                <button class="add-exercise-btn">
+                                    <i class="fas fa-plus"></i> Aggiungi Esercizio
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
