@@ -1,0 +1,154 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    const loadingScreen = document.getElementById('loading-screen');
+    const schedaNameElement = document.getElementById('scheda-name');
+    const dateRangeDisplay = document.getElementById('date-range-display');
+    const seduteContainer = document.getElementById('sedute-container');
+
+    let currentUser = null;
+
+    const colorMap = {
+        'Arancione': '#ff6600',
+        'Verde': '#4ade80',
+        'Blu': '#3b82f6',
+        'Rosa': '#f472b6'
+    };
+
+    const gradientMap = {
+        'Arancione': 'linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%)',
+        'Verde': 'linear-gradient(135deg, #1a2b16 0%, #1a1a1a 100%)',
+        'Blu': 'linear-gradient(135deg, #161d2b 0%, #1a1a1a 100%)',
+        'Rosa': 'linear-gradient(135deg, #2b1625 0%, #1a1a1a 100%)'
+    };
+
+    // --- Authentication & Initialization ---
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            currentUser = user;
+            await loadUserPreferences(user.uid);
+            const routineId = getRoutineIdFromUrl();
+            if (routineId) {
+                await loadRoutineData(routineId);
+            } else {
+                console.error("No routine ID found in URL.");
+                // Optionally redirect or show an error message
+            }
+            loadingScreen.style.display = 'none';
+        } else {
+            window.location.href = '../auth/auth.html';
+        }
+    });
+
+    async function loadUserPreferences(uid) {
+        try {
+            const doc = await db.collection('users').doc(uid).get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.preferences && data.preferences.color) {
+                    setPrimaryColor(data.preferences.color);
+                }
+            }
+        } catch (error) {
+            console.error("Error loading preferences:", error);
+        }
+    }
+
+    function setPrimaryColor(colorName) {
+        const hex = colorMap[colorName] || colorMap['Arancione'];
+        const gradient = gradientMap[colorName] || gradientMap['Arancione'];
+        document.documentElement.style.setProperty('--primary-color', hex);
+        document.documentElement.style.setProperty('--background-gradient', gradient);
+    }
+
+    function getRoutineIdFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('id');
+    }
+
+    async function loadRoutineData(routineId) {
+        try {
+            const routineDoc = await db.collection('routines').doc(routineId).get();
+            if (routineDoc.exists) {
+                const routine = routineDoc.data();
+                renderRoutine(routine);
+            } else {
+                console.error("Routine not found.");
+                // Optionally redirect or show an error
+            }
+        } catch (error) {
+            console.error("Error loading routine data:", error);
+        }
+    }
+
+    function renderRoutine(routine) {
+        schedaNameElement.textContent = routine.name;
+
+        const options = { day: 'numeric', month: 'short', year: 'numeric' };
+        let dateRangeText = '';
+        if (routine.startDate && routine.endDate) {
+            const startDate = routine.startDate.toDate().toLocaleDateString('it-IT', options);
+            const endDate = routine.endDate.toDate().toLocaleDateString('it-IT', options);
+            dateRangeText = `${startDate} - ${endDate}`;
+        } else if (routine.startDate) {
+            dateRangeText = routine.startDate.toDate().toLocaleDateString('it-IT', options);
+        }
+        dateRangeDisplay.textContent = dateRangeText;
+
+        seduteContainer.innerHTML = ''; // Clear existing placeholder
+        if (routine.seduteData && routine.seduteData.length > 0) {
+            routine.seduteData.forEach(seduta => {
+                const sedutaCard = document.createElement('div');
+                sedutaCard.className = 'card-section seduta-card';
+                sedutaCard.dataset.sedutaId = seduta.id;
+                sedutaCard.innerHTML = `
+                    <div class="seduta-header">
+                        <div class="seduta-title-container">
+                            <h3 class="section-label">${seduta.name}</h3>
+                        </div>
+                    </div>
+                    <div class="seduta-exercises-header">
+                        <span class="header-col col-name">Esercizio</span>
+                        <span class="header-col col-rep">Rep</span>
+                        <span class="header-col col-set">Serie</span>
+                        <span class="header-col col-rest">Recupero</span>
+                        <span class="header-col col-weight">Peso (kg)</span>
+                        <span class="header-col col-note">Nota</span>
+                        <span class="header-col col-photo">Foto</span>
+                    </div>
+                    <div class="seduta-content">
+                        <div class="exercises-list">
+                            <!-- Exercise rows will be dynamically loaded here -->
+                        </div>
+                    </div>
+                `;
+                const exercisesList = sedutaCard.querySelector('.exercises-list');
+                if (seduta.exercises && seduta.exercises.length > 0) {
+                    seduta.exercises.forEach(exercise => {
+                        const exerciseRow = document.createElement('div');
+                        exerciseRow.className = 'exercise-row';
+                        exerciseRow.innerHTML = `
+                            <span class="exercise-detail col-name">${exercise.name}</span>
+                            <span class="exercise-detail col-rep">${exercise.reps}</span>
+                            <span class="exercise-detail col-set">${exercise.sets}</span>
+                            <span class="exercise-detail col-rest">${exercise.rest}</span>
+                            <span class="exercise-detail col-weight">${exercise.weight}</span>
+                            <span class="exercise-detail col-note">${exercise.note}</span>
+                            <span class="exercise-detail col-photo">
+                                <img src="${exercise.photo || 'https://via.placeholder.com/90'}" alt="Esercizio">
+                            </span>
+                        `;
+                        exercisesList.appendChild(exerciseRow);
+                    });
+                } else {
+                    exercisesList.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 20px;">Nessun esercizio in questa seduta.</p>';
+                }
+                seduteContainer.appendChild(sedutaCard);
+            });
+        } else {
+            seduteContainer.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 40px;">Nessuna seduta trovata per questa scheda.</p>';
+        }
+    }
+});

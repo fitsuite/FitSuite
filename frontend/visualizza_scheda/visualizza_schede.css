@@ -1,0 +1,280 @@
+:root {
+    --primary-color: #ff6600;
+    --bg-dark: #1a1a1a;
+    --bg-card: #262626;
+    --text-white: #ffffff;
+    --text-gray: #a0a0a0;
+    --sidebar-width: 280px;
+    --background-gradient: linear-gradient(135deg, #262626 0%, #1a1a1a 100%);
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    flex-grow: 1;
+    padding: 60px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--background-gradient);
+    min-height: 100vh;
+}
+
+.content-header {
+    width: 100%;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    padding: 0 5%;
+    gap: 20px;
+}
+
+.content-header h1 {
+    color: var(--primary-color);
+    font-size: 32px;
+    font-weight: 500;
+    margin: 0;
+    white-space: nowrap;
+    position: static;
+    transform: none;
+}
+
+.share-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    position: static;
+    transform: none;
+    min-width: 120px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.share-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
+
+.visualizza-scheda-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0 20px;
+}
+
+.card-section {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    margin-bottom: 40px;
+    width: 100%;
+}
+
+.section-label {
+    color: var(--primary-color);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    min-width: 20px;
+    display: inline-block;
+    outline: none;
+}
+
+.header-details {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+#scheda-name {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text-white);
+    margin: 0;
+}
+
+.date-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-gray);
+    font-size: 16px;
+}
+
+.date-display i {
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+.seduta-card {
+    margin-bottom: 20px; /* Space between session cards */
+}
+
+.seduta-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    position: relative;
+    width: 100%;
+}
+
+.seduta-title-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    justify-content: center;
+    flex: 1;
+    margin: 0 auto;
+}
+
+.seduta-exercises-header {
+    display: grid;
+    grid-template-columns: 2.5fr 0.6fr 0.6fr 1fr 1fr 2.5fr 100px; /* Adjusted for view mode */
+    gap: 15px;
+    padding: 0 15px;
+    margin-bottom: 5px;
+    align-items: center;
+}
+
+.header-col {
+    color: var(--text-gray);
+    font-size: 14px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.header-col.col-name, .header-col.col-note {
+    text-align: left;
+}
+
+.seduta-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px 0 0 0;
+}
+
+.exercises-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.exercise-row {
+    display: grid;
+    grid-template-columns: 2.5fr 0.6fr 0.6fr 1fr 1fr 2.5fr 100px; /* Adjusted for view mode */
+    gap: 15px;
+    padding: 15px;
+    background: #333;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    align-items: center;
+    position: relative;
+}
+
+.exercise-detail {
+    color: var(--text-white);
+    font-size: 14px;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+.exercise-detail.col-name {
+    text-align: left;
+    font-weight: 500;
+}
+
+.exercise-detail.col-note {
+    text-align: left;
+    white-space: pre-wrap; /* Preserve whitespace and allow wrapping */
+}
+
+.exercise-detail.col-photo img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #555;
+    display: block;
+    margin: 0 auto;
+}
+
+@media (max-width: 1024px) {
+    .content-header {
+        padding: 0 5%;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 40px 20px;
+    }
+    
+    .content-header {
+        flex-direction: column;
+        gap: 20px;
+        position: static;
+        text-align: center;
+    }
+
+    .content-header h1, .share-btn {
+        position: static;
+        transform: none;
+        width: 100%;
+    }
+
+    .header-details {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #scheda-name {
+        width: 100%;
+        text-align: center;
+    }
+
+    .date-display {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .seduta-exercises-header, .exercise-row {
+        grid-template-columns: 1fr; /* Stack columns on small screens */
+        text-align: left;
+    }
+
+    .header-col, .exercise-detail {
+        text-align: left;
+    }
+
+    .exercise-detail.col-photo {
+        text-align: center;
+    }
+
+    .exercise-detail.col-photo img {
+        margin: 0 auto;
+    }
+}
