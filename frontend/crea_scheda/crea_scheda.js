@@ -315,8 +315,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         menuTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
-            // Close other dropdowns
-            document.querySelectorAll('.exercise-menu-dropdown').forEach(d => {
+            // Close all other dropdowns (both exercise and seduta)
+            document.querySelectorAll('.exercise-menu-dropdown, .seduta-menu-dropdown').forEach(d => {
                 if (d !== dropdown) d.classList.remove('active');
             });
             dropdown.classList.toggle('active');
@@ -365,13 +365,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createSedutaHTML(id) {
         return `
+            <div class="drag-handle">
+                <i class="fas fa-grip-lines"></i>
+                <i class="fas fa-grip-lines"></i>
+            </div>
             <div class="seduta-header">
                 <div class="seduta-title-container">
                     <button class="collapse-seduta-btn"><i class="fas fa-chevron-down"></i></button>
-                    <div class="drag-handle">
-                        <i class="fas fa-grip-lines"></i>
-                        <i class="fas fa-grip-lines"></i>
-                    </div>
                     <h3 class="section-label" contenteditable="false" data-custom-name="false">Seduta ${id}</h3>
                 </div>
                 <button class="seduta-menu-trigger">
@@ -452,8 +452,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         menuTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
-            // Close other dropdowns
-            document.querySelectorAll('.seduta-menu-dropdown').forEach(d => {
+            // Close all other dropdowns (both exercise and seduta)
+            document.querySelectorAll('.seduta-menu-dropdown, .exercise-menu-dropdown').forEach(d => {
                 if (d !== dropdown) d.classList.remove('active');
             });
             dropdown.classList.toggle('active');
@@ -725,6 +725,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.exercise-menu-trigger') && !e.target.closest('.exercise-menu-dropdown') &&
+            !e.target.closest('.seduta-menu-trigger') && !e.target.closest('.seduta-menu-dropdown')) {
+            document.querySelectorAll('.exercise-menu-dropdown.active, .seduta-menu-dropdown.active').forEach(d => {
+                d.classList.remove('active');
+            });
+        }
+    });
 
     // --- SPIN BUTTONS DELEGATION ---
     document.addEventListener('click', (e) => {
