@@ -19,20 +19,22 @@
     padding: 60px 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: center; /* Ripristinato per centrare il contenuto principale */
     background: var(--background-gradient);
     min-height: 100vh;
 }
 
 .content-header {
     width: 100%;
-    margin-bottom: 30px;
+    max-width: 1200px; /* Aggiunto per allineare con il wrapper */
+    margin: 0 auto 30px auto; /* Centra l'header e aggiunge margine inferiore */
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
     padding: 0 5%;
     gap: 20px;
+    flex-wrap: wrap;
 }
 
 .content-header h1 {
@@ -43,6 +45,36 @@
     white-space: nowrap;
     position: static;
     transform: none;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Space between buttons */
+}
+
+.edit-btn {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    padding: 12px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 120px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.edit-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
 }
 
 .share-btn {
@@ -240,9 +272,17 @@
         text-align: center;
     }
 
-    .content-header h1, .share-btn {
-        position: static;
-        transform: none;
+    .content-header h1 {
+        width: 100%;
+    }
+
+    .header-right {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .share-btn, .edit-btn {
         width: 100%;
     }
 
