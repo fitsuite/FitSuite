@@ -1,0 +1,157 @@
+:root {
+    --primary-color: #ff6600;
+    --bg-dark: #1a1a1a;
+    --bg-card: #262626;
+    --text-white: #ffffff;
+    --text-gray: #a0a0a0;
+    --input-bg: #333;
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+
+.ai-form-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.form-section {
+    background: var(--bg-card);
+    padding: 25px;
+    border-radius: 15px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 30px;
+}
+
+.form-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.form-group {
+    flex: 1;
+    min-width: 200px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-gray);
+    font-size: 0.9rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-white);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--primary-color);
+}
+
+/* Radio & Checkbox Groups */
+.radio-group, .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.radio-group label, .checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    background: var(--input-bg);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.radio-group label:hover, .checkbox-group label:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.radio-group input, .checkbox-group input {
+    accent-color: var(--primary-color);
+    width: 18px;
+    height: 18px;
+}
+
+/* Range Input */
+input[type=range] {
+    width: 100%;
+    margin: 10px 0;
+    accent-color: var(--primary-color);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 50px;
+}
+
+.generate-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 15px 50px;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(255, 102, 0, 0.3);
+}
+
+.generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 102, 0, 0.4);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 5px;
+    color: var(--text-gray);
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .radio-group, .checkbox-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .radio-group label, .checkbox-group label {
+        width: 100%;
+    }
+}

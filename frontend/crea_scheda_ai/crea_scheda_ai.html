@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crea Scheda con AI - FitSuite</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="./crea_scheda_ai.css">
+    <link rel="stylesheet" href="../templates/sidebar/sidebar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div id="sidebar-placeholder"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Crea Scheda con AI</h1>
+            </header>
+            
+            <div class="ai-form-container">
+                <form id="ai-workout-form">
+                    <!-- Dati Personali -->
+                    <div class="form-section">
+                        <h3>Dati Personali</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Sesso</label>
+                                <div class="radio-group">
+                                    <label><input type="radio" name="sesso" value="maschio" required> Maschio</label>
+                                    <label><input type="radio" name="sesso" value="femmina" required> Femmina</label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="eta">Età</label>
+                                <input type="number" id="eta" name="eta" min="10" max="100" required placeholder="Es. 30">
+                            </div>
+                            <div class="form-group">
+                                <label for="peso">Peso (kg)</label>
+                                <input type="number" id="peso" name="peso" min="30" max="200" step="0.1" required placeholder="Es. 75.5">
+                            </div>
+                            <div class="form-group">
+                                <label for="altezza">Altezza (cm)</label>
+                                <input type="number" id="altezza" name="altezza" min="100" max="250" required placeholder="Es. 175">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Obiettivo ed Esperienza -->
+                    <div class="form-section">
+                        <h3>Profilo Atletico</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="obiettivo">Obiettivo</label>
+                                <select id="obiettivo" name="obiettivo" required>
+                                    <option value="" disabled selected>Seleziona obiettivo</option>
+                                    <option value="dimagrimento">Perdita Peso</option>
+                                    <option value="ipertrofia">Massa Muscolare (Ipertrofia)</option>
+                                    <option value="forza">Forza</option>
+                                    <option value="mantenimento">Mantenimento</option>
+                                    <option value="resistenza">Resistenza</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="esperienza">Esperienza</label>
+                                <select id="esperienza" name="esperienza" required>
+                                    <option value="" disabled selected>Seleziona livello</option>
+                                    <option value="principiante">Principiante (0-1 anni)</option>
+                                    <option value="intermedio">Intermedio (1-3 anni)</option>
+                                    <option value="avanzato">Avanzato (>3 anni)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preferenze Allenamento -->
+                    <div class="form-section">
+                        <h3>Preferenze Allenamento</h3>
+                        <div class="form-group">
+                            <label for="giorni">Giorni a settimana: <span id="giorni-val">3</span></label>
+                            <input type="range" id="giorni" name="giorni" min="1" max="7" value="3" oninput="document.getElementById('giorni-val').textContent = this.value">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Attrezzatura Disponibile</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="attrezzatura" value="palestra" checked> Palestra Completa</label>
+                                <label><input type="checkbox" name="attrezzatura" value="manubri"> Manubri</label>
+                                <label><input type="checkbox" name="attrezzatura" value="bilanciere"> Bilanciere</label>
+                                <label><input type="checkbox" name="attrezzatura" value="macchine"> Macchine Isotoniche</label>
+                                <label><input type="checkbox" name="attrezzatura" value="cavi"> Cavi</label>
+                                <label><input type="checkbox" name="attrezzatura" value="corpo_libero"> Corpo Libero</label>
+                                <label><input type="checkbox" name="attrezzatura" value="elastici"> Elastici</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Focus Muscolare</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="focus" value="full_body"> Full Body (Ogni giorno)</label>
+                                <label><input type="checkbox" name="focus" value="petto"> Petto</label>
+                                <label><input type="checkbox" name="focus" value="schiena"> Schiena</label>
+                                <label><input type="checkbox" name="focus" value="gambe"> Gambe</label>
+                                <label><input type="checkbox" name="focus" value="spalle"> Spalle</label>
+                                <label><input type="checkbox" name="focus" value="braccia"> Braccia</label>
+                                <label><input type="checkbox" name="focus" value="addome"> Addome</label>
+                            </div>
+                            <small>Seleziona "Full Body" per allenare tutto il corpo ogni seduta, oppure seleziona i gruppi muscolari specifici su cui vuoi concentrarti.</small>
+                        </div>
+                    </div>
+
+                    <!-- Limitazioni -->
+                    <div class="form-section">
+                        <h3>Limitazioni Fisiche</h3>
+                        <div class="form-group">
+                            <label for="limitazioni">Limitazioni (Max 20 caratteri)</label>
+                            <input type="text" id="limitazioni" name="limitazioni" maxlength="20" placeholder="Es. Dolore spalla dx">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="generate-btn">Genera Scheda con AI</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="../templates/sidebar/sidebar.js"></script>
+    <script src="./crea_scheda_ai.js"></script>
+    <script>
+        // Load sidebar.html into the sidebar-placeholder div
+        fetch('../templates/sidebar/sidebar.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('sidebar-placeholder').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading sidebar:', error));
+    </script>
+</body>
+</html>

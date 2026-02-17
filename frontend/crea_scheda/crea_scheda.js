@@ -213,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             <div class="col-drag exercise-drag-handle">
                 <i class="fas fa-grip-lines"></i>
-                <i class="fas fa-grip-lines"></i>
             </div>
             <div class="col-name">
                 <input type="text" class="exercise-input name-input" value="${exercise.name_it || exercise.name}" readonly title="${exercise.name_it || exercise.name}">
@@ -392,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  
                  const dragHandle = document.createElement('div');
                  dragHandle.className = 'superset-drag-handle';
-                 dragHandle.innerHTML = '<i class="fas fa-grip-lines"></i><i class="fas fa-grip-lines"></i>';
+                 dragHandle.innerHTML = '<i class="fas fa-grip-lines"></i>';
                  
                  const list = document.createElement('div');
                  list.className = 'superset-exercises-list';
@@ -439,12 +438,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             <div class="drag-handle">
                 <i class="fas fa-grip-lines"></i>
-                <i class="fas fa-grip-lines"></i>
             </div>
             <div class="seduta-header">
                 <div class="seduta-title-container">
                     <button class="collapse-seduta-btn"><i class="fas fa-chevron-down"></i></button>
                     <h3 class="section-label" contenteditable="false" data-custom-name="false">Seduta ${id}</h3>
+                    <div class="seduta-summary">
+                        <!-- Summary content will be populated via JS -->
+                    </div>
                 </div>
                 <button class="seduta-menu-trigger">
                     <i class="fas fa-ellipsis-v"></i>
@@ -514,10 +515,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (collapseBtn && sedutaBody) {
             collapseBtn.addEventListener('click', () => {
                 collapseBtn.classList.toggle('collapsed');
+                const summary = card.querySelector('.seduta-summary');
+                
                 if (sedutaBody.style.display === 'none') {
                     sedutaBody.style.display = 'block';
+                    if (summary) summary.style.display = 'none';
                 } else {
                     sedutaBody.style.display = 'none';
+                    updateSedutaSummary(card);
+                    if (summary) summary.style.display = 'flex';
                 }
             });
         }
@@ -612,6 +618,34 @@ document.addEventListener('DOMContentLoaded', () => {
         seduteContainer.appendChild(newCard);
         initSedutaEvents(newCard);
         updateSeduteNumbers();
+    }
+
+    function updateSedutaSummary(card) {
+        const exercises = card.querySelectorAll('.exercise-row');
+        const count = exercises.length;
+        const muscleCounts = {};
+        
+        exercises.forEach(row => {
+            const muscles = (row.dataset.muscles || "").split(',').filter(m => m);
+            muscles.forEach(m => {
+                muscleCounts[m] = (muscleCounts[m] || 0) + 1;
+            });
+        });
+        
+        let mainMuscle = "-";
+        if (Object.keys(muscleCounts).length > 0) {
+            mainMuscle = Object.entries(muscleCounts).reduce((a, b) => b[1] > a[1] ? b : a)[0];
+            // Capitalize first letter
+            mainMuscle = mainMuscle.charAt(0).toUpperCase() + mainMuscle.slice(1);
+        }
+        
+        const summary = card.querySelector('.seduta-summary');
+        if (summary) {
+            summary.innerHTML = `
+                <span class="summary-item"><i class="fas fa-dumbbell"></i> ${count} Esercizi</span>
+                <span class="summary-item"><i class="fas fa-running"></i> ${mainMuscle}</span>
+            `;
+        }
     }
 
     function updateSeduteNumbers() {
@@ -763,6 +797,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const exerciseRow = document.createElement('div');
         exerciseRow.className = 'exercise-row';
         exerciseRow.dataset.exerciseId = exercise.exerciseId; // Use ID from exercise data
+        
+        // Muscle fallback logic
+        let muscles = [];
+        if (exercise.targetMuscles_it && exercise.targetMuscles_it.length > 0) {
+            muscles = exercise.targetMuscles_it;
+        } else if (exercise.bodyParts_it && exercise.bodyParts_it.length > 0) {
+            muscles = exercise.bodyParts_it;
+        } else if (exercise.targetMuscles && exercise.targetMuscles.length > 0) {
+            muscles = exercise.targetMuscles;
+        } else if (exercise.bodyParts && exercise.bodyParts.length > 0) {
+            muscles = exercise.bodyParts;
+        }
+        
+        exerciseRow.dataset.muscles = muscles.join(',');
         
         // Use the shared function to generate HTML
         exerciseRow.innerHTML = createExerciseRowHTML(exercise);
