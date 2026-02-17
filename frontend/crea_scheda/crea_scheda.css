@@ -554,8 +554,8 @@ body {
 .seduta-exercises-header {
     display: grid;
     /* Updated columns: Drag, Name, Rep, Set, Rest, Weight, Note, Photo, Actions */
-    /* Reduced Name column (2fr) and Note column (1.2fr) to increase spacing */
-    grid-template-columns: 40px 2fr 0.6fr 0.6fr 1fr 1fr 1.2fr 100px 40px;
+    /* Note column changed to 100px to match Photo */
+    grid-template-columns: 40px 2fr 0.6fr 0.6fr 1fr 1fr 100px 100px 40px;
     gap: 20px; /* Increased gap from 8px */
     padding: 0 15px;
     margin-bottom: 5px;
@@ -581,7 +581,7 @@ body {
 .exercise-row {
     display: grid !important;
     /* Match header columns */
-    grid-template-columns: 40px 2fr 0.6fr 0.6fr 1fr 1fr 1.2fr 100px 40px;
+    grid-template-columns: 40px 2fr 0.6fr 0.6fr 1fr 1fr 100px 100px 40px;
     gap: 20px; /* Increased gap from 8px */
     padding: 15px;
     background: #333; /* Darker background distinct from seduta card */
@@ -707,6 +707,9 @@ body {
     font-family: inherit;
     overflow: hidden;
     background: #222;
+    width: 90px; /* Match photo width */
+    margin: 0 auto; /* Center like photo */
+    display: block;
 }
 
 .col-photo img {
@@ -741,79 +744,106 @@ body {
 /* Superset Styles */
 .superset-wrapper {
     display: flex;
-    align-items: stretch;
-    background: #333; /* Match standard exercise row background */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    background: #333; /* Match .exercise-row */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Match .exercise-row */
+    border-radius: 12px; /* Match .exercise-row */
     margin-bottom: 15px;
     position: relative;
-    padding-left: 15px; /* Match standard row left padding */
-    padding-right: 0;
+    padding: 7.5px 15px; /* Half vertical padding to share with rows */
+    gap: 20px; /* Horizontal gap between handle and list */
+    align-items: stretch; /* Ensure handle stretches */
 }
 
 .superset-drag-handle {
-    width: 40px;
+    width: 40px; /* Match grid column width */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     cursor: grab;
+    background: transparent;
+    border: none;
     color: var(--text-gray);
-    /* Removed border-right to be cleaner */
-    margin-right: 20px; /* Match standard row grid gap */
+    gap: 3px;
+    font-size: 14px;
+    padding: 0;
+    flex-shrink: 0;
 }
 
-.superset-drag-handle:hover {
+.superset-drag-handle i {
+    opacity: 0.5;
+}
+
+.superset-drag-handle:hover i {
+    opacity: 1;
     color: white;
-    background: rgba(255, 255, 255, 0.05);
 }
 
 .superset-exercises-list {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0;
-    position: relative; /* For the vertical connecting line */
-    padding-top: 5px;
-    padding-bottom: 5px;
-    padding-right: 15px; /* Match standard row right padding */
+    /* No gap, let rows touch to handle spacing via padding */
 }
 
-/* The vertical connecting line for the whole list */
-.superset-exercises-list::before {
+.superset-wrapper .exercise-row {
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr 100px 100px 40px !important;
+    margin-bottom: 0 !important;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: transparent;
+    border-radius: 0;
+    padding: 7.5px 0 !important; /* Half padding for equal spacing */
+    gap: 20px; /* Match grid gap */
+}
+
+.superset-wrapper .exercise-row:last-child {
+    border-bottom: none;
+}
+
+.superset-wrapper .exercise-row .exercise-drag-handle {
+    display: none;
+}
+
+/* Vertical Line for Superset */
+.superset-wrapper .exercise-row {
+    position: relative;
+}
+
+.superset-wrapper .exercise-row::before {
     content: '';
     position: absolute;
-    left: -11px; /* Position in the center of the 20px gap (approx) */
-    top: 30px; /* Start a bit down */
-    bottom: 30px; /* End a bit up */
-    width: 2px;
+    left: -12px; /* Position in the gap between handle and content */
+    width: 3px;
     background-color: var(--primary-color);
-    z-index: 1;
+    z-index: 10; /* Ensure it stays on top of borders */
+    
+    /* Default for middle rows: spans full height */
+    top: 0;
+    bottom: 0;
+    border-radius: 0;
 }
 
-/* Hide original drag handle inside superset */
-.superset-wrapper .exercise-row .exercise-drag-handle {
-    display: none; /* Hide drag handle inside superset */
+/* Logic for Line Start/End (Middle of Name Box) */
+.superset-wrapper .exercise-row:first-child::before {
+    top: 50%; /* Start from vertical center */
+    bottom: -1px; /* Extend slightly to cover border gap */
+    border-radius: 3px 3px 0 0;
 }
 
-/* Hide grid column for drag handle inside superset */
-.superset-wrapper .exercise-row {
-    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr 1.2fr 100px 40px; /* Removed first 40px column */
-    background: transparent; /* Transparent background inside wrapper */
-    border: none; /* No border for individual rows */
-    margin-bottom: 0 !important;
-    padding: 10px 0; /* Vertical padding only, horizontal 0 */
-    position: relative;
-    gap: 20px; /* Maintain standard grid gap */
+.superset-wrapper .exercise-row:last-child::before {
+    top: -1px; /* Extend slightly to cover border gap */
+    bottom: 50%; /* End at vertical center */
+    border-radius: 0 0 3px 3px;
 }
 
-/* Adjust the grid to account for missing drag handle column */
-.superset-wrapper .exercise-row .col-name {
-    padding-left: 0; /* Restore original padding */
-    position: relative;
+.superset-wrapper .exercise-row:first-child:last-child::before {
+     top: 50%;
+     bottom: 50%;
+     border-radius: 3px;
 }
 
-/* The bullet point */
+/* Remove .col-name::before styles */
 .superset-wrapper .exercise-row .col-name::before {
     content: none;
 }

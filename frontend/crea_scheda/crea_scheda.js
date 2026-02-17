@@ -364,50 +364,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
         createSupersetBtn.addEventListener('click', () => {
             const parent = exerciseRow.parentNode;
-            const clone = exerciseRow.cloneNode(true);
-            const cloneDropdown = clone.querySelector('.exercise-menu-dropdown');
-            if (cloneDropdown) cloneDropdown.classList.remove('active');
-
-            // Handle recovery time logic: move from current to next
-            const currentRestInput = exerciseRow.querySelector('.col-rest input');
-            const cloneRestInput = clone.querySelector('.col-rest input');
+            const dropdown = exerciseRow.querySelector('.exercise-menu-dropdown');
             
-            if (currentRestInput && cloneRestInput) {
-                cloneRestInput.value = currentRestInput.value;
-                currentRestInput.value = ''; // Clear the first exercise rest
-            }
-
+            // Check if already in superset
             if (parent.classList.contains('superset-exercises-list')) {
-                // Already in a superset, just append the clone
-                parent.insertBefore(clone, exerciseRow.nextSibling);
+                 // Already in superset: Duplicate and append
+                 const clone = exerciseRow.cloneNode(true);
+                 // Reset inputs in clone? The user said "identico a quello sopra", so keep values.
+                 
+                 // Ensure dropdown is closed in clone
+                 const cloneDropdown = clone.querySelector('.exercise-menu-dropdown');
+                 if (cloneDropdown) cloneDropdown.classList.remove('active');
+                 
+                 // Insert after current row
+                 if (exerciseRow.nextSibling) {
+                    parent.insertBefore(clone, exerciseRow.nextSibling);
+                 } else {
+                    parent.appendChild(clone);
+                 }
+                 
+                 dropdown.classList.remove('active');
+                 initExerciseRowEvents(clone, null);
             } else {
-                // Create new superset wrapper
-                const wrapper = document.createElement('div');
-                wrapper.className = 'superset-wrapper';
-                
-                // Create drag handle for wrapper
-                const wrapperHandle = document.createElement('div');
-                wrapperHandle.className = 'superset-drag-handle drag-handle'; // Add drag-handle class for Sortable
-                wrapperHandle.innerHTML = '<i class="fas fa-grip-lines"></i><i class="fas fa-grip-lines"></i>';
-                wrapper.appendChild(wrapperHandle);
-
-                // Container for exercises
-                const exercisesContainer = document.createElement('div');
-                exercisesContainer.className = 'superset-exercises-list';
-                wrapper.appendChild(exercisesContainer);
-
-                // Insert wrapper where exerciseRow was
-                parent.insertBefore(wrapper, exerciseRow);
-                
-                // Move exerciseRow into container
-                exercisesContainer.appendChild(exerciseRow);
-                
-                // Append clone
-                exercisesContainer.appendChild(clone);
+                 // Not in superset: Create wrapper
+                 const wrapper = document.createElement('div');
+                 wrapper.className = 'superset-wrapper';
+                 
+                 const dragHandle = document.createElement('div');
+                 dragHandle.className = 'superset-drag-handle';
+                 dragHandle.innerHTML = '<i class="fas fa-grip-lines"></i><i class="fas fa-grip-lines"></i>';
+                 
+                 const list = document.createElement('div');
+                 list.className = 'superset-exercises-list';
+                 
+                 // Insert wrapper before current row
+                 parent.insertBefore(wrapper, exerciseRow);
+                 
+                 // Move current row into list
+                 list.appendChild(exerciseRow);
+                 
+                 // Create duplicate
+                 const clone = exerciseRow.cloneNode(true);
+                 const cloneDropdown = clone.querySelector('.exercise-menu-dropdown');
+                 if (cloneDropdown) cloneDropdown.classList.remove('active');
+                 
+                 list.appendChild(clone);
+                 
+                 wrapper.appendChild(dragHandle);
+                 wrapper.appendChild(list);
+                 
+                 dropdown.classList.remove('active');
+                 initExerciseRowEvents(clone, null);
             }
-
-            dropdown.classList.remove('active');
-            initExerciseRowEvents(clone, null);
         });
 
         moveUpBtn.addEventListener('click', () => {
