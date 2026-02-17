@@ -8,7 +8,7 @@
     background-color: #1a1a1a; /* Dark background */
     padding: 0;
     overflow: hidden;
-    border: 2px solid #ff6600; /* Orange border as per image */
+    border: 2px solid var(--primary-color); /* Orange border as per image */
     border-radius: 15px; /* Rounded corners */
     box-shadow: 0 0 20px rgba(0,0,0,0.8);
 }
@@ -24,7 +24,7 @@
 }
 
 .modal-title {
-    color: #ff6600;
+    color: var(--primary-color);
     font-size: 32px;
     font-weight: bold;
     margin: 0;
@@ -33,7 +33,8 @@
 .close-modal-btn {
     position: absolute;
     right: 20px;
-    top: 20px;
+    top: 50%;
+    transform: translateY(-50%);
     background: transparent;
     border: none;
     color: #888;
@@ -43,7 +44,7 @@
 }
 
 .close-modal-btn:hover {
-    color: #ff6600;
+    color: var(--primary-color);
 }
 
 .modal-body {
@@ -83,7 +84,7 @@
 }
 
 .filter-group h3 {
-    color: #ff6600;
+    color: var(--primary-color);
     font-size: 18px;
     margin: 0;
     font-weight: 600;
@@ -134,8 +135,11 @@
 }
 
 /* Search Area */
-.search-area {
+.search-area-full {
     width: 100%;
+    padding: 0 20px 20px 20px;
+    background-color: #1a1a1a;
+    flex-shrink: 0;
 }
 
 .search-container {
@@ -164,7 +168,7 @@
 }
 
 #exercise-search:focus {
-    border-color: #ff6600;
+    border-color: var(--primary-color);
 }
 
 /* Exercises Grid */
@@ -182,7 +186,7 @@
 
 .exercise-card {
     background-color: #222;
-    border: 1px solid #ff6600;
+    border: 1px solid var(--primary-color);
     border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
@@ -192,8 +196,19 @@
 
 .exercise-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(255, 102, 0, 0.2);
+    box-shadow: 0 5px 15px rgba(255, 102, 0, 0.2); /* Fallback opacity handled by JS usually, but this is CSS only so maybe use var with rgba? */
 }
+/* Note: CSS variables inside rgba() is tricky if the variable is a hex code. 
+   Assuming --primary-color is hex. 
+   However, we can just use the variable for border and color. 
+   For shadow, we might need an RGB variable or just keep orange as a default if we can't compute it.
+   Wait, sidebar.js sets --primary-color-rgb. Let's use that if available.
+   FitSuite seems to use --primary-color as hex. 
+   Let's check if --primary-color-rgb is available. 
+   In sidebar.js it IS set. 
+   So I can use rgba(var(--primary-color-rgb), 0.2).
+*/
+
 
 .card-image {
     width: 100%;
@@ -219,7 +234,7 @@
 }
 
 .card-info h4 {
-    color: #ff6600;
+    color: var(--primary-color);
     font-size: 16px;
     margin: 0;
     white-space: nowrap;
@@ -265,7 +280,7 @@
 }
 
 input:checked + .slider {
-    background-color: #ff6600;
+    background-color: var(--primary-color);
 }
 
 input:checked + .slider:before {
@@ -314,21 +329,35 @@ input:checked ~ .label-text {
 @media (max-width: 900px) {
     .modal-body {
         flex-direction: column;
+        overflow-y: auto; /* Allow scrolling */
     }
     
     .filters-sidebar {
         width: 100%;
         height: auto;
-        max-height: 200px;
-        flex-direction: row;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding-bottom: 10px;
+        max-height: none;
+        flex-direction: column;
+        overflow-x: hidden;
+        overflow-y: visible;
+        padding-bottom: 20px;
+        flex-shrink: 0;
     }
 
     .filter-group {
-        min-width: 250px;
-        height: 100%;
-        overflow-y: auto;
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        overflow-y: visible;
+        margin-bottom: 10px;
+    }
+
+    .main-content-area {
+        overflow: visible;
+        height: auto;
+    }
+
+    .exercises-grid-container {
+        overflow: visible;
+        height: auto;
     }
 }

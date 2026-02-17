@@ -738,6 +738,100 @@ body {
     color: var(--primary-color); /* Primary color on hover */
 }
 
+/* Superset Styles */
+.superset-wrapper {
+    display: flex;
+    align-items: stretch;
+    background: #333; /* Match standard exercise row background */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    margin-bottom: 15px;
+    position: relative;
+    padding-left: 15px; /* Match standard row left padding */
+    padding-right: 0;
+}
+
+.superset-drag-handle {
+    width: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: grab;
+    color: var(--text-gray);
+    /* Removed border-right to be cleaner */
+    margin-right: 20px; /* Match standard row grid gap */
+}
+
+.superset-drag-handle:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.superset-exercises-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative; /* For the vertical connecting line */
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-right: 15px; /* Match standard row right padding */
+}
+
+/* The vertical connecting line for the whole list */
+.superset-exercises-list::before {
+    content: '';
+    position: absolute;
+    left: -11px; /* Position in the center of the 20px gap (approx) */
+    top: 30px; /* Start a bit down */
+    bottom: 30px; /* End a bit up */
+    width: 2px;
+    background-color: var(--primary-color);
+    z-index: 1;
+}
+
+/* Hide original drag handle inside superset */
+.superset-wrapper .exercise-row .exercise-drag-handle {
+    display: none; /* Hide drag handle inside superset */
+}
+
+/* Hide grid column for drag handle inside superset */
+.superset-wrapper .exercise-row {
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr 1.2fr 100px 40px; /* Removed first 40px column */
+    background: transparent; /* Transparent background inside wrapper */
+    border: none; /* No border for individual rows */
+    margin-bottom: 0 !important;
+    padding: 10px 0; /* Vertical padding only, horizontal 0 */
+    position: relative;
+    gap: 20px; /* Maintain standard grid gap */
+}
+
+/* Adjust the grid to account for missing drag handle column */
+.superset-wrapper .exercise-row .col-name {
+    padding-left: 0; /* Restore original padding */
+    position: relative;
+}
+
+/* The bullet point */
+.superset-wrapper .exercise-row .col-name::before {
+    content: none;
+}
+
+/* Remove old superset styles */
+.exercise-row.superset-start,
+.exercise-row.superset-middle,
+.exercise-row.superset-end,
+.exercise-row.superset-start::before,
+.exercise-row.superset-middle::before,
+.exercise-row.superset-end::before,
+.exercise-row.superset-start::after,
+.exercise-row.superset-middle::after,
+.exercise-row.superset-end::after {
+    display: none;
+    content: none;
+}
+
 /* Remove old group styles */
 .exercise-group-wrapper, 
 .group-indicator, 

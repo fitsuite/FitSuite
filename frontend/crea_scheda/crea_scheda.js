@@ -297,6 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dropdown = exerciseRow.querySelector('.exercise-menu-dropdown');
         const deleteBtn = exerciseRow.querySelector('.delete-exercise');
         const duplicateBtn = exerciseRow.querySelector('.duplicate-exercise');
+        const createSupersetBtn = exerciseRow.querySelector('.create-superset');
         const moveUpBtn = exerciseRow.querySelector('.move-exercise-up');
         const moveDownBtn = exerciseRow.querySelector('.move-exercise-down');
 
@@ -328,7 +329,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         deleteBtn.addEventListener('click', () => {
+            const parent = exerciseRow.parentNode;
             exerciseRow.remove();
+            
+            // Check if parent is a superset container and handle cleanup
+            if (parent.classList.contains('superset-exercises-list')) {
+                const wrapper = parent.closest('.superset-wrapper');
+                const remaining = parent.children.length;
+                if (remaining === 0) {
+                    wrapper.remove();
+                } else if (remaining === 1) {
+                    // Unwrap the last exercise
+                    const lastExercise = parent.firstElementChild;
+                    wrapper.parentNode.insertBefore(lastExercise, wrapper);
+                    wrapper.remove();
+                }
+            }
         });
 
         duplicateBtn.addEventListener('click', () => {
@@ -344,6 +360,54 @@ document.addEventListener('DOMContentLoaded', () => {
              
              // Re-initialize events for clone
              initExerciseRowEvents(clone, null);
+        });
+
+        createSupersetBtn.addEventListener('click', () => {
+            const parent = exerciseRow.parentNode;
+            const clone = exerciseRow.cloneNode(true);
+            const cloneDropdown = clone.querySelector('.exercise-menu-dropdown');
+            if (cloneDropdown) cloneDropdown.classList.remove('active');
+
+            // Handle recovery time logic: move from current to next
+            const currentRestInput = exerciseRow.querySelector('.col-rest input');
+            const cloneRestInput = clone.querySelector('.col-rest input');
+            
+            if (currentRestInput && cloneRestInput) {
+                cloneRestInput.value = currentRestInput.value;
+                currentRestInput.value = ''; // Clear the first exercise rest
+            }
+
+            if (parent.classList.contains('superset-exercises-list')) {
+                // Already in a superset, just append the clone
+                parent.insertBefore(clone, exerciseRow.nextSibling);
+            } else {
+                // Create new superset wrapper
+                const wrapper = document.createElement('div');
+                wrapper.className = 'superset-wrapper';
+                
+                // Create drag handle for wrapper
+                const wrapperHandle = document.createElement('div');
+                wrapperHandle.className = 'superset-drag-handle drag-handle'; // Add drag-handle class for Sortable
+                wrapperHandle.innerHTML = '<i class="fas fa-grip-lines"></i><i class="fas fa-grip-lines"></i>';
+                wrapper.appendChild(wrapperHandle);
+
+                // Container for exercises
+                const exercisesContainer = document.createElement('div');
+                exercisesContainer.className = 'superset-exercises-list';
+                wrapper.appendChild(exercisesContainer);
+
+                // Insert wrapper where exerciseRow was
+                parent.insertBefore(wrapper, exerciseRow);
+                
+                // Move exerciseRow into container
+                exercisesContainer.appendChild(exerciseRow);
+                
+                // Append clone
+                exercisesContainer.appendChild(clone);
+            }
+
+            dropdown.classList.remove('active');
+            initExerciseRowEvents(clone, null);
         });
 
         moveUpBtn.addEventListener('click', () => {
@@ -434,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (exercisesList && typeof Sortable !== 'undefined') {
             new Sortable(exercisesList, {
                 animation: 150,
-                handle: '.exercise-drag-handle',
+                handle: '.exercise-drag-handle, .superset-drag-handle',
                 ghostClass: 'sortable-ghost'
             });
         }
