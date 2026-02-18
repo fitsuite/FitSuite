@@ -141,6 +141,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const initial = (user.displayName || user.email).charAt(0).toUpperCase();
             userInitialMain.textContent = initial;
 
+            // Apply cached theme immediately
+            applyThemeFromCache(user.uid);
+
             try {
                 // Fetch additional data from Firestore and wait for sidebar
                 await Promise.all([
@@ -171,6 +174,31 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const updatedCache = { ...currentCache, ...newPrefs };
         localStorage.setItem(cacheKey, JSON.stringify(updatedCache));
+    }
+
+    // Apply Theme from Cache
+    function applyThemeFromCache(uid) {
+        const cacheKey = `userPreferences_${uid}`;
+        try {
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) {
+                const prefs = JSON.parse(cached);
+                if (prefs.color) {
+                    setPrimaryColor(prefs.color);
+                    currentColorLabel.textContent = prefs.color;
+                    setActiveColorDot(prefs.color);
+                }
+                if (prefs.language) {
+                    userLanguage.textContent = prefs.language;
+                    updateLanguageFlag(prefs.language);
+                }
+                if (prefs.notifications) {
+                    userNotifications.textContent = prefs.notifications;
+                }
+            }
+        } catch (e) {
+            console.error("Error applying cached theme:", e);
+        }
     }
 
     // Fetch User Data from Firestore
@@ -366,18 +394,18 @@ document.addEventListener('DOMContentLoaded', () => {
                           dot.classList.contains('blue') ? 'Blu' : 'Rosa';
             
             try {
-                await db.collection('users').doc(currentUser.uid).update({
-                    'preferences.color': color
-                });
-                
-                // Update cache
+                // Optimistic Update: Update cache and UI immediately
                 savePreferencesToCache(currentUser.uid, { color: color });
-
                 currentColorLabel.textContent = color;
                 setActiveColorDot(color);
                 setPrimaryColor(color); // Update primary color dynamically
+
+                await db.collection('users').doc(currentUser.uid).update({
+                    'preferences.color': color
+                });
             } catch (error) {
                 console.error("Error updating color:", error);
+                // Optional: Revert UI if needed, but for color it's minor
             }
         });
     });
