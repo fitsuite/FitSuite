@@ -33,6 +33,70 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--background-gradient', gradient);
     }
 
+    // Mobile Sidebar Logic
+    function initMobileSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const body = document.body;
+
+        if (!sidebar) {
+            // Retry if sidebar not yet loaded
+            setTimeout(initMobileSidebar, 100);
+            return;
+        }
+
+        // Check if toggle button already exists
+        if (!document.querySelector('.sidebar-toggle-btn')) {
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'sidebar-toggle-btn';
+            toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+            toggleBtn.onclick = toggleSidebar;
+            body.appendChild(toggleBtn);
+        }
+
+        // Check if overlay already exists
+        if (!document.querySelector('.sidebar-overlay')) {
+            const overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            overlay.onclick = closeSidebar;
+            body.appendChild(overlay);
+        }
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (sidebar) {
+            sidebar.classList.toggle('open');
+            if (overlay) {
+                overlay.classList.toggle('active', sidebar.classList.contains('open'));
+                overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+                // Trigger reflow for transition
+                if (sidebar.classList.contains('open')) {
+                    setTimeout(() => overlay.style.opacity = '1', 10);
+                } else {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.style.display = 'none', 300);
+                }
+            }
+        }
+    }
+
+    function closeSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (sidebar) {
+            sidebar.classList.remove('open');
+            if (overlay) {
+                overlay.classList.remove('active');
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 300);
+            }
+        }
+    }
+
+    // Initialize mobile sidebar
+    initMobileSidebar();
+
     // Check Auth State and populate sidebar
     auth.onAuthStateChanged(async (user) => {
         if (user) {

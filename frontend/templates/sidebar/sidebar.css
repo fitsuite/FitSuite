@@ -9,6 +9,81 @@
     padding: 20px;
     position: fixed;
     height: 100vh;
+    transition: transform 0.3s ease, width 0.3s ease;
+    z-index: 1000;
+}
+
+/* Mobile Sidebar Styles */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 250px; /* Fixed width when open */
+        box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    /* Overlay for mobile when sidebar is open */
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .sidebar-overlay.active {
+        display: block;
+        opacity: 1;
+    }
+}
+
+/* Sidebar Toggle Button (Mobile) */
+.sidebar-toggle-btn {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1001;
+    background: var(--primary-color, #ff6600);
+    color: white;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease, background-color 0.2s;
+    display: flex; /* Hidden by default via media query, but flex here for centering */
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-toggle-btn:hover {
+    transform: scale(1.1);
+    background-color: white;
+    color: var(--primary-color, #ff6600);
+}
+
+/* Hide on desktop, show on mobile */
+@media (min-width: 993px) {
+    .sidebar-toggle-btn {
+        display: none !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .sidebar-toggle-btn {
+        display: flex !important;
+    }
 }
 
 .sidebar-header {
@@ -22,6 +97,18 @@
     background: rgba(255, 255, 255, 0.05);
     padding: 10px;
     border-radius: 12px;
+}
+
+/* AI Button Specific Style */
+.new-routine-btn.ai-btn {
+    background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%); /* Purple Gradient */
+    margin-top: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.new-routine-btn.ai-btn:hover {
+    background: linear-gradient(135deg, #9b4dff 0%, #5a1ae0 100%);
+    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
 }
 
 .user-avatar-small {

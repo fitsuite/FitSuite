@@ -24,19 +24,45 @@ document.addEventListener('DOMContentLoaded', () => {
         'Rosa': 'linear-gradient(135deg, #2b1625 0%, #1a1a1a 100%)'
     };
 
+    // Helper to wait for sidebar
+    function waitForSidebar() {
+        return new Promise(resolve => {
+            const start = Date.now();
+            const check = () => {
+                if (document.querySelector('.sidebar')) {
+                    resolve();
+                } else if (Date.now() - start > 5000) {
+                    console.warn("Sidebar load timeout");
+                    resolve();
+                } else {
+                    requestAnimationFrame(check);
+                }
+            };
+            check();
+        });
+    }
+
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            currentUser = user;
-            await loadUserPreferences(user.uid);
-            const routineId = getRoutineIdFromUrl();
-            if (routineId) {
-                await loadRoutineData(routineId);
-            } else {
-                console.error("No routine ID found in URL.");
-                // Optionally redirect or show an error message
+            try {
+                currentUser = user;
+                const tasks = [
+                    loadUserPreferences(user.uid),
+                    waitForSidebar()
+                ];
+                const routineId = getRoutineIdFromUrl();
+                if (routineId) {
+                    tasks.push(loadRoutineData(routineId));
+                } else {
+                    console.error("No routine ID found in URL.");
+                }
+                await Promise.all(tasks);
+            } catch (error) {
+                console.error("Error during initialization:", error);
+            } finally {
+                if (loadingScreen) loadingScreen.style.display = 'none';
             }
-            loadingScreen.style.display = 'none';
         } else {
             window.location.href = '../auth/auth.html';
         }
@@ -74,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (routineDoc.exists) {
                 const routine = routineDoc.data();
                 renderRoutine(routine);
+                await waitForImages();
             } else {
                 console.error("Routine not found.");
                 // Optionally redirect or show an error
@@ -81,6 +108,20 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Error loading routine data:", error);
         }
+    }
+
+    function waitForImages() {
+        const images = document.querySelectorAll('#sedute-container img');
+        if (images.length === 0) return Promise.resolve();
+
+        const promises = Array.from(images).map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve; // Resolve even on error to avoid hanging
+            });
+        });
+        return Promise.all(promises);
     }
 
     function renderRoutine(routine) {

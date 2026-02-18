@@ -42,10 +42,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function waitForSidebar() {
+        return new Promise(resolve => {
+            const start = Date.now();
+            const check = () => {
+                if (document.querySelector('.sidebar')) {
+                    resolve();
+                } else if (Date.now() - start > 5000) {
+                    console.warn("Sidebar load timeout");
+                    resolve();
+                } else {
+                    requestAnimationFrame(check);
+                }
+            };
+            check();
+        });
+    }
+
     auth.onAuthStateChanged(async user => {
         if (user) {
-            await loadUserPreferences(user.uid);
-            fetchRoutines(user.uid);
+            try {
+                await Promise.all([
+                    loadUserPreferences(user.uid),
+                    fetchRoutines(user.uid),
+                    waitForSidebar()
+                ]);
+            } catch (error) {
+                console.error("Error during initialization:", error);
+            } finally {
+                if (loadingScreen) loadingScreen.style.display = 'none';
+            }
         } else {
             window.location.href = '../auth/auth.html';
         }
@@ -76,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (snapshot.empty) {
                 renderRoutines([]);
-                if (loadingScreen) loadingScreen.style.display = 'none';
+                // if (loadingScreen) loadingScreen.style.display = 'none'; // Handled in onAuthStateChanged
                 return;
             }
 
@@ -94,12 +120,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             renderRoutines(allRoutines);
             
-            if (loadingScreen) loadingScreen.style.display = 'none';
+            // if (loadingScreen) loadingScreen.style.display = 'none'; // Handled in onAuthStateChanged
 
         } catch (error) {
             console.error("Errore nel recupero delle schede:", error);
             routinesContainer.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Errore nel caricamento delle schede. Riprova più tardi.</div>';
-            if (loadingScreen) loadingScreen.style.display = 'none';
+            // if (loadingScreen) loadingScreen.style.display = 'none'; // Handled in onAuthStateChanged
         }
     }
 

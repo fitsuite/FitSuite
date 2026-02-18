@@ -53,12 +53,38 @@ document.addEventListener('DOMContentLoaded', () => {
         'Rosa': 'linear-gradient(135deg, #2b1625 0%, #1a1a1a 100%)'
     };
 
+    // Helper to wait for sidebar
+    function waitForSidebar() {
+        return new Promise(resolve => {
+            const start = Date.now();
+            const check = () => {
+                if (document.querySelector('.sidebar')) {
+                    resolve();
+                } else if (Date.now() - start > 5000) {
+                    console.warn("Sidebar load timeout");
+                    resolve();
+                } else {
+                    requestAnimationFrame(check);
+                }
+            };
+            check();
+        });
+    }
+
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            currentUser = user;
-            await loadUserPreferences(user.uid);
-            loadingScreen.style.display = 'none';
+            try {
+                currentUser = user;
+                await Promise.all([
+                    loadUserPreferences(user.uid),
+                    waitForSidebar()
+                ]);
+            } catch (error) {
+                console.error("Error during initialization:", error);
+            } finally {
+                if (loadingScreen) loadingScreen.style.display = 'none';
+            }
         } else {
             window.location.href = '../auth/auth.html';
         }

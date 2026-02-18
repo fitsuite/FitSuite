@@ -88,9 +88,8 @@
             auth.onAuthStateChanged(user => {
                 if (!user) {
                     window.location.href = '../auth/auth.html';
-                } else {
-                    loadingScreen.style.display = 'none';
                 }
+                // loadingScreen.style.display = 'none'; // Moved to lista_schede.js after data load
             });
         });
     </script>
