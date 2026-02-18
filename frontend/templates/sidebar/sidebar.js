@@ -103,21 +103,37 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('User is signed in for sidebar:', user.email);
             
             // Fetch user preferences and apply theme
+            const cacheKey = `userPreferences_${user.uid}`;
+            
+            // 1. Try Cache First
+            try {
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    const prefs = JSON.parse(cached);
+                    if (prefs.color) {
+                        setPrimaryColor(prefs.color);
+                    }
+                }
+            } catch (e) { console.error("Cache error in sidebar:", e); }
+
+            // 2. Fetch from Network (Background)
             try {
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 if (userDoc.exists) {
                     const data = userDoc.data();
                     if (data.preferences && data.preferences.color) {
                         setPrimaryColor(data.preferences.color);
+                        // Update cache
+                        localStorage.setItem(cacheKey, JSON.stringify(data.preferences));
                     } else {
-                        setPrimaryColor('Arancione');
+                        if (!localStorage.getItem(cacheKey)) setPrimaryColor('Arancione');
                     }
                 } else {
-                    setPrimaryColor('Arancione');
+                    if (!localStorage.getItem(cacheKey)) setPrimaryColor('Arancione');
                 }
             } catch (error) {
                 console.error("Error fetching user preferences for theme:", error);
-                setPrimaryColor('Arancione');
+                if (!localStorage.getItem(cacheKey)) setPrimaryColor('Arancione');
             }
 
             // Function to update sidebar elements

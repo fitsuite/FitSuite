@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
+        const loadingScreen = document.getElementById('loading-screen');
         if (user) {
             try {
                 currentUser = user;
@@ -69,12 +70,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function loadUserPreferences(uid) {
+        const cacheKey = `userPreferences_${uid}`;
+        // 1. Try Cache
+        try {
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) {
+                const prefs = JSON.parse(cached);
+                if (prefs.color) {
+                    setPrimaryColor(prefs.color);
+                    return; // Skip network if cached
+                }
+            }
+        } catch (e) {
+            console.error("Cache error:", e);
+        }
+
+        // 2. Network Fallback
         try {
             const doc = await db.collection('users').doc(uid).get();
             if (doc.exists) {
                 const data = doc.data();
-                if (data.preferences && data.preferences.color) {
-                    setPrimaryColor(data.preferences.color);
+                if (data.preferences) {
+                    if (data.preferences.color) {
+                        setPrimaryColor(data.preferences.color);
+                    }
+                    // Save to cache
+                    localStorage.setItem(cacheKey, JSON.stringify(data.preferences));
                 }
             }
         } catch (error) {

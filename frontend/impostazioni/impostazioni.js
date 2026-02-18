@@ -28,6 +28,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--background-gradient', gradient);
     }
 
+    function waitForSidebar() {
+        return new Promise(resolve => {
+            const start = Date.now();
+            const check = () => {
+                if (document.querySelector('.sidebar')) {
+                    resolve();
+                } else if (Date.now() - start > 5000) {
+                    console.warn("Sidebar load timeout");
+                    resolve();
+                } else {
+                    requestAnimationFrame(check);
+                }
+            };
+            check();
+        });
+    }
+
 
 
     // DOM Elements - Main Profile
@@ -114,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check Auth State
     auth.onAuthStateChanged(async (user) => {
+        const loadingScreen = document.getElementById('loading-screen');
         if (user) {
             currentUser = user;
             console.log('User is signed in:', user.email);
@@ -123,14 +141,37 @@ document.addEventListener('DOMContentLoaded', () => {
             const initial = (user.displayName || user.email).charAt(0).toUpperCase();
             userInitialMain.textContent = initial;
 
-            // Fetch additional data from Firestore
-            fetchUserData(user.uid);
-            fetchUserRoutines(user.uid);
+            try {
+                // Fetch additional data from Firestore and wait for sidebar
+                await Promise.all([
+                    fetchUserData(user.uid),
+                    waitForSidebar()
+                ]);
+            } catch (error) {
+                console.error("Error during initialization:", error);
+            } finally {
+                if (loadingScreen) loadingScreen.style.display = 'none';
+            }
         } else {
             console.log('No user signed in, redirecting to login...');
             window.location.href = '../auth/auth.html';
         }
     });
+
+    // Helper to save preferences to localStorage
+    function savePreferencesToCache(uid, newPrefs) {
+        const cacheKey = `userPreferences_${uid}`;
+        let currentCache = {};
+        try {
+            const stored = localStorage.getItem(cacheKey);
+            if (stored) currentCache = JSON.parse(stored);
+        } catch (e) {
+            console.error("Error parsing cached preferences", e);
+        }
+        
+        const updatedCache = { ...currentCache, ...newPrefs };
+        localStorage.setItem(cacheKey, JSON.stringify(updatedCache));
+    }
 
     // Fetch User Data from Firestore
     async function fetchUserData(uid) {
@@ -161,6 +202,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Update Preferences
                 if (data.preferences) {
+                    // Save to localStorage
+                    savePreferencesToCache(uid, data.preferences);
+
                     currentColorLabel.textContent = data.preferences.color || "Arancione";
                     userLanguage.textContent = data.preferences.language || "Italiano";
                     userNotifications.textContent = data.preferences.notifications || "Consenti tutti";
@@ -299,6 +343,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('users').doc(currentUser.uid).update({
                     'preferences.language': newLanguage
                 });
+                
+                // Update cache
+                savePreferencesToCache(currentUser.uid, { language: newLanguage });
+
                 userLanguage.textContent = newLanguage;
                 updateLanguageFlag(newLanguage); // Update the flag icon
                 changeLanguageModal.classList.remove('active');
@@ -321,6 +369,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('users').doc(currentUser.uid).update({
                     'preferences.color': color
                 });
+                
+                // Update cache
+                savePreferencesToCache(currentUser.uid, { color: color });
+
                 currentColorLabel.textContent = color;
                 setActiveColorDot(color);
                 setPrimaryColor(color); // Update primary color dynamically
@@ -352,6 +404,10 @@ document.addEventListener('DOMContentLoaded', () => {
             await db.collection('users').doc(currentUser.uid).update({
                 'preferences.notifications': selectedNotification
             });
+            
+            // Update cache
+            savePreferencesToCache(currentUser.uid, { notifications: selectedNotification });
+
             userNotifications.textContent = selectedNotification;
             alert(`Preferenze notifiche aggiornate a: ${selectedNotification}`);
             changeNotificationsModal.classList.remove('active');
