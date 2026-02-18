@@ -7,8 +7,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let allRoutines = []; // Store routines for client-side filtering
 
-    auth.onAuthStateChanged(user => {
+    const colorMap = {
+        'Arancione': '#ff6600',
+        'Verde': '#4ade80',
+        'Blu': '#3b82f6',
+        'Rosa': '#f472b6'
+    };
+
+    const gradientMap = {
+        'Arancione': 'linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%)',
+        'Verde': 'linear-gradient(135deg, #1a2b16 0%, #1a1a1a 100%)',
+        'Blu': 'linear-gradient(135deg, #161d2b 0%, #1a1a1a 100%)',
+        'Rosa': 'linear-gradient(135deg, #2b1625 0%, #1a1a1a 100%)'
+    };
+
+    function setPrimaryColor(colorName) {
+        const hex = colorMap[colorName] || colorMap['Arancione'];
+        const gradient = gradientMap[colorName] || gradientMap['Arancione'];
+        document.documentElement.style.setProperty('--primary-color', hex);
+        document.documentElement.style.setProperty('--background-gradient', gradient);
+    }
+
+    async function loadUserPreferences(uid) {
+        try {
+            const doc = await db.collection('users').doc(uid).get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.preferences && data.preferences.color) {
+                    setPrimaryColor(data.preferences.color);
+                }
+            }
+        } catch (error) {
+            console.error("Error loading preferences:", error);
+        }
+    }
+
+    auth.onAuthStateChanged(async user => {
         if (user) {
+            await loadUserPreferences(user.uid);
             fetchRoutines(user.uid);
         } else {
             window.location.href = '../auth/auth.html';
