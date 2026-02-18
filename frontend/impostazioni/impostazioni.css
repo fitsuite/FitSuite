@@ -414,34 +414,52 @@ body.settings-body {
     border-color: var(--primary-color);
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-    .content-header h1 {
-        left: 5%;
-        transform: none;
+/* Tablet/Laptop Responsive Styles */
+@media (max-width: 1366px) {
+    .main-content {
+        padding: 40px 20px; /* Add side padding */
     }
-    .logout-btn {
-        right: 5%;
+
+    .content-header {
+        max-width: 900px; /* Constrain width to keep elements closer */
+        margin: 0 auto 30px auto;
+        padding: 0; /* Remove internal padding as main-content has it */
+        justify-content: space-between;
+    }
+
+    .content-header h1 {
+        position: static;
         transform: none;
+        left: auto;
+        font-size: 28px;
+    }
+
+    .logout-btn {
+        position: static;
+        transform: none;
+        right: auto;
+        padding: 10px 25px;
+    }
+
+    .settings-container {
+        max-width: 100%; /* Allow full width up to max */
+        width: 100%;
+        padding: 0;
+    }
+
+    .settings-card {
+        padding: 20px;
     }
 }
 
 @media (max-width: 768px) {
-    .main-content {
-        margin-left: 0;
-        padding: 40px 20px;
-    }
-    
     .content-header {
         flex-direction: column;
-        gap: 20px;
-        position: static;
+        gap: 15px;
         text-align: center;
     }
     
-    .content-header h1, .logout-btn {
-        position: static;
-        transform: none;
-        width: 100%;
+    .content-header h1 {
+        font-size: 24px;
     }
 }

@@ -8,6 +8,11 @@
     --background-gradient: linear-gradient(135deg, #262626 0%, #1a1a1a 100%);
 }
 
+/* Global Box Sizing Reset for this page */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 .app-container {
     display: flex;
     min-height: 100vh;
@@ -253,9 +258,70 @@
     margin: 0 auto;
 }
 
-@media (max-width: 1024px) {
+/* Tablet/Laptop scaling */
+@media (max-width: 1366px) {
     .content-header {
-        padding: 0 5%;
+        padding: 0 2%;
+        max-width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    .visualizza-scheda-wrapper {
+        padding: 0 10px;
+    }
+    
+    .card-section {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .seduta-exercises-header {
+        grid-template-columns: 2fr 0.8fr 0.8fr 1.2fr 1.2fr 2fr 70px; /* Optimized proportions */
+        gap: 8px;
+        padding: 0 10px;
+    }
+
+    .exercise-row {
+        grid-template-columns: 2fr 0.8fr 0.8fr 1.2fr 1.2fr 2fr 70px; /* Match header */
+        gap: 8px;
+        padding: 10px;
+    }
+    
+    .header-col {
+        font-size: 12px;
+        white-space: normal; /* Allow wrapping for tight spaces */
+        line-height: 1.2;
+    }
+
+    .exercise-detail {
+        font-size: 12px;
+    }
+    
+    .exercise-detail.col-photo img {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .content-header h1 {
+        font-size: 24px;
+    }
+    
+    .edit-btn, .share-btn {
+        padding: 8px 16px;
+        font-size: 12px;
+        min-width: auto;
+    }
+    
+    #scheda-name {
+        font-size: 22px;
+    }
+    
+    .date-display {
+        font-size: 13px;
+    }
+    
+    .section-label {
+        font-size: 16px;
     }
 }
 
