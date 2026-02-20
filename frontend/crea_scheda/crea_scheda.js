@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedEndDate = null;
     let currentCalendarDate = new Date();
     let seduteCount = 1;
+    let editingRoutineId = null;
 
     const colorMap = {
         'Arancione': '#ff6600',
@@ -81,6 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     loadUserPreferences(user.uid),
                     waitForSidebar()
                 ]);
+
+                // Check for routine ID in URL
+                const params = new URLSearchParams(window.location.search);
+                const routineId = params.get('id');
+                if (routineId) {
+                    await loadRoutineForEdit(routineId);
+                }
             } catch (error) {
                 console.error("Error during initialization:", error);
             } finally {
@@ -90,6 +98,107 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = '../auth/auth.html';
         }
     });
+
+    async function loadRoutineForEdit(routineId) {
+        try {
+            const doc = await db.collection('routines').doc(routineId).get();
+            if (!doc.exists) {
+                console.error("Routine not found");
+                return;
+            }
+            const routine = doc.data();
+            
+            if (routine.userId !== currentUser.uid) {
+                alert("Non hai il permesso di modificare questa scheda.");
+                window.location.href = '../lista_schede/lista_scheda.html';
+                return;
+            }
+
+            editingRoutineId = routineId;
+            document.querySelector('.content-header h1').textContent = "Modifica Scheda";
+            nomeSchedaInput.value = routine.name || '';
+            
+            if (routine.startDate) {
+                 selectedStartDate = routine.startDate.toDate();
+                 if (routine.endDate) selectedEndDate = routine.endDate.toDate();
+                 
+                 const options = { day: 'numeric', month: 'short', year: 'numeric' };
+                 if (selectedEndDate) {
+                    dateRangeDisplay.textContent = `${selectedStartDate.toLocaleDateString('it-IT', options)} - ${selectedEndDate.toLocaleDateString('it-IT', options)}`;
+                 } else {
+                    dateRangeDisplay.textContent = selectedStartDate.toLocaleDateString('it-IT', options);
+                 }
+                 dateRangeDisplay.classList.add('date-set');
+            }
+
+            seduteContainer.innerHTML = '';
+            seduteCount = 0;
+
+            if (routine.seduteData && routine.seduteData.length > 0) {
+                routine.seduteData.forEach(seduta => {
+                    seduteCount++;
+                    const sedutaCard = document.createElement('div');
+                    sedutaCard.className = 'card-section seduta-card';
+                    sedutaCard.dataset.sedutaId = seduteCount;
+                    sedutaCard.innerHTML = createSedutaHTML(seduteCount);
+                    
+                    const label = sedutaCard.querySelector('.section-label');
+                    label.textContent = seduta.name;
+                    if (seduta.name !== `Seduta ${seduteCount}`) {
+                        label.dataset.customName = "true";
+                    }
+
+                    seduteContainer.appendChild(sedutaCard);
+                    initSedutaEvents(sedutaCard);
+
+                    const exercisesList = sedutaCard.querySelector('.exercises-list');
+                    if (seduta.exercises && seduta.exercises.length > 0) {
+                        seduta.exercises.forEach(ex => {
+                            const exerciseRow = document.createElement('div');
+                            exerciseRow.className = 'exercise-row';
+                            exerciseRow.dataset.exerciseId = ex.exerciseId || '';
+                            
+                            const mockEx = {
+                                name: ex.name,
+                                gifUrl: ex.photo || 'https://via.placeholder.com/90'
+                            };
+                            
+                            exerciseRow.innerHTML = createExerciseRowHTML(mockEx);
+                            
+                            const repInput = exerciseRow.querySelector('.col-rep input');
+                            if (repInput) repInput.value = ex.reps || '';
+                            
+                            const setInput = exerciseRow.querySelector('.col-set input');
+                            if (setInput) setInput.value = ex.sets || '';
+                            
+                            const restInput = exerciseRow.querySelector('.col-rest input');
+                            if (restInput) restInput.value = ex.rest || '';
+                            
+                            const weightInput = exerciseRow.querySelector('.col-weight input');
+                            if (weightInput) weightInput.value = ex.weight || '';
+                            
+                            const noteInput = exerciseRow.querySelector('.col-note textarea');
+                            if (noteInput) noteInput.value = ex.note || '';
+
+                            exercisesList.appendChild(exerciseRow);
+                            initExerciseRowEvents(exerciseRow, mockEx);
+                        });
+                    }
+                    updateSedutaSummary(sedutaCard);
+                });
+            } else {
+                seduteCount++;
+                const sedutaCard = document.createElement('div');
+                sedutaCard.className = 'card-section seduta-card';
+                sedutaCard.dataset.sedutaId = seduteCount;
+                sedutaCard.innerHTML = createSedutaHTML(seduteCount);
+                seduteContainer.appendChild(sedutaCard);
+                initSedutaEvents(sedutaCard);
+            }
+        } catch (e) {
+            console.error("Error loading routine:", e);
+        }
+    }
 
     async function loadUserPreferences(uid) {
         const cacheKey = `userPreferences_${uid}`;
@@ -840,24 +949,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 endDate: selectedEndDate ? firebase.firestore.Timestamp.fromDate(selectedEndDate) : null,
                 sedute: seduteCount,
                 seduteData: seduteData, // Add the detailed data here
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            const docRef = await db.collection('routines').add(routineData);
+            let savedId;
+            if (editingRoutineId) {
+                routineData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+                await db.collection('routines').doc(editingRoutineId).update(routineData);
+                savedId = editingRoutineId;
+            } else {
+                routineData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                const docRef = await db.collection('routines').add(routineData);
+                savedId = docRef.id;
+            }
 
             // Update Local Cache immediately
             try {
                 const currentCache = getLocalRoutinesCache(currentUser.uid) || [];
                 const newRoutineForCache = {
                     ...routineData,
-                    id: docRef.id,
+                    id: savedId,
                     // Use current date for cache instead of serverTimestamp placeholder
                     createdAt: { toDate: () => new Date() },
                     startDate: selectedStartDate ? { toDate: () => selectedStartDate } : null,
                     endDate: selectedEndDate ? { toDate: () => selectedEndDate } : null
                 };
-                // Add to list and update cache
-                currentCache.push(newRoutineForCache);
+                
+                if (editingRoutineId) {
+                    const index = currentCache.findIndex(r => r.id === savedId);
+                    if (index !== -1) {
+                        // Preserve original createdAt if possible, but we don't have it here.
+                        // Using new Date() will bump it to top, which is acceptable.
+                        currentCache[index] = newRoutineForCache;
+                    } else {
+                        currentCache.push(newRoutineForCache);
+                    }
+                } else {
+                    currentCache.push(newRoutineForCache);
+                }
+
                 updateLocalRoutinesCache(currentUser.uid, currentCache);
             } catch (cacheError) {
                 console.error("Error updating local cache:", cacheError);
