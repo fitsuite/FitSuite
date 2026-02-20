@@ -62,6 +62,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Helper to update local routines cache (Limit 20)
+    function updateLocalRoutinesCache(uid, routines) {
+        const cacheKey = `cachedRoutines_${uid}`;
+        // Sort by createdAt descending
+        const sorted = [...routines].sort((a, b) => {
+            const dateA = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+            const dateB = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+            return dateB - dateA;
+        });
+        
+        // Take top 20
+        const toCache = sorted.slice(0, 20).map(r => {
+            return {
+                ...r,
+                // Serialize timestamps to ISO strings for storage
+                createdAt: r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toISOString() : r.createdAt,
+                startDate: r.startDate && r.startDate.toDate ? r.startDate.toDate().toISOString() : r.startDate,
+                endDate: r.endDate && r.endDate.toDate ? r.endDate.toDate().toISOString() : r.endDate
+            };
+        });
+        
+        localStorage.setItem(cacheKey, JSON.stringify(toCache));
+    }
+
+    // Helper to get routines from local cache
+    function getLocalRoutinesCache(uid) {
+        const cacheKey = `cachedRoutines_${uid}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (!cached) return null;
+        try {
+            const routines = JSON.parse(cached);
+            return routines.map(r => ({
+                ...r,
+                // Hydrate timestamps with a mock toDate() method
+                createdAt: r.createdAt ? { toDate: () => new Date(r.createdAt) } : null,
+                startDate: r.startDate ? { toDate: () => new Date(r.startDate) } : null,
+                endDate: r.endDate ? { toDate: () => new Date(r.endDate) } : null
+            }));
+        } catch (e) {
+            console.error("Error parsing routines cache", e);
+            return null;
+        }
+    }
+
     function waitForSidebar() {
         return new Promise(resolve => {
             const start = Date.now();
@@ -115,14 +159,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function fetchRoutines(uid) {
+        // 1. Load from Cache FIRST for speed
+        const cachedRoutines = getLocalRoutinesCache(uid);
+        if (cachedRoutines && cachedRoutines.length > 0) {
+            allRoutines = cachedRoutines;
+            renderRoutines(allRoutines);
+        }
+
         try {
+            // 2. Fetch from Network (Background Refresh)
             const snapshot = await db.collection('routines')
                 .where('userId', '==', uid)
                 .get();
 
             if (snapshot.empty) {
+                allRoutines = [];
                 renderRoutines([]);
-                // if (loadingScreen) loadingScreen.style.display = 'none'; // Handled in onAuthStateChanged
+                updateLocalRoutinesCache(uid, []);
                 return;
             }
 
@@ -138,14 +191,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 return dateB - dateA;
             });
 
+            // 3. Update UI and Cache
             renderRoutines(allRoutines);
-            
-            // if (loadingScreen) loadingScreen.style.display = 'none'; // Handled in onAuthStateChanged
+            updateLocalRoutinesCache(uid, allRoutines);
 
         } catch (error) {
             console.error("Errore nel recupero delle schede:", error);
-            routinesContainer.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Errore nel caricamento delle schede. Riprova più tardi.</div>';
-            // if (loadingScreen) loadingScreen.style.display = 'none'; // Handled in onAuthStateChanged
+            if (!cachedRoutines || cachedRoutines.length === 0) {
+                routinesContainer.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Errore nel caricamento delle schede. Riprova più tardi.</div>';
+            }
         }
     }
 
@@ -220,13 +274,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 menuDropdown.classList.remove('active');
                 const newName = prompt("Inserisci il nuovo nome della scheda:", routine.name);
                 if (newName && newName.trim() !== "" && newName !== routine.name) {
+                    // Optimistic update
+                    const oldName = routine.name;
+                    routine.name = newName;
+                    renderRoutines(allRoutines);
+                    updateLocalRoutinesCache(auth.currentUser.uid, allRoutines);
+
                     try {
                         await db.collection('routines').doc(routine.id).update({ name: newName });
-                        routine.name = newName; // Update local data
-                        renderRoutines(allRoutines); // Re-render
                     } catch (error) {
                         console.error("Error renaming routine:", error);
                         alert("Errore durante la rinomina della scheda.");
+                        // Revert
+                        routine.name = oldName;
+                        renderRoutines(allRoutines);
+                        updateLocalRoutinesCache(auth.currentUser.uid, allRoutines);
                     }
                 }
             });
@@ -237,16 +299,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 menuDropdown.classList.remove('active');
                 if (confirm(`Sei sicuro di voler eliminare la scheda "${routine.name}"?`)) {
+                    // Optimistic update
+                    const originalRoutines = [...allRoutines];
+                    allRoutines = allRoutines.filter(r => r.id !== routine.id);
+                    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+                    filterRoutines(searchTerm);
+                    updateLocalRoutinesCache(auth.currentUser.uid, allRoutines);
+
                     try {
                         await db.collection('routines').doc(routine.id).delete();
-                        // Remove from local list
-                        allRoutines = allRoutines.filter(r => r.id !== routine.id);
-                        // Re-filter/Re-render
-                        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-                        filterRoutines(searchTerm);
                     } catch (error) {
                         console.error("Error deleting routine:", error);
                         alert("Errore durante l'eliminazione della scheda.");
+                        // Revert
+                        allRoutines = originalRoutines;
+                        filterRoutines(searchTerm);
+                        updateLocalRoutinesCache(auth.currentUser.uid, allRoutines);
                     }
                 }
             });

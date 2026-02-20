@@ -125,6 +125,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Helper to get routines from local cache
+    function getLocalRoutinesCache(uid) {
+        const cacheKey = `cachedRoutines_${uid}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (!cached) return [];
+        try {
+            const routines = JSON.parse(cached);
+            return routines.map(r => ({
+                ...r,
+                // Hydrate timestamps with a mock toDate() method
+                createdAt: r.createdAt ? { toDate: () => new Date(r.createdAt) } : null,
+                startDate: r.startDate ? { toDate: () => new Date(r.startDate) } : null,
+                endDate: r.endDate ? { toDate: () => new Date(r.endDate) } : null
+            }));
+        } catch (e) {
+            console.error("Error parsing routines cache", e);
+            return [];
+        }
+    }
+
+    // Helper to update local routines cache (Limit 20)
+    function updateLocalRoutinesCache(uid, routines) {
+        const cacheKey = `cachedRoutines_${uid}`;
+        // Sort by createdAt descending
+        const sorted = [...routines].sort((a, b) => {
+            const dateA = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+            const dateB = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+            return dateB - dateA;
+        });
+        
+        // Take top 20
+        const toCache = sorted.slice(0, 20).map(r => {
+            return {
+                ...r,
+                // Serialize timestamps to ISO strings for storage
+                createdAt: r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toISOString() : r.createdAt,
+                startDate: r.startDate && r.startDate.toDate ? r.startDate.toDate().toISOString() : r.startDate,
+                endDate: r.endDate && r.endDate.toDate ? r.endDate.toDate().toISOString() : r.endDate
+            };
+        });
+        
+        localStorage.setItem(cacheKey, JSON.stringify(toCache));
+    }
+
     function setPrimaryColor(colorName) {
         const hex = colorMap[colorName] || colorMap['Arancione'];
         const gradient = gradientMap[colorName] || gradientMap['Arancione'];
@@ -803,7 +847,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            await db.collection('routines').add(routineData);
+            const docRef = await db.collection('routines').add(routineData);
+
+            // Update Local Cache immediately
+            try {
+                const currentCache = getLocalRoutinesCache(currentUser.uid) || [];
+                const newRoutineForCache = {
+                    ...routineData,
+                    id: docRef.id,
+                    // Use current date for cache instead of serverTimestamp placeholder
+                    createdAt: { toDate: () => new Date() },
+                    startDate: selectedStartDate ? { toDate: () => selectedStartDate } : null,
+                    endDate: selectedEndDate ? { toDate: () => selectedEndDate } : null
+                };
+                // Add to list and update cache
+                currentCache.push(newRoutineForCache);
+                updateLocalRoutinesCache(currentUser.uid, currentCache);
+            } catch (cacheError) {
+                console.error("Error updating local cache:", cacheError);
+            }
+
             alert('Scheda salvata con successo!');
             window.location.href = '../lista_schede/lista_scheda.html';
         } catch (error) {

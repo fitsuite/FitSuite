@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ];
                 const routineId = getRoutineIdFromUrl();
                 if (routineId) {
-                    tasks.push(loadRoutineData(routineId));
+                    tasks.push(loadRoutineData(routineId, user.uid));
                 } else {
                     console.error("No routine ID found in URL.");
                 }
@@ -103,6 +103,64 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Helper to get routines from local cache
+    function getLocalRoutinesCache(uid) {
+        const cacheKey = `cachedRoutines_${uid}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (!cached) return null;
+        try {
+            const routines = JSON.parse(cached);
+            return routines.map(r => ({
+                ...r,
+                // Hydrate timestamps with a mock toDate() method
+                createdAt: r.createdAt ? { toDate: () => new Date(r.createdAt) } : null,
+                startDate: r.startDate ? { toDate: () => new Date(r.startDate) } : null,
+                endDate: r.endDate ? { toDate: () => new Date(r.endDate) } : null
+            }));
+        } catch (e) {
+            console.error("Error parsing routines cache", e);
+            return null;
+        }
+    }
+
+    function updateSingleRoutineInCache(uid, routine) {
+        const cacheKey = `cachedRoutines_${uid}`;
+        const cached = localStorage.getItem(cacheKey);
+        
+        try {
+            let routines = cached ? JSON.parse(cached) : [];
+            const index = routines.findIndex(r => r.id === routine.id);
+            
+            // Prepare routine for cache (serialize dates)
+            const cacheItem = {
+                ...routine,
+                createdAt: routine.createdAt && routine.createdAt.toDate ? routine.createdAt.toDate().toISOString() : routine.createdAt,
+                startDate: routine.startDate && routine.startDate.toDate ? routine.startDate.toDate().toISOString() : routine.startDate,
+                endDate: routine.endDate && routine.endDate.toDate ? routine.endDate.toDate().toISOString() : routine.endDate
+            };
+
+            if (index !== -1) {
+                routines[index] = cacheItem;
+            } else {
+                routines.push(cacheItem);
+            }
+
+            // Sort
+            routines.sort((a, b) => {
+                 const dateA = new Date(a.createdAt || 0);
+                 const dateB = new Date(b.createdAt || 0);
+                 return dateB - dateA;
+            });
+
+            // Limit
+            if (routines.length > 20) routines = routines.slice(0, 20);
+            
+            localStorage.setItem(cacheKey, JSON.stringify(routines));
+        } catch (e) {
+            console.error("Error updating single routine cache", e);
+        }
+    }
+
     function setPrimaryColor(colorName) {
         const hex = colorMap[colorName] || colorMap['Arancione'];
         const gradient = gradientMap[colorName] || gradientMap['Arancione'];
@@ -115,12 +173,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return params.get('id');
     }
 
-    async function loadRoutineData(routineId) {
+    async function loadRoutineData(routineId, uid) {
+        // 1. Try Cache
+        const cachedRoutines = getLocalRoutinesCache(uid);
+        if (cachedRoutines) {
+            const cachedRoutine = cachedRoutines.find(r => r.id === routineId);
+            if (cachedRoutine) {
+                renderRoutine(cachedRoutine);
+            }
+        }
+
         try {
             const routineDoc = await db.collection('routines').doc(routineId).get();
             if (routineDoc.exists) {
-                const routine = routineDoc.data();
+                const routine = { id: routineDoc.id, ...routineDoc.data() };
                 renderRoutine(routine);
+                updateSingleRoutineInCache(uid, routine);
                 await waitForImages();
             } else {
                 console.error("Routine not found.");
