@@ -136,17 +136,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Calendar Logic ---
     datePickerTrigger.addEventListener('click', (e) => {
-        const rect = datePickerTrigger.getBoundingClientRect();
+        // Reset positioning styles to ensure centering works
         const modalContent = calendarModal.querySelector('.modal-content');
-        
-        // Position the modal content relative to the trigger
-        if (window.innerWidth > 768) {
-            modalContent.style.position = 'absolute';
-            modalContent.style.top = `${rect.bottom + window.scrollY + 10}px`;
-            modalContent.style.left = `${rect.left + window.scrollX}px`;
-            modalContent.style.transform = 'none';
-            modalContent.style.margin = '0';
-        }
+        modalContent.style.position = '';
+        modalContent.style.top = '';
+        modalContent.style.left = '';
+        modalContent.style.transform = '';
+        modalContent.style.margin = '';
 
         calendarModal.classList.add('active');
         renderCalendar();
