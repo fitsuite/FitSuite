@@ -144,9 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (routineDoc.exists) {
                 const routine = { id: routineDoc.id, ...routineDoc.data() };
                 renderRoutine(routine);
-                if (window.CacheManager) {
-                    window.CacheManager.updateRoutine(uid, routine);
-                }
+                updateSingleRoutineInCache(uid, routine);
                 await waitForImages();
             } else {
                 console.error("Routine not found.");
@@ -169,6 +167,59 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         return Promise.all(promises);
+    }
+
+    function handleEditButton(routine) {
+        const editBtn = document.querySelector('.edit-btn');
+        if (!editBtn) return;
+
+        const modal = document.getElementById('edit-confirm-modal');
+        const confirmBtn = document.getElementById('confirm-edit-btn');
+        const cancelBtn = document.getElementById('cancel-edit-btn');
+
+        function updateButtonVisibility() {
+            const isOwner = currentUser && routine.userId === currentUser.uid;
+            // Solo risoluzioni maggiori di mobile (es. > 768px)
+            const isDesktop = window.innerWidth >= 768; 
+
+            if (isOwner && isDesktop) {
+                editBtn.style.display = 'flex';
+            } else {
+                editBtn.style.display = 'none';
+            }
+        }
+
+        updateButtonVisibility();
+
+        // Aggiorna visibilità al resize
+        window.addEventListener('resize', updateButtonVisibility);
+
+        // Gestione click
+        editBtn.onclick = (e) => {
+            e.preventDefault();
+            if (modal) modal.classList.add('active');
+        };
+
+        if (confirmBtn) {
+            confirmBtn.onclick = () => {
+                window.location.href = `../crea_scheda/crea_scheda.html?id=${routine.id}`;
+            };
+        }
+
+        if (cancelBtn) {
+            cancelBtn.onclick = () => {
+                if (modal) modal.classList.remove('active');
+            };
+        }
+
+        // Close on click outside
+        if (modal) {
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        }
     }
 
     function renderRoutine(routine) {
