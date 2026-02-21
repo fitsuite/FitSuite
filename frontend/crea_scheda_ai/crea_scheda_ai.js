@@ -63,21 +63,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function loadUserPreferences(uid) {
-        const cacheKey = `userPreferences_${uid}`;
-        // 1. Try Cache
-        try {
-            const cached = localStorage.getItem(cacheKey);
-            if (cached) {
-                const prefs = JSON.parse(cached);
-                if (prefs.color) {
-                    setPrimaryColor(prefs.color);
-                    return; // Skip network if cached
-                }
-            }
-        } catch (e) {
-            console.error("Cache error:", e);
-        }
+        if (!window.CacheManager) return;
 
+        // 1. Try Cache
+        const prefs = window.CacheManager.getPreferences(uid);
+        if (prefs && prefs.color) {
+            setPrimaryColor(prefs.color);
+            return;
+        }
+        
         // 2. Network Fallback
         try {
             const doc = await db.collection('users').doc(uid).get();
@@ -87,8 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.preferences.color) {
                         setPrimaryColor(data.preferences.color);
                     }
-                    // Save to cache
-                    localStorage.setItem(cacheKey, JSON.stringify(data.preferences));
+                    window.CacheManager.savePreferences(uid, data.preferences);
                 }
             }
         } catch (error) {

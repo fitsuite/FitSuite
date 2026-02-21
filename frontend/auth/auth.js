@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 clearMessages('registration-error-message');
+                sessionStorage.setItem('justLoggedIn', 'true');
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
@@ -166,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 clearMessages('login-error-message');
+                sessionStorage.setItem('justLoggedIn', 'true');
                 await auth.signInWithEmailAndPassword(email, password);
             } catch (error) {
                 displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
@@ -181,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 try {
                     clearMessages('login-error-message'); // Clear login errors before Google sign-in
+                    sessionStorage.setItem('justLoggedIn', 'true');
                     const result = await auth.signInWithPopup(provider);
                     const user = result.user;
 
@@ -231,10 +234,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Handle authentication state changes
-    firebase.auth().onAuthStateChanged(user => {
+    firebase.auth().onAuthStateChanged(async user => {
         if (user) {
             // User is signed in.
             console.log('User is signed in:', user);
+            
+            // Save lastUserId for optimistic loading
+            localStorage.setItem('lastUserId', user.uid);
+            
+            // Initialize Cache
+            if (window.CacheManager) {
+                try {
+                    const force = sessionStorage.getItem('justLoggedIn') === 'true';
+                    sessionStorage.removeItem('justLoggedIn');
+                    await window.CacheManager.initCache(user.uid, force);
+                } catch (e) {
+                    console.error("Cache init failed", e);
+                }
+            }
+
             // Redirect to crea_scheda.html
             window.location.href = '../crea_scheda/crea_scheda.html';
         } else {

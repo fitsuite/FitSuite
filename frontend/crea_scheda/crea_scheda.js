@@ -71,12 +71,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Optimistic Load: Render immediately if we have a known user
+    const lastUid = localStorage.getItem('lastUserId');
+    if (lastUid) {
+        console.log("Optimistic load for create routine:", lastUid);
+        loadUserPreferences(lastUid);
+        // waitForSidebar(); // Sidebar loading is independent
+    }
+
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
         const loadingScreen = document.getElementById('loading-screen');
         if (user) {
             try {
                 currentUser = user;
+                
+                // Update lastUserId
+                if (user.uid !== lastUid) {
+                    localStorage.setItem('lastUserId', user.uid);
+                }
+
                 await Promise.all([
                     loadUserPreferences(user.uid),
                     waitForSidebar()
@@ -92,19 +106,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function loadUserPreferences(uid) {
-        const cacheKey = `userPreferences_${uid}`;
+        if (!window.CacheManager) return;
+        
         // 1. Try Cache
-        try {
-            const cached = localStorage.getItem(cacheKey);
-            if (cached) {
-                const prefs = JSON.parse(cached);
-                if (prefs.color) {
-                    setPrimaryColor(prefs.color);
-                    return; // Skip network if cached
-                }
-            }
-        } catch (e) {
-            console.error("Cache error:", e);
+        const prefs = window.CacheManager.getPreferences(uid);
+        if (prefs && prefs.color) {
+            setPrimaryColor(prefs.color);
+            return;
         }
 
         // 2. Network Fallback
@@ -116,57 +124,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.preferences.color) {
                         setPrimaryColor(data.preferences.color);
                     }
-                    // Save to cache
-                    localStorage.setItem(cacheKey, JSON.stringify(data.preferences));
+                    window.CacheManager.savePreferences(uid, data.preferences);
                 }
             }
         } catch (error) {
             console.error("Error loading preferences:", error);
         }
-    }
-
-    // Helper to get routines from local cache
-    function getLocalRoutinesCache(uid) {
-        const cacheKey = `cachedRoutines_${uid}`;
-        const cached = localStorage.getItem(cacheKey);
-        if (!cached) return [];
-        try {
-            const routines = JSON.parse(cached);
-            return routines.map(r => ({
-                ...r,
-                // Hydrate timestamps with a mock toDate() method
-                createdAt: r.createdAt ? { toDate: () => new Date(r.createdAt) } : null,
-                startDate: r.startDate ? { toDate: () => new Date(r.startDate) } : null,
-                endDate: r.endDate ? { toDate: () => new Date(r.endDate) } : null
-            }));
-        } catch (e) {
-            console.error("Error parsing routines cache", e);
-            return [];
-        }
-    }
-
-    // Helper to update local routines cache (Limit 20)
-    function updateLocalRoutinesCache(uid, routines) {
-        const cacheKey = `cachedRoutines_${uid}`;
-        // Sort by createdAt descending
-        const sorted = [...routines].sort((a, b) => {
-            const dateA = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-            const dateB = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
-            return dateB - dateA;
-        });
-        
-        // Take top 20
-        const toCache = sorted.slice(0, 20).map(r => {
-            return {
-                ...r,
-                // Serialize timestamps to ISO strings for storage
-                createdAt: r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toISOString() : r.createdAt,
-                startDate: r.startDate && r.startDate.toDate ? r.startDate.toDate().toISOString() : r.startDate,
-                endDate: r.endDate && r.endDate.toDate ? r.endDate.toDate().toISOString() : r.endDate
-            };
-        });
-        
-        localStorage.setItem(cacheKey, JSON.stringify(toCache));
     }
 
     function setPrimaryColor(colorName) {
@@ -847,18 +810,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Update Local Cache immediately
             try {
-                const currentCache = getLocalRoutinesCache(currentUser.uid) || [];
-                const newRoutineForCache = {
-                    ...routineData,
-                    id: docRef.id,
-                    // Use current date for cache instead of serverTimestamp placeholder
-                    createdAt: { toDate: () => new Date() },
-                    startDate: selectedStartDate ? { toDate: () => selectedStartDate } : null,
-                    endDate: selectedEndDate ? { toDate: () => selectedEndDate } : null
-                };
-                // Add to list and update cache
-                currentCache.push(newRoutineForCache);
-                updateLocalRoutinesCache(currentUser.uid, currentCache);
+                if (window.CacheManager) {
+                    const newRoutineForCache = {
+                        ...routineData,
+                        id: docRef.id,
+                        // Use current date for cache instead of serverTimestamp placeholder
+                        createdAt: { toDate: () => new Date() },
+                        startDate: selectedStartDate ? { toDate: () => selectedStartDate } : null,
+                        endDate: selectedEndDate ? { toDate: () => selectedEndDate } : null
+                    };
+                    window.CacheManager.updateRoutine(currentUser.uid, newRoutineForCache);
+                }
             } catch (cacheError) {
                 console.error("Error updating local cache:", cacheError);
             }
