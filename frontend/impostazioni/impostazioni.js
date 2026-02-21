@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = auth.currentUser.email;
         try {
             await auth.sendPasswordResetEmail(email);
-            alert(`Email di reset password inviata a ${email}`);
+            await alert(`Email di reset password inviata a ${email}`);
             changePasswordModal.classList.remove('active'); // Close modal after sending email
         } catch (error) {
             alert("Errore nell'invio dell'email: " + error.message);
@@ -462,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateLocalUserProfile(currentUser.uid, { phoneNumber: newPhone });
                 
                 userPhone.textContent = newPhone;
-                alert("Numero di telefono aggiornato con successo!");
+                await alert("Numero di telefono aggiornato con successo!");
                 changePhoneModal.classList.remove('active'); // Close modal after successful update
             } catch (error) {
                 alert("Errore nell'aggiornamento: " + error.message);
@@ -558,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateLocalUserProfile(currentUser.uid, { 'preferences.notifications': selectedNotification });
 
             userNotifications.textContent = selectedNotification;
-            alert(`Preferenze notifiche aggiornate a: ${selectedNotification}`);
+            await alert(`Preferenze notifiche aggiornate a: ${selectedNotification}`);
             changeNotificationsModal.classList.remove('active');
         } catch (error) {
             console.error("Error updating notifications:", error);
@@ -591,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = '../auth/auth.html';
         } catch (error) {
             if (error.code === 'auth/requires-recent-login') {
-                alert("Per eliminare l'account è necessario aver effettuato l'accesso di recente. Effettua il logout e rientra prima di riprovare.");
+                await alert("Per eliminare l'account è necessario aver effettuato l'accesso di recente. Effettua il logout e rientra prima di riprovare.");
                 auth.signOut().then(() => window.location.href = '../auth/auth.html');
             } else {
                 alert("Errore durante l'eliminazione: " + error.message);
@@ -647,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             console.log("Feedback submitted successfully");
-            alert("Grazie per il tuo feedback! La tua opinione è importante per noi.");
+            await alert("Grazie per il tuo feedback! La tua opinione è importante per noi.");
             
             giveFeedbackModal.classList.remove('active');
             feedbackTextarea.value = ''; // Clear textarea after submission
@@ -787,7 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             updateLocalUserProfile(currentUser.uid, cacheUpdates);
 
-            alert("Dati abbonamento aggiornati con successo!");
+            await alert("Dati abbonamento aggiornati con successo!");
             subscriptionEditModal.classList.remove('active');
             fetchUserData(currentUser.uid); // Refresh displayed data
         } catch (error) {

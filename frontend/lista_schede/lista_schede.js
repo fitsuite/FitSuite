@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renameBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 menuDropdown.classList.remove('active');
-                const newName = prompt("Inserisci il nuovo nome della scheda:", routine.name);
+                const newName = await window.showPrompt("Inserisci il nuovo nome della scheda:", routine.name, "Rinomina Scheda");
                 if (newName && newName.trim() !== "" && newName !== routine.name) {
                     // Optimistic update
                     const oldName = routine.name;
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 menuDropdown.classList.remove('active');
-                if (confirm(`Sei sicuro di voler eliminare la scheda "${routine.name}"?`)) {
+                if (await window.showConfirm(`Sei sicuro di voler eliminare la scheda "${routine.name}"?`, "Elimina Scheda")) {
                     // Optimistic update
                     const originalRoutines = [...allRoutines];
                     allRoutines = allRoutines.filter(r => r.id !== routine.id);

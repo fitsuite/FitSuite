@@ -198,6 +198,8 @@ body {
 .seduta-card {
     /* margin-bottom handled by .card-section */
     position: relative; /* Needed for absolute positioning of drag handle */
+    margin-left: 35px;
+    width: calc(100% - 35px);
 }
 
 .seduta-card .drag-handle {

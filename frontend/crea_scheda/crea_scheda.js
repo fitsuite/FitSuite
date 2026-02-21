@@ -559,14 +559,31 @@ document.addEventListener('DOMContentLoaded', () => {
                  parent.insertBefore(wrapper, exerciseRow);
                  
                  // Move current row into list
-                 list.appendChild(exerciseRow);
-                 
-                 // Create duplicate
-                 const clone = exerciseRow.cloneNode(true);
-                 const cloneDropdown = clone.querySelector('.exercise-menu-dropdown');
-                 if (cloneDropdown) cloneDropdown.classList.remove('active');
-                 
-                 list.appendChild(clone);
+                list.appendChild(exerciseRow);
+                
+                // Capture recovery value from original
+                const originalRestInput = exerciseRow.querySelector('.col-rest input');
+                const restValue = originalRestInput ? originalRestInput.value : '';
+
+                // Create duplicate
+                const clone = exerciseRow.cloneNode(true);
+                
+                // Set recovery on clone
+                const cloneRestInput = clone.querySelector('.col-rest input');
+                if (cloneRestInput) {
+                    cloneRestInput.value = restValue;
+                }
+
+                // Clear recovery on original
+                if (originalRestInput) {
+                    originalRestInput.value = '';
+                    originalRestInput.placeholder = '-';
+                }
+
+                const cloneDropdown = clone.querySelector('.exercise-menu-dropdown');
+                if (cloneDropdown) cloneDropdown.classList.remove('active');
+                
+                list.appendChild(clone);
                  
                  wrapper.appendChild(dragHandle);
                  wrapper.appendChild(list);
@@ -943,7 +960,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Error updating local cache:", cacheError);
             }
 
-            alert('Scheda salvata con successo!');
+            await alert('Scheda salvata con successo!');
             window.location.href = '../lista_schede/lista_scheda.html';
         } catch (error) {
             console.error("Error saving routine:", error);
