@@ -5,6 +5,10 @@ async function logout() {
     try {
         await firebase.auth().signOut(); // Usa la versione compat di signOut
         console.log("Utente disconnesso con successo.");
+        
+        // Remove lastUserId to prevent optimistic loading for next user
+        localStorage.removeItem('lastUserId');
+
         // Reindirizza alla pagina di autenticazione dopo il logout
         window.location.href = '../../frontend/auth/auth.html';
     } catch (error) {

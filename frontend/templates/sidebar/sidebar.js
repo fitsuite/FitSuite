@@ -94,98 +94,75 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Helper to get routines from local cache
-    function getLocalRoutinesCache(uid) {
-        const cacheKey = `cachedRoutines_${uid}`;
-        const cached = localStorage.getItem(cacheKey);
-        if (!cached) return null;
-        try {
-            const routines = JSON.parse(cached);
-            return routines.map(r => ({
-                ...r,
-                // Hydrate timestamps with a mock toDate() method
-                createdAt: r.createdAt ? { toDate: () => new Date(r.createdAt) } : null,
-                startDate: r.startDate ? { toDate: () => new Date(r.startDate) } : null,
-                endDate: r.endDate ? { toDate: () => new Date(r.endDate) } : null
-            }));
-        } catch (e) {
-            console.error("Error parsing routines cache", e);
-            return null;
-        }
-    }
-
-    // Helper to update local routines cache (Limit 20)
-    function updateLocalRoutinesCache(uid, routines) {
-        const cacheKey = `cachedRoutines_${uid}`;
-        // Sort by createdAt descending
-        const sorted = [...routines].sort((a, b) => {
-            const dateA = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-            const dateB = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
-            return dateB - dateA;
-        });
-        
-        // Take top 20
-        const toCache = sorted.slice(0, 20).map(r => {
-            return {
-                ...r,
-                // Serialize timestamps to ISO strings for storage
-                createdAt: r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toISOString() : r.createdAt,
-                startDate: r.startDate && r.startDate.toDate ? r.startDate.toDate().toISOString() : r.startDate,
-                endDate: r.endDate && r.endDate.toDate ? r.endDate.toDate().toISOString() : r.endDate
-            };
-        });
-        
-        localStorage.setItem(cacheKey, JSON.stringify(toCache));
-        
-        // Dispatch event to notify other components
-        const event = new CustomEvent('routines-updated', { detail: { uid } });
-        document.dispatchEvent(event);
-    }
-
     // Initialize mobile sidebar
     initMobileSidebar();
+
+    // Optimistic Load
+    const lastUid = localStorage.getItem('lastUserId');
+    if (lastUid) {
+        // Apply theme immediately
+        if (window.CacheManager) {
+            const prefs = window.CacheManager.getPreferences(lastUid);
+            if (prefs && prefs.color) setPrimaryColor(prefs.color);
+        }
+        
+        // Try to load routines optimistically
+        const optimisticSidebarLoad = () => {
+            const listContainer = document.getElementById('user-routine-list-sidebar');
+            if (listContainer) {
+                console.log("Optimistic sidebar load for:", lastUid);
+                fetchUserRoutines(lastUid, listContainer);
+            } else {
+                // If sidebar not injected yet, wait briefly (but not too long, let real auth take over if slow)
+                setTimeout(optimisticSidebarLoad, 100);
+            }
+        };
+        // Only try for a limited time to avoid conflict with real auth if it's fast
+        // But actually, fetchUserRoutines is safe to call multiple times.
+        optimisticSidebarLoad();
+    }
 
     // Check Auth State and populate sidebar
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             console.log('User is signed in for sidebar:', user.email);
             
-            // Fetch user preferences and apply theme
-            const cacheKey = `userPreferences_${user.uid}`;
-            let hasCachedTheme = false;
-            
-            // 1. Try Cache First
-            try {
-                const cached = localStorage.getItem(cacheKey);
-                if (cached) {
-                    const prefs = JSON.parse(cached);
-                    if (prefs.color) {
-                        setPrimaryColor(prefs.color);
-                        hasCachedTheme = true;
-                    }
-                }
-            } catch (e) { console.error("Cache error in sidebar:", e); }
+            // Update lastUserId
+            if (user.uid !== lastUid) {
+                localStorage.setItem('lastUserId', user.uid);
+            }
 
-            // 2. Fetch from Network (ONLY if not cached)
-            if (!hasCachedTheme) {
-                try {
-                    const userDoc = await db.collection('users').doc(user.uid).get();
-                    if (userDoc.exists) {
-                        const data = userDoc.data();
-                        if (data.preferences && data.preferences.color) {
-                            setPrimaryColor(data.preferences.color);
-                            // Update cache
-                            localStorage.setItem(cacheKey, JSON.stringify(data.preferences));
+            // Fetch user preferences and apply theme
+            if (window.CacheManager) {
+                const prefs = window.CacheManager.getPreferences(user.uid);
+                if (prefs && prefs.color) {
+                    setPrimaryColor(prefs.color);
+                } else {
+                     // Try to fetch if not in cache (fallback)
+                     // Or just rely on CacheManager.initCache() if it was called elsewhere
+                     // But sidebar might be standalone
+                     // Let's keep the fallback logic but use CacheManager to save
+                     try {
+                        const userDoc = await db.collection('users').doc(user.uid).get();
+                        if (userDoc.exists) {
+                            const data = userDoc.data();
+                            if (data.preferences) {
+                                if (data.preferences.color) setPrimaryColor(data.preferences.color);
+                                window.CacheManager.savePreferences(user.uid, data.preferences);
+                            } else {
+                                setPrimaryColor('Arancione');
+                            }
                         } else {
-                            if (!localStorage.getItem(cacheKey)) setPrimaryColor('Arancione');
+                            setPrimaryColor('Arancione');
                         }
-                    } else {
-                        if (!localStorage.getItem(cacheKey)) setPrimaryColor('Arancione');
+                    } catch (error) {
+                        console.error("Error fetching user preferences for theme:", error);
+                        setPrimaryColor('Arancione');
                     }
-                } catch (error) {
-                    console.error("Error fetching user preferences for theme:", error);
-                    if (!localStorage.getItem(cacheKey)) setPrimaryColor('Arancione');
                 }
+            } else {
+                // Fallback if CacheManager not loaded (should not happen if setup correctly)
+                setPrimaryColor('Arancione');
             }
 
             // Function to update sidebar elements
@@ -222,12 +199,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch User Routines
     async function fetchUserRoutines(uid, container) {
         // 1. Render from Cache FIRST
-        const cachedRoutines = getLocalRoutinesCache(uid);
-        if (cachedRoutines) {
-            renderUserRoutines(cachedRoutines, container);
+        if (window.CacheManager) {
+            const cachedRoutines = window.CacheManager.getRoutines(uid);
+            if (cachedRoutines !== null) {
+                console.log("Sidebar routines loaded from cache, skipping DB");
+                renderUserRoutines(cachedRoutines, container);
+                return;
+            }
         }
 
         try {
+            console.log("Sidebar routines not in cache, fetching from DB");
             // 2. Network Refresh
             const routinesSnapshot = await db.collection('routines')
                                              .where('userId', '==', uid)
@@ -236,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (routinesSnapshot.empty) {
                 // If empty on server, clear cache (or update with empty list)
                 renderUserRoutines([], container);
-                updateLocalRoutinesCache(uid, []); // This dispatches event, but listener just re-renders cache, which is fine (idempotent)
+                if (window.CacheManager) window.CacheManager.saveRoutines(uid, []);
             } else {
                 let routines = [];
                 routinesSnapshot.forEach(doc => {
@@ -251,19 +233,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 // 3. Update UI and Cache
-                // We only render top 20 in sidebar to match cache? 
-                // User asked for "20 most recent". Sidebar usually shows recent.
-                // But if we want to be consistent with "save... 20 most recent", 
-                // we should probably pass all to updateLocalRoutinesCache (which slices to 20),
-                // and render what we have.
-                // If we render ALL from network, then when we switch to cache-only view (e.g. offline restart), we only see 20.
-                // This is acceptable.
                 renderUserRoutines(routines, container); 
-                updateLocalRoutinesCache(uid, routines);
+                if (window.CacheManager) window.CacheManager.saveRoutines(uid, routines.slice(0, 20));
             }
         } catch (error) {
             console.error("Error fetching user routines for sidebar:", error);
-            if (!cachedRoutines) {
+            const hasCache = window.CacheManager && window.CacheManager.getRoutines(uid);
+            if (!hasCache) {
                 const errorItem = document.createElement('li');
                 errorItem.textContent = 'Errore nel caricamento delle schede.';
                 errorItem.style.color = 'red';

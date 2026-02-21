@@ -129,11 +129,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // State
     let currentUser = null;
 
+    // Optimistic Load: Render immediately if we have a known user
+    const lastUid = localStorage.getItem('lastUserId');
+    if (lastUid) {
+        console.log("Optimistic load for settings:", lastUid);
+        applyThemeFromCache(lastUid);
+        fetchUserData(lastUid);
+    }
+
     // Check Auth State
     auth.onAuthStateChanged(async (user) => {
         const loadingScreen = document.getElementById('loading-screen');
         if (user) {
             currentUser = user;
+            
+            // Update lastUserId
+            if (user.uid !== lastUid) {
+                localStorage.setItem('lastUserId', user.uid);
+            }
+
             console.log('User is signed in:', user.email);
             
             // Populate basic info from Auth
@@ -163,91 +177,107 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper to save preferences to localStorage
     function savePreferencesToCache(uid, newPrefs) {
-        const cacheKey = `userPreferences_${uid}`;
-        let currentCache = {};
-        try {
-            const stored = localStorage.getItem(cacheKey);
-            if (stored) currentCache = JSON.parse(stored);
-        } catch (e) {
-            console.error("Error parsing cached preferences", e);
+        if (window.CacheManager) {
+            const currentCache = window.CacheManager.getPreferences(uid) || {};
+            const updatedCache = { ...currentCache, ...newPrefs };
+            window.CacheManager.savePreferences(uid, updatedCache);
+        } else {
+            const cacheKey = `userPreferences_${uid}`;
+            let currentCache = {};
+            try {
+                const stored = localStorage.getItem(cacheKey);
+                if (stored) currentCache = JSON.parse(stored);
+            } catch (e) {
+                console.error("Error parsing cached preferences", e);
+            }
+            const updatedCache = { ...currentCache, ...newPrefs };
+            localStorage.setItem(cacheKey, JSON.stringify(updatedCache));
         }
-        
-        const updatedCache = { ...currentCache, ...newPrefs };
-        localStorage.setItem(cacheKey, JSON.stringify(updatedCache));
     }
 
     // Apply Theme from Cache
     function applyThemeFromCache(uid) {
-        const cacheKey = `userPreferences_${uid}`;
-        try {
-            const cached = localStorage.getItem(cacheKey);
-            if (cached) {
-                const prefs = JSON.parse(cached);
-                if (prefs.color) {
-                    setPrimaryColor(prefs.color);
-                    currentColorLabel.textContent = prefs.color;
-                    setActiveColorDot(prefs.color);
+        let prefs = null;
+        if (window.CacheManager) {
+            prefs = window.CacheManager.getPreferences(uid);
+        } else {
+            const cacheKey = `userPreferences_${uid}`;
+            try {
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) prefs = JSON.parse(cached);
+            } catch (e) {
+                console.error("Error applying cached theme:", e);
+            }
+        }
+
+        if (prefs) {
+            if (prefs.color) {
+                setPrimaryColor(prefs.color);
+                if (document.getElementById('current-color')) {
+                    document.getElementById('current-color').textContent = prefs.color;
                 }
-                if (prefs.language) {
-                    userLanguage.textContent = prefs.language;
-                    updateLanguageFlag(prefs.language);
+                setActiveColorDot(prefs.color);
+            }
+            if (prefs.language) {
+                if (document.getElementById('user-language')) {
+                    document.getElementById('user-language').textContent = prefs.language;
                 }
-                if (prefs.notifications) {
-                    userNotifications.textContent = prefs.notifications;
+                updateLanguageFlag(prefs.language);
+            }
+            if (prefs.notifications) {
+                if (document.getElementById('user-notifications')) {
+                    document.getElementById('user-notifications').textContent = prefs.notifications;
                 }
             }
-        } catch (e) {
-            console.error("Error applying cached theme:", e);
         }
     }
 
     // Fetch User Data from Firestore
     async function fetchUserData(uid) {
+        // 1. Try Cache FIRST
+        if (window.CacheManager) {
+            const cachedPrefs = window.CacheManager.getPreferences(uid);
+            // We can't easily cache the *entire* user document with current CacheManager structure 
+            // because it splits preferences and routines. 
+            // However, we can at least use the preferences part if available.
+            // Ideally, we should extend CacheManager or use localStorage for the full user profile if needed.
+            // For now, let's check if we have preferences and if so, use them to avoid at least that part of the delay.
+            
+            // Actually, the user wants "NO DB calls" if cached. 
+            // So we should probably cache the entire user profile in CacheManager or localStorage.
+            
+            const cachedProfile = localStorage.getItem(`userProfile_${uid}`);
+            if (cachedProfile) {
+                try {
+                    const data = JSON.parse(cachedProfile);
+                    updateUIWithUserData(data);
+                    console.log("User data loaded from cache, skipping DB");
+                    return; // SKIP DB CALL
+                } catch (e) {
+                    console.error("Error parsing cached profile", e);
+                }
+            }
+        }
+
         try {
+            console.log("User data not in cache, fetching from DB");
             const doc = await db.collection('users').doc(uid).get();
             if (doc.exists) {
                 const data = doc.data();
                 
-                // Update Phone
-                userPhone.textContent = data.phoneNumber || "Non impostato";
-
-                // Update Subscription Info
-                if (data.subscription) {
-                    subscriptionExpiry.textContent = data.subscription.endDate ? new Date(data.subscription.endDate.toDate()).toLocaleDateString() : "Nessun abbonamento attivo";
-                    paymentMethod.textContent = data.subscription.paymentMethod || "Non impostato";
-                    // Initialize new subscription fields
-                    autoRenewInput.checked = data.subscription.autoRenew || false;
-                    lastPaymentDateInput.value = data.subscription.lastPaymentDate ? new Date(data.subscription.lastPaymentDate.toDate()).toISOString().split('T')[0] : '';
-                    nextPaymentDateInput.value = data.subscription.nextPaymentDate ? new Date(data.subscription.nextPaymentDate.toDate()).toISOString().split('T')[0] : '';
-                } else {
-                    subscriptionExpiry.textContent = "Nessun abbonamento attivo";
-                    paymentMethod.textContent = "Non impostato";
-                    // Reset new subscription fields
-                    autoRenewInput.checked = false;
-                    lastPaymentDateInput.value = '';
-                    nextPaymentDateInput.value = '';
-                }
+                // Save to Cache (LocalStorage for full profile)
+                localStorage.setItem(`userProfile_${uid}`, JSON.stringify(data));
                 
-                // Update Preferences
-                if (data.preferences) {
-                    // Save to localStorage
-                    savePreferencesToCache(uid, data.preferences);
-
-                    currentColorLabel.textContent = data.preferences.color || "Arancione";
-                    userLanguage.textContent = data.preferences.language || "Italiano";
-                    userNotifications.textContent = data.preferences.notifications || "Consenti tutti";
-                    
-                    // Set active color dot
-                    setActiveColorDot(data.preferences.color);
-                    // Set primary color dynamically
-                    setPrimaryColor(data.preferences.color);
-                    // Update language flag
-                    updateLanguageFlag(data.preferences.language);
+                updateUIWithUserData(data);
+                
+                // Also update CacheManager for preferences specifically
+                if (data.preferences && window.CacheManager) {
+                    window.CacheManager.savePreferences(uid, data.preferences);
                 }
             } else {
                 console.log("No such document! Creating one...");
                 // If doc doesn't exist for some reason, create it
-                await db.collection('users').doc(uid).set({
+                const newData = {
                         email: auth.currentUser.email,
                         phoneNumber: "",
                         preferences: {
@@ -266,12 +296,68 @@ document.addEventListener('DOMContentLoaded', () => {
                             paymentMethod: "Non impostato"
                         },
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                // Set default primary color
-                setPrimaryColor('Arancione');
+                    };
+                
+                await db.collection('users').doc(uid).set(newData);
+                
+                // Cache the new data
+                localStorage.setItem(`userProfile_${uid}`, JSON.stringify(newData));
+                updateUIWithUserData(newData);
             }
         } catch (error) {
             console.error("Error fetching user data:", error);
+        }
+    }
+
+    function updateUIWithUserData(data) {
+        // Update Phone
+        userPhone.textContent = data.phoneNumber || "Non impostato";
+
+        // Update Subscription Info
+        if (data.subscription) {
+            // Handle dates which might be strings (from JSON) or Timestamps (from Firestore)
+            const formatDate = (dateVal) => {
+                if (!dateVal) return null;
+                if (dateVal.toDate) return dateVal.toDate(); // Firestore Timestamp
+                return new Date(dateVal); // String/Number
+            };
+
+            const endDate = formatDate(data.subscription.endDate);
+            subscriptionExpiry.textContent = endDate ? endDate.toLocaleDateString() : "Nessun abbonamento attivo";
+            
+            paymentMethod.textContent = data.subscription.paymentMethod || "Non impostato";
+            // Initialize new subscription fields
+            autoRenewInput.checked = data.subscription.autoRenew || false;
+            
+            const lastPayment = formatDate(data.subscription.lastPaymentDate);
+            lastPaymentDateInput.value = lastPayment ? lastPayment.toISOString().split('T')[0] : '';
+            
+            const nextPayment = formatDate(data.subscription.nextPaymentDate);
+            nextPaymentDateInput.value = nextPayment ? nextPayment.toISOString().split('T')[0] : '';
+        } else {
+            subscriptionExpiry.textContent = "Nessun abbonamento attivo";
+            paymentMethod.textContent = "Non impostato";
+            // Reset new subscription fields
+            autoRenewInput.checked = false;
+            lastPaymentDateInput.value = '';
+            nextPaymentDateInput.value = '';
+        }
+        
+        // Update Preferences
+        if (data.preferences) {
+            // Save to localStorage (legacy/backup)
+            savePreferencesToCache(currentUser ? currentUser.uid : '', data.preferences);
+
+            currentColorLabel.textContent = data.preferences.color || "Arancione";
+            userLanguage.textContent = data.preferences.language || "Italiano";
+            userNotifications.textContent = data.preferences.notifications || "Consenti tutti";
+            
+            // Set active color dot
+            setActiveColorDot(data.preferences.color);
+            // Set primary color dynamically
+            setPrimaryColor(data.preferences.color);
+            // Update language flag
+            updateLanguageFlag(data.preferences.language);
         }
     }
 
@@ -295,6 +381,33 @@ document.addEventListener('DOMContentLoaded', () => {
             languageFlagIcon.textContent = '🇬🇧';
         } else {
             languageFlagIcon.textContent = '🌐'; // Default globe icon
+        }
+    }
+
+    // Helper to update local user profile cache
+    function updateLocalUserProfile(uid, updates) {
+        const cacheKey = `userProfile_${uid}`;
+        try {
+            const cached = localStorage.getItem(cacheKey);
+            let profile = cached ? JSON.parse(cached) : {};
+            
+            for (const [key, value] of Object.entries(updates)) {
+                if (key.includes('.')) {
+                    const parts = key.split('.');
+                    let current = profile;
+                    for (let i = 0; i < parts.length - 1; i++) {
+                        if (!current[parts[i]]) current[parts[i]] = {};
+                        current = current[parts[i]];
+                    }
+                    current[parts[parts.length - 1]] = value;
+                } else {
+                    profile[key] = value;
+                }
+            }
+            
+            localStorage.setItem(cacheKey, JSON.stringify(profile));
+        } catch (e) {
+            console.error("Error updating local user profile cache", e);
         }
     }
 
@@ -344,6 +457,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('users').doc(currentUser.uid).update({
                     phoneNumber: newPhone
                 });
+                
+                // Update Cache
+                updateLocalUserProfile(currentUser.uid, { phoneNumber: newPhone });
+                
                 userPhone.textContent = newPhone;
                 alert("Numero di telefono aggiornato con successo!");
                 changePhoneModal.classList.remove('active'); // Close modal after successful update
@@ -374,6 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Update cache
                 savePreferencesToCache(currentUser.uid, { language: newLanguage });
+                updateLocalUserProfile(currentUser.uid, { 'preferences.language': newLanguage });
 
                 userLanguage.textContent = newLanguage;
                 updateLanguageFlag(newLanguage); // Update the flag icon
@@ -396,6 +514,8 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // Optimistic Update: Update cache and UI immediately
                 savePreferencesToCache(currentUser.uid, { color: color });
+                updateLocalUserProfile(currentUser.uid, { 'preferences.color': color });
+                
                 currentColorLabel.textContent = color;
                 setActiveColorDot(color);
                 setPrimaryColor(color); // Update primary color dynamically
@@ -435,6 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Update cache
             savePreferencesToCache(currentUser.uid, { notifications: selectedNotification });
+            updateLocalUserProfile(currentUser.uid, { 'preferences.notifications': selectedNotification });
 
             userNotifications.textContent = selectedNotification;
             alert(`Preferenze notifiche aggiornate a: ${selectedNotification}`);
@@ -643,7 +764,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            await db.collection('users').doc(currentUser.uid).update({
+            const subscriptionUpdates = {
                 'subscription.type': newSubscriptionType,
                 'subscription.startDate': firebase.firestore.Timestamp.fromDate(new Date(newStartDate)),
                 'subscription.endDate': firebase.firestore.Timestamp.fromDate(new Date(newEndDate)),
@@ -652,7 +773,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 'subscription.autoRenew': newAutoRenew,
                 'subscription.lastPaymentDate': newLastPaymentDate ? firebase.firestore.Timestamp.fromDate(new Date(newLastPaymentDate)) : null,
                 'subscription.nextPaymentDate': newNextPaymentDate ? firebase.firestore.Timestamp.fromDate(new Date(newNextPaymentDate)) : null
-            });
+            };
+
+            await db.collection('users').doc(currentUser.uid).update(subscriptionUpdates);
+            
+            // Update Cache with strings
+            const cacheUpdates = { ...subscriptionUpdates };
+            // Convert timestamps to strings for cache
+            if (cacheUpdates['subscription.startDate']) cacheUpdates['subscription.startDate'] = new Date(newStartDate).toISOString();
+            if (cacheUpdates['subscription.endDate']) cacheUpdates['subscription.endDate'] = new Date(newEndDate).toISOString();
+            if (cacheUpdates['subscription.lastPaymentDate']) cacheUpdates['subscription.lastPaymentDate'] = newLastPaymentDate ? new Date(newLastPaymentDate).toISOString() : null;
+            if (cacheUpdates['subscription.nextPaymentDate']) cacheUpdates['subscription.nextPaymentDate'] = newNextPaymentDate ? new Date(newNextPaymentDate).toISOString() : null;
+
+            updateLocalUserProfile(currentUser.uid, cacheUpdates);
+
             alert("Dati abbonamento aggiornati con successo!");
             subscriptionEditModal.classList.remove('active');
             fetchUserData(currentUser.uid); // Refresh displayed data

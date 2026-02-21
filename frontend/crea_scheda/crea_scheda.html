@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../templates/aggiungi_esercizio/aggiungi_esercizio.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../components/loading_screen/loading_screen.css">
+    <link rel="stylesheet" href="../components/session_control/session_control.css">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
@@ -35,6 +36,7 @@
     <!-- SortableJS for drag and drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="../templates/aggiungi_esercizio/aggiungi_esercizio.js"></script>
+    <script src="../cache_manager.js"></script>
 </head>
 <body>
     <script src="../components/loading_screen/loading_screen.js"></script>
@@ -168,6 +170,7 @@
 
     <script src="../templates/sidebar/sidebar.js"></script>
     <script src="./crea_scheda.js"></script>
+    <script src="../components/session_control/session_control.js"></script>
     <script>
         // Load sidebar.html into the sidebar-placeholder div
         fetch('../templates/sidebar/sidebar.html')

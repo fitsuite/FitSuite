@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../templates/sidebar/sidebar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../components/loading_screen/loading_screen.css">
+    <link rel="stylesheet" href="../components/session_control/session_control.css">
     <link rel="icon" type="image/x-icon" href="../../image/logo.ico">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
@@ -26,6 +27,7 @@
       };
       firebase.initializeApp(firebaseConfig);
     </script>
+    <script src="../cache_manager.js"></script>
 </head>
 <body class="settings-body">
     <script src="../components/loading_screen/loading_screen.js"></script>
@@ -342,8 +344,13 @@
         </div>
     </div>
 
+<<<<<<< HEAD
     <script src="./impostazioni.js"></script>
+    <script src="../components/session_control/session_control.js"></script>
+=======
+>>>>>>> 549943bcae27b153f1f95c4ed2f88a2bf6a361bc
     <script src="../templates/sidebar/sidebar.js"></script>
+    <script src="./impostazioni.js"></script>
     <script>
         // Load sidebar.html into the sidebar-placeholder div
         fetch('../templates/sidebar/sidebar.html')

@@ -42,12 +42,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Helper to get Routine ID from URL
+    function getRoutineIdFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('id');
+    }
+
+    // Optimistic Load: Render immediately if we have a known user
+    const lastUid = localStorage.getItem('lastUserId');
+    if (lastUid) {
+        const routineId = getRoutineIdFromUrl();
+        if (routineId) {
+            console.log("Optimistic load for routine:", routineId);
+            loadUserPreferences(lastUid);
+            loadRoutineData(routineId, lastUid);
+            // Don't wait for sidebar here
+            waitForSidebar();
+        }
+    }
+
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
         const loadingScreen = document.getElementById('loading-screen');
         if (user) {
             try {
                 currentUser = user;
+                
+                // Update lastUserId
+                if (user.uid !== lastUid) {
+                    localStorage.setItem('lastUserId', user.uid);
+                }
+
                 const tasks = [
                     loadUserPreferences(user.uid),
                     waitForSidebar()
@@ -70,19 +95,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function loadUserPreferences(uid) {
-        const cacheKey = `userPreferences_${uid}`;
+        if (!window.CacheManager) return;
+
         // 1. Try Cache
-        try {
-            const cached = localStorage.getItem(cacheKey);
-            if (cached) {
-                const prefs = JSON.parse(cached);
-                if (prefs.color) {
-                    setPrimaryColor(prefs.color);
-                    return; // Skip network if cached
-                }
-            }
-        } catch (e) {
-            console.error("Cache error:", e);
+        const prefs = window.CacheManager.getPreferences(uid);
+        if (prefs && prefs.color) {
+            setPrimaryColor(prefs.color);
+            return;
         }
 
         // 2. Network Fallback
@@ -94,8 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.preferences.color) {
                         setPrimaryColor(data.preferences.color);
                     }
-                    // Save to cache
-                    localStorage.setItem(cacheKey, JSON.stringify(data.preferences));
+                    window.CacheManager.savePreferences(uid, data.preferences);
                 }
             }
         } catch (error) {
@@ -103,93 +121,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Helper to get routines from local cache
-    function getLocalRoutinesCache(uid) {
-        const cacheKey = `cachedRoutines_${uid}`;
-        const cached = localStorage.getItem(cacheKey);
-        if (!cached) return null;
-        try {
-            const routines = JSON.parse(cached);
-            return routines.map(r => ({
-                ...r,
-                // Hydrate timestamps with a mock toDate() method
-                createdAt: r.createdAt ? { toDate: () => new Date(r.createdAt) } : null,
-                startDate: r.startDate ? { toDate: () => new Date(r.startDate) } : null,
-                endDate: r.endDate ? { toDate: () => new Date(r.endDate) } : null
-            }));
-        } catch (e) {
-            console.error("Error parsing routines cache", e);
-            return null;
-        }
-    }
-
-    function updateSingleRoutineInCache(uid, routine) {
-        const cacheKey = `cachedRoutines_${uid}`;
-        const cached = localStorage.getItem(cacheKey);
-        
-        try {
-            let routines = cached ? JSON.parse(cached) : [];
-            const index = routines.findIndex(r => r.id === routine.id);
-            
-            // Prepare routine for cache (serialize dates)
-            const cacheItem = {
-                ...routine,
-                createdAt: routine.createdAt && routine.createdAt.toDate ? routine.createdAt.toDate().toISOString() : routine.createdAt,
-                startDate: routine.startDate && routine.startDate.toDate ? routine.startDate.toDate().toISOString() : routine.startDate,
-                endDate: routine.endDate && routine.endDate.toDate ? routine.endDate.toDate().toISOString() : routine.endDate
-            };
-
-            if (index !== -1) {
-                routines[index] = cacheItem;
-            } else {
-                routines.push(cacheItem);
-            }
-
-            // Sort
-            routines.sort((a, b) => {
-                 const dateA = new Date(a.createdAt || 0);
-                 const dateB = new Date(b.createdAt || 0);
-                 return dateB - dateA;
-            });
-
-            // Limit
-            if (routines.length > 20) routines = routines.slice(0, 20);
-            
-            localStorage.setItem(cacheKey, JSON.stringify(routines));
-        } catch (e) {
-            console.error("Error updating single routine cache", e);
-        }
-    }
-
-    function setPrimaryColor(colorName) {
-        const hex = colorMap[colorName] || colorMap['Arancione'];
-        const gradient = gradientMap[colorName] || gradientMap['Arancione'];
-        document.documentElement.style.setProperty('--primary-color', hex);
-        document.documentElement.style.setProperty('--background-gradient', gradient);
-    }
-
-    function getRoutineIdFromUrl() {
-        const params = new URLSearchParams(window.location.search);
-        return params.get('id');
-    }
-
     async function loadRoutineData(routineId, uid) {
         // 1. Try Cache
-        const cachedRoutines = getLocalRoutinesCache(uid);
-        if (cachedRoutines) {
-            const cachedRoutine = cachedRoutines.find(r => r.id === routineId);
-            if (cachedRoutine) {
-                renderRoutine(cachedRoutine);
+        if (window.CacheManager) {
+            const cachedRoutines = window.CacheManager.getRoutines(uid);
+            if (cachedRoutines) {
+                const cachedRoutine = cachedRoutines.find(r => r.id === routineId);
+                if (cachedRoutine) {
+                    console.log("Routine loaded from cache:", routineId);
+                    renderRoutine(cachedRoutine);
+                    // Hide loading screen immediately if possible, or let Promise.all handle it
+                    // But to be sure, we return early to skip DB
+                    await waitForImages();
+                    return;
+                }
             }
         }
 
         try {
+            console.log("Routine not in cache, fetching from DB:", routineId);
             const routineDoc = await db.collection('routines').doc(routineId).get();
             if (routineDoc.exists) {
                 const routine = { id: routineDoc.id, ...routineDoc.data() };
                 renderRoutine(routine);
                 updateSingleRoutineInCache(uid, routine);
-                handleEditButton(routine);
                 await waitForImages();
             } else {
                 console.error("Routine not found.");
