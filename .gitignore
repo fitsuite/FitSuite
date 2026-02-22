@@ -1,7 +1,0 @@
-# Environment variables
-.env
-frontend/config.js
-
-# Dependencies
-node_modules/
-.DS_Store

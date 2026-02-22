@@ -16,14 +16,20 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
-    <script src="../config.js"></script>
     <script>
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyCEgbB9rBBKOov3aDma0DMn-EuU0bGMMYo",
+        authDomain: "fitsuite-a7b6c.firebaseapp.com",
+        projectId: "fitsuite-a7b6c",
+        storageBucket: "fitsuite-a7b6c.firebasestorage.app",
+        messagingSenderId: "721614273457",
+        appId: "1:721614273457:web:195f48279fafd01a1f5b90",
+        measurementId: "G-W4ME455MH5"
+      };
+
       // Initialize Firebase
-      if (window.CONFIG && window.CONFIG.FIREBASE) {
-        firebase.initializeApp(window.CONFIG.FIREBASE);
-      } else {
-        console.error("Firebase config not found in window.CONFIG");
-      }
+      firebase.initializeApp(firebaseConfig);
     </script>
     <!-- Logout script -->
     <script src="../../backend/function/logout.js"></script>

@@ -226,10 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function generateRoutineWithGemini(userData, exercises) {
-        const apiKey = (window.CONFIG && window.CONFIG.GEMINI && window.CONFIG.GEMINI.API_KEY) || "";
-        if (!apiKey) {
-            throw new Error("Gemini API Key non trovata nella configurazione.");
-        }
+        const apiKey = "AIzaSyCcNhs7-ihHVjao3Vi6c5oqh_duTvPPEyA"; // From .env
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
         const systemPrompt = `
