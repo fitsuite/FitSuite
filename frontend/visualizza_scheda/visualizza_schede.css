@@ -213,6 +213,136 @@
     padding: 20px 0 0 0;
 }
 
+/* Stili per il Popup Dettaglio Esercizio */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.3s ease;
+}
+
+.popup-overlay.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+.popup-card {
+    background: var(--bg-card);
+    border-radius: 15px;
+    padding: 30px;
+    width: 95%; /* Aumentato per occupare più spazio */
+    max-width: 700px; /* Reso più rettangolare */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    /* max-height: 90vh; */ /* Rimosso */
+    /* overflow-y: auto; */ /* Rimosso */
+}
+
+.popup-overlay.active .popup-card {
+    transform: scale(1);
+}
+
+.close-popup-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-gray);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-popup-btn:hover {
+    color: var(--primary-color);
+}
+
+.popup-exercise-gif {
+    width: 100%;
+    max-width: 200px; /* Rimpicciolita l'immagine */
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.popup-exercise-name {
+    color: var(--primary-color);
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.popup-exercise-description {
+    color: var(--text-white);
+    font-size: 16px;
+    line-height: 1.6;
+    text-align: left;
+    width: 100%;
+    margin-top: 15px; /* Aggiunto un po' di spazio sopra */
+    /* max-height: 300px; */ /* Rimosso */
+    /* overflow-y: auto; */ /* Rimosso */
+    padding-right: 0; /* Rimosso */
+}
+
+.popup-exercise-description ol {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Layout a griglia responsivo */
+    gap: 15px; /* Spazio tra i passi */
+    padding-left: 0; /* Rimuovo l'indentazione predefinita */
+    list-style: none; /* Rimuovo i pallini/numeri predefiniti */
+}
+
+.popup-exercise-description li {
+    background-color: rgba(255, 255, 255, 0.05); /* Sfondo leggero per ogni passo */
+    padding: 15px;
+    border-radius: 8px;
+    text-align: left;
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 0; /* Rimuovo il margin-bottom precedente */
+}
+
+.popup-exercise-description li::before {
+    content: counter(list-item) ". "; /* Aggiunge il numero del passo */
+    counter-increment: list-item;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-right: 10px;
+    flex-shrink: 0; /* Evita che il numero si rimpicciolisca */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .popup-card {
+        padding: 20px;
+    }
+
+    .popup-exercise-name {
+        font-size: 24px;
+    }
+
+    .popup-exercise-description {
+        font-size: 14px;
+    }
+}
+
 .exercises-list {
     display: flex;
     flex-direction: column;

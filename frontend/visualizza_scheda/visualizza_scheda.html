@@ -131,6 +131,15 @@
     <script src="./visualizza_scheda.js"></script>
     <script src="../components/session_control/session_control.js"></script>
     <script src="../components/popup/popup.js"></script>
+    <!-- Exercise Detail Popup -->
+    <div id="exercise-detail-popup" class="popup-overlay">
+        <div class="popup-card">
+            <button class="close-popup-btn"><i class="fas fa-times"></i></button>
+            <img id="popup-exercise-gif" src="" alt="Esercizio GIF" class="popup-exercise-gif">
+            <h3 id="popup-exercise-name" class="popup-exercise-name"></h3>
+            <p id="popup-exercise-description" class="popup-exercise-description"></p>
+        </div>
+    </div>
     <script>
         // Load sidebar.html into the sidebar-placeholder div
         fetch('../templates/sidebar/sidebar.html')
