@@ -253,8 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Redirect to crea_scheda.html
-            window.location.href = '../crea_scheda/crea_scheda.html';
+            // Redirect to lista_schede.html
+            window.location.href = '../lista_schede/lista_scheda.html';
         } else {
             // User is signed out.
             console.log('User is signed out.');
