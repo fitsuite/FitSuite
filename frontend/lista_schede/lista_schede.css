@@ -338,4 +338,18 @@ body.list-body {
         transform: none;
         width: 100%;
     }
+
+.col-sessions {
+                display: none !important;
+            }
+
+            .list-header, .routine-list-row {
+                grid-template-columns: 30px 3fr 1.5fr 150px; /* Adjusted to remove 'Sedute' column, more space for name, less for menu, centered period */
+                gap: 15px; /* Adjusted gap for better spacing */
+            }
+
+            .col-date {
+                text-align: center;
+                justify-self: center;
+            }
 }

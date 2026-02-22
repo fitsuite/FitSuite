@@ -462,4 +462,107 @@ body.settings-body {
     .content-header h1 {
         font-size: 24px;
     }
+
+    .logout-btn {
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 13px;
+        margin-top: 15px; /* Aggiungi un po' di spazio sopra il bottone */
+    }
+
+    .settings-container {
+        padding: 0 15px; /* Riduci il padding laterale per più spazio */
+    }
+
+    .settings-card {
+        padding: 20px 15px; /* Riduci il padding interno della card */
+        margin-bottom: 20px; /* Riduci il margine tra le card */
+    }
+
+    .card-title {
+        font-size: 28px; /* Riduci la dimensione del titolo della card */
+        text-align: center; /* Centra il titolo della card */
+        margin-bottom: 15px;
+    }
+
+    .card-row {
+        flex-direction: column; /* Impila gli elementi verticalmente */
+        align-items: center; /* Centra gli elementi */
+        gap: 10px; /* Spazio tra gli elementi impilati */
+        padding: 10px 0; /* Riduci il padding della riga */
+    }
+
+    .card-row .row-info {
+        width: 100%; /* Assicura che le informazioni occupino tutta la larghezza */
+        flex-direction: column; /* Impila icona e testo */
+        align-items: center; /* Centra icona e testo */
+        text-align: center; /* Centra il testo */
+        gap: 5px; /* Spazio tra icona e testo */
+    }
+
+    .row-label {
+        font-size: 10px; /* Riduci la dimensione del label */
+    }
+
+    .row-value {
+        font-size: 14px; /* Riduci la dimensione del valore */
+    }
+
+    .card-row .card-btn,
+    .card-row .delete-account-btn-styled {
+        width: 100%; /* I bottoni occupano tutta la larghezza disponibile */
+        min-width: unset; /* Rimuove il min-width fisso */
+        padding: 10px 15px; /* Riduci il padding per schermi più piccoli */
+        font-size: 13px; /* Riduci la dimensione del font */
+    }
+
+    .card-footer-action {
+        margin-top: 20px; /* Riduci il margine superiore */
+    }
+
+    .action-hint {
+        font-size: 11px; /* Riduci la dimensione del hint */
+        margin-bottom: 10px;
+    }
+
+    /* Modals adjustments */
+    .modal-content {
+        padding: 30px 20px; /* Riduci il padding del contenuto modale */
+        max-width: 350px; /* Riduci la larghezza massima del modale */
+    }
+
+    .modal-content h3 {
+        font-size: 22px; /* Riduci la dimensione del titolo modale */
+    }
+
+    .modal-content p {
+        font-size: 14px; /* Riduci la dimensione del testo modale */
+    }
+
+    .modal-actions {
+        flex-direction: column; /* Impila i bottoni modali */
+        gap: 10px; /* Spazio tra i bottoni modali */
+    }
+
+    .modal-btn-secondary,
+    .modal-btn-primary,
+    .modal-btn-danger {
+        width: 100%; /* Bottoni modali a piena larghezza */
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+
+    .modal-input, .modal-textarea {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    #new-phone-input {
+        font-size: 16px; /* Riduci la dimensione del font per il numero di telefono */
+    }
+
+    .language-options button {
+        padding: 10px 15px;
+        font-size: 13px;
+    }
 }
