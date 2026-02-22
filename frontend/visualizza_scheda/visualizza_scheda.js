@@ -9,21 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const seduteContainer = document.getElementById('sedute-container');
 
     let currentUser = null;
-    let allExercisesData = []; // Variabile per memorizzare tutti i dati degli esercizi
-
-    // Carica i dati degli esercizi all'avvio
-    async function loadAllExercisesData() {
-        try {
-            const response = await fetch('../../backend/data_it/esercizi_DATABASE_TOTALE.json');
-            allExercisesData = await response.json();
-            console.log("Dati esercizi caricati:", allExercisesData);
-        } catch (error) {
-            console.error("Errore nel caricamento dei dati degli esercizi:", error);
-        }
-    }
-
-    // Chiama la funzione per caricare i dati all'avvio
-    loadAllExercisesData();
 
     const colorMap = {
         'Arancione': '#ff6600',
@@ -281,32 +266,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const exercisesList = sedutaCard.querySelector('.exercises-list');
                 if (seduta.exercises && seduta.exercises.length > 0) {
                     seduta.exercises.forEach(exercise => {
-                        // Find the corresponding exercise in allExercisesData to get the Italian name
-                        const fullExerciseData = allExercisesData.find(ex => ex.name === exercise.name);
-                        const displayExerciseName = fullExerciseData ? fullExerciseData.name_it : exercise.name; // Use Italian name if found, otherwise fallback to original
-
                         const exerciseRow = document.createElement('div');
                         exerciseRow.className = 'exercise-row';
                         exerciseRow.innerHTML = `
-                            <span class="exercise-detail col-name">${displayExerciseName}</span>
+                            <span class="exercise-detail col-name">${exercise.name}</span>
                             <span class="exercise-detail col-rep">${exercise.reps}</span>
                             <span class="exercise-detail col-set">${exercise.sets}</span>
                             <span class="exercise-detail col-rest">${exercise.rest}</span>
                             <span class="exercise-detail col-weight">${exercise.weight}</span>
                             <span class="exercise-detail col-note">${exercise.note}</span>
                             <span class="exercise-detail col-photo">
-                                <img src="${exercise.photo || 'https://via.placeholder.com/90'}" alt="Esercizio" data-exercise-name="${displayExerciseName}" class="exercise-gif-thumbnail">
+                                <img src="${exercise.photo || 'https://via.placeholder.com/90'}" alt="Esercizio">
                             </span>
                         `;
                         exercisesList.appendChild(exerciseRow);
-
-                        const exerciseGifThumbnail = exerciseRow.querySelector('.exercise-gif-thumbnail');
-                        if (exerciseGifThumbnail) {
-                            exerciseGifThumbnail.addEventListener('click', () => {
-                                // The data-exercise-name is already set to the Italian name
-                                showExerciseDetailPopup(exerciseGifThumbnail.dataset.exerciseName);
-                            });
-                        }
                     });
                 } else {
                     exercisesList.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 20px;">Nessun esercizio in questa seduta.</p>';
@@ -316,53 +289,5 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             seduteContainer.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 40px;">Nessuna seduta trovata per questa scheda.</p>';
         }
-    }
-
-    // Funzioni per la gestione del popup
-    const exerciseDetailPopup = document.getElementById('exercise-detail-popup');
-    const popupExerciseGif = document.getElementById('popup-exercise-gif');
-    const popupExerciseName = document.getElementById('popup-exercise-name');
-    const popupExerciseDescription = document.getElementById('popup-exercise-description');
-    const closePopupBtn = document.querySelector('.close-popup-btn');
-
-    function showExerciseDetailPopup(exerciseName) {
-        console.log("Tentativo di mostrare popup per esercizio:", exerciseName);
-
-        // Recupera la preferenza linguistica dalla cache
-        const languagePreference = localStorage.getItem('languagePreference') || 'it'; // Default a 'it'
-
-        let exerciseData;
-        if (languagePreference === 'it') {
-            exerciseData = allExercisesData.find(ex => ex.name_it === exerciseName);
-        } else {
-            exerciseData = allExercisesData.find(ex => ex.name === exerciseName);
-        }
-        
-        if (exerciseData) {
-            console.log("Dati esercizio trovati:", exerciseData);
-            popupExerciseGif.src = exerciseData.gifUrl;
-            popupExerciseName.textContent = languagePreference === 'it' ? exerciseData.name_it : exerciseData.name;
-            popupExerciseDescription.innerHTML = `<ol>${(languagePreference === 'it' ? exerciseData.instructions_it : exerciseData.instructions).map(instruction => `<li>${instruction}</li>`).join('')}</ol>`;
-            exerciseDetailPopup.classList.add('active');
-        } else {
-            console.warn(`Dati per l'esercizio "${exerciseName}" non trovati.`);
-        }
-    }
-
-    function hideExerciseDetailPopup() {
-        exerciseDetailPopup.classList.remove('active');
-    }
-
-    // Listener per chiudere il popup
-    if (closePopupBtn) {
-        closePopupBtn.addEventListener('click', hideExerciseDetailPopup);
-    }
-
-    if (exerciseDetailPopup) {
-        exerciseDetailPopup.addEventListener('click', (event) => {
-            if (event.target === exerciseDetailPopup) {
-                hideExerciseDetailPopup();
-            }
-        });
     }
 });
