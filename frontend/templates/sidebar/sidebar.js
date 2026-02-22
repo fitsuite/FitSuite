@@ -44,6 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Set initial height and add resize listener for mobile
+        setSidebarHeight();
+        window.addEventListener('resize', setSidebarHeight);
+        window.addEventListener('orientationchange', setSidebarHeight);
+
         // Check if toggle button already exists
         if (!document.querySelector('.sidebar-toggle-btn')) {
             const toggleBtn = document.createElement('button');
@@ -59,6 +64,18 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.className = 'sidebar-overlay';
             overlay.onclick = closeSidebar;
             body.appendChild(overlay);
+        }
+    }
+
+    function setSidebarHeight() {
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar && window.innerWidth <= 992) { // Apply only on mobile
+            sidebar.style.height = `${window.innerHeight}px`;
+            sidebar.style.minHeight = `${window.innerHeight}px`;
+        } else if (sidebar && window.innerWidth > 992) {
+            // Reset height for desktop if it was set by JS
+            sidebar.style.height = '';
+            sidebar.style.minHeight = '';
         }
     }
 

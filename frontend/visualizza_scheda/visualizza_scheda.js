@@ -260,21 +260,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 sedutaCard.innerHTML = `
                     <div class="seduta-header">
                         <div class="seduta-title-container">
+                            <button class="collapse-seduta-btn"><i class="fas fa-chevron-down"></i></button>
                             <h3 class="section-label">${seduta.name}</h3>
                         </div>
                     </div>
-                    <div class="seduta-exercises-header">
-                        <span class="header-col col-name">Esercizio</span>
-                        <span class="header-col col-rep">Rep</span>
-                        <span class="header-col col-set">Serie</span>
-                        <span class="header-col col-rest">Recupero</span>
-                        <span class="header-col col-weight">Peso (kg)</span>
-                        <span class="header-col col-note">Nota</span>
-                        <span class="header-col col-photo">Foto</span>
-                    </div>
-                    <div class="seduta-content">
-                        <div class="exercises-list">
-                            <!-- Exercise rows will be dynamically loaded here -->
+                    <div class="seduta-body">
+                        <div class="seduta-exercises-header">
+                            <span class="header-col col-name">Esercizio</span>
+                            <span class="header-col col-rep">Rep</span>
+                            <span class="header-col col-set">Serie</span>
+                            <span class="header-col col-rest">Recupero</span>
+                            <span class="header-col col-weight">Peso (kg)</span>
+                            <span class="header-col col-note">Nota</span>
+                            <span class="header-col col-photo">Foto</span>
+                        </div>
+                        <div class="seduta-content">
+                            <div class="exercises-list">
+                                <!-- Exercise rows will be dynamically loaded here -->
+                            </div>
                         </div>
                     </div>
                 `;
@@ -312,6 +315,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     exercisesList.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 20px;">Nessun esercizio in questa seduta.</p>';
                 }
                 seduteContainer.appendChild(sedutaCard);
+
+                // Add collapse/expand functionality
+                const collapseBtn = sedutaCard.querySelector('.collapse-seduta-btn');
+                const sedutaBody = sedutaCard.querySelector('.seduta-body');
+
+                if (collapseBtn && sedutaBody) {
+
+
+                    collapseBtn.addEventListener('click', () => {
+                        sedutaBody.classList.toggle('collapsed');
+                        collapseBtn.classList.toggle('collapsed');
+                    });
+                }
             });
         } else {
             seduteContainer.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 40px;">Nessuna seduta trovata per questa scheda.</p>';
