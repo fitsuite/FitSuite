@@ -125,12 +125,13 @@ body.settings-body {
 }
 
 .settings-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 20px rgba(255, 102, 0, 0.15);
+    border-color: rgba(255, 102, 0, 0.3);
 }
 
 .glow-card {
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(145deg, #2a2a2a, #202020);
 }
 
 .card-title {
@@ -196,7 +197,6 @@ body.settings-body {
 .card-btn:hover {
     opacity: 0.9;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px color-mix(in srgb, var(--primary-color), transparent 60%);
 }
 
 /* Classe specifica per i bottoni "Modifica" (piccoli) - Aggiornata per uniformare altezza */
@@ -228,7 +228,6 @@ body.settings-body {
 .delete-account-btn-styled:hover {
     background-color: #ff4444;
     color: white;
-    box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
 }
 
 /* Color dots */
@@ -366,12 +365,10 @@ body.settings-body {
     cursor: pointer;
     transition: all 0.2s;
     font-weight: 600;
-    box-shadow: 0 4px 15px color-mix(in srgb, var(--primary-color), transparent 70%);
 }
 
 .modal-btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px color-mix(in srgb, var(--primary-color), transparent 60%);
 }
 
 .modal-btn-danger {
@@ -387,7 +384,6 @@ body.settings-body {
 
 .modal-btn-danger:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 68, 68, 0.4);
 }
 
 /* Form elements in modals */
