@@ -414,6 +414,77 @@ body.settings-body {
     border-color: var(--primary-color);
 }
 
+/* Language Options Styling */
+.language-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Spaziatura aumentata come richiesto */
+    margin: 20px 0;
+    width: 100%;
+}
+
+.language-options .lang-option {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Notification Options Styling - Stile "Palette" simile alla Lingua */
+.notification-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+    width: 100%;
+}
+
+.notification-options label {
+    display: flex;
+    align-items: center;
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 25px; /* Arrotondato come i bottoni */
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+    font-weight: 500;
+    position: relative;
+}
+
+.notification-options label:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.notification-options label:has(input:checked) {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--primary-color), transparent 70%);
+}
+
+.notification-options input[type="radio"] {
+    appearance: none; /* Nasconde il radio button standard */
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 50%;
+    margin-right: 15px;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.notification-options label:has(input:checked) input[type="radio"] {
+    border-color: white;
+    background-color: white;
+    box-shadow: none;
+}
+
 /* Tablet/Laptop Responsive Styles */
 @media (max-width: 1366px) {
     .main-content {
@@ -527,12 +598,13 @@ body.settings-body {
 
     /* Modals adjustments */
     .modal-content {
-        padding: 30px 20px; /* Riduci il padding del contenuto modale */
-        max-width: 350px; /* Riduci la larghezza massima del modale */
+        padding: 25px 15px; /* Ottimizza spazio interno */
+        max-width: 500px; /* Limite massimo per tablet, ma flessibile per mobile */
+        width: 95%;
     }
 
     .modal-content h3 {
-        font-size: 22px; /* Riduci la dimensione del titolo modale */
+        font-size: 20px; /* Leggermente più piccolo per evitare a capo indesiderati */
     }
 
     .modal-content p {
@@ -553,8 +625,8 @@ body.settings-body {
     }
 
     .modal-input, .modal-textarea {
-        padding: 10px 12px;
-        font-size: 13px;
+        padding: 12px 15px; /* Padding comodo per il touch */
+        font-size: 16px; /* Evita lo zoom automatico su iOS */
     }
 
     #new-phone-input {
@@ -562,7 +634,7 @@ body.settings-body {
     }
 
     .language-options button {
-        padding: 10px 15px;
-        font-size: 13px;
+        padding: 15px; /* Mantiene padding comodo */
+        font-size: 16px; /* Evita testo troppo piccolo */
     }
 }

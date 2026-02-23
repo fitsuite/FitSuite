@@ -26,7 +26,8 @@
     border-radius: 12px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
     max-width: 90%;
-    width: 400px;
+    width: 100%; /* Adapts to container/screen width */
+    margin: 0 auto; /* Centers it if needed */
     text-align: center;
     transform: translateY(-20px);
     transition: transform 0.3s ease;
