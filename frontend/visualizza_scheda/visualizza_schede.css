@@ -526,29 +526,59 @@
         width: 100%;
     }
 
-    .seduta-exercises-header, .exercise-row {
-        grid-template-columns: 3fr 0.7fr 0.7fr 0.8fr 0.8fr 1.2fr 80px; /* Further adjusted column widths */
-        gap: 8px; /* Increased gap */
-        padding: 10px 8px; /* Increased padding */
+    .seduta-exercises-header {
+        display: none; /* Hide header on mobile, details will have labels */
     }
 
-    .header-col, .exercise-detail {
-        font-size: 14px; /* Larger font size */
+    .exercise-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Two columns */
+        gap: 10px; /* Gap between grid items */
+        padding: 15px;
+        text-align: center; /* Default center alignment for grid items */
+    }
+
+    .exercise-detail.col-name {
+        grid-column: 1 / -1; /* Span across all columns */
         text-align: center;
+        margin-bottom: 10px; /* Add some space below the name */
     }
 
-    .header-col.col-name, .exercise-detail.col-name {
-        text-align: left; /* Keep name left-aligned */
+    .exercise-detail {
+        font-size: 16px; /* Increased font size for readability */
+        text-align: left; /* Align text to the left */
+        width: 100%; /* Take full width */
     }
+
+    .exercise-detail.col-name {
+        font-weight: bold;
+        color: var(--primary-color);
+        font-size: 18px;
+    }
+
+    .exercise-detail.col-note {
+        grid-column: 1 / -1; /* Span across all columns */
+        text-align: left;
+        margin-top: 10px; /* Add some space above the note */
+    }
+
+    .exercise-detail.col-rep::before { content: "Ripetizioni: "; font-weight: bold; color: var(--text-gray); }
+    .exercise-detail.col-set::before { content: "Serie: "; font-weight: bold; color: var(--text-gray); }
+    .exercise-detail.col-rest::before { content: "Recupero: "; font-weight: bold; color: var(--text-gray); }
+    .exercise-detail.col-weight::before { content: "Peso: "; font-weight: bold; color: var(--text-gray); }
+    .exercise-detail.col-note::before { content: "Nota: "; font-weight: bold; color: var(--text-gray); }
 
     .exercise-detail.col-photo {
+        grid-column: 1 / -1; /* Span across all columns */
         text-align: center;
+        margin-top: 10px;
     }
 
     .exercise-detail.col-photo img {
-        width: 70px; /* Even larger image */
-        height: 70px;
-        margin: 0 auto;
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
     }
 }
 
