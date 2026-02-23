@@ -4,8 +4,7 @@
     --primary-color: #ff6600; /* Fallback */
 }
 
-html, body {
-    height: 100%;
+body {
     margin: 0;
     font-family: 'Segoe UI', Roboto, sans-serif;
     background-color: #1a1a1a;
@@ -17,12 +16,17 @@ html, body {
 @media (max-width: 1200px) {
     body {
         /* Slight scale down for laptops */
-
+        zoom: 0.9; 
+        -moz-transform: scale(0.9);
+        -moz-transform-origin: 0 0;
     }
 }
 
 @media (max-width: 992px) {
-
+    body {
+        zoom: 0.85;
+        -moz-transform: scale(0.85);
+    }
     :root {
         --sidebar-width: 0px !important; /* Collapse sidebar space on smaller screens */
     }
@@ -34,7 +38,10 @@ html, body {
 }
 
 @media (max-width: 768px) {
-
+    body {
+        zoom: 0.8; /* Significant scale down for tablets/mobile */
+        -moz-transform: scale(0.8);
+    }
     
     .navbar {
         padding: 10px;
@@ -49,7 +56,10 @@ html, body {
 }
 
 @media (max-width: 480px) {
-
+    body {
+        zoom: 0.75; /* Further scale down for small phones */
+        -moz-transform: scale(0.75);
+    }
 }
 
 /* Hero Section */
@@ -673,4 +683,3 @@ hr {
 .hidden {
     display: none !important;
 }
-
