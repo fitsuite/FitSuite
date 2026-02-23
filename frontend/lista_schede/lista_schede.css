@@ -339,17 +339,31 @@ body.list-body {
         width: 100%;
     }
 
-.col-sessions {
-                display: none !important;
-            }
+    .col-sessions {
+        display: none !important;
+    }
 
-            .list-header, .routine-list-row {
-                grid-template-columns: 30px 3fr 1.5fr 150px; /* Adjusted to remove 'Sedute' column, more space for name, less for menu, centered period */
-                gap: 15px; /* Adjusted gap for better spacing */
-            }
+    .list-header, .routine-list-row {
+        /* Adjusted: Reduced actions width (150px -> 110px), gave more relative space to name */
+        grid-template-columns: 30px 1fr 0.4fr 110px;
+        gap: 10px;
+    }
 
-            .col-date {
-                text-align: center;
-                justify-self: center;
-            }
+    .col-name {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        word-wrap: break-word;
+        line-height: 1.3;
+    }
+
+    .col-date {
+        text-align: center;
+        justify-self: center;
+        font-size: 12px;
+    }
+
+    .view-btn {
+        padding: 6px 12px;
+    }
 }
