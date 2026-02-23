@@ -12,10 +12,9 @@ body {
     overflow-x: hidden;
 }
 
-/* Responsive Global Scaling */
-@media (max-width: 1200px) {
+/* Responsive Global Scaling - DISABILITATO PER PROBLEMI SIDEBAR */
+/* @media (max-width: 1200px) {
     body {
-        /* Slight scale down for laptops */
         zoom: 0.9; 
         -moz-transform: scale(0.9);
         -moz-transform-origin: 0 0;
@@ -28,7 +27,7 @@ body {
         -moz-transform: scale(0.85);
     }
     :root {
-        --sidebar-width: 0px !important; /* Collapse sidebar space on smaller screens */
+        --sidebar-width: 0px !important; 
     }
     .main-content {
         margin-left: 0 !important;
@@ -39,7 +38,7 @@ body {
 
 @media (max-width: 768px) {
     body {
-        zoom: 0.8; /* Significant scale down for tablets/mobile */
+        zoom: 0.8; 
         -moz-transform: scale(0.8);
     }
     
@@ -47,7 +46,6 @@ body {
         padding: 10px;
     }
     
-    /* Adjust sidebar toggle button position if needed */
     .sidebar-toggle-btn {
         top: 10px;
         left: 10px;
@@ -57,8 +55,32 @@ body {
 
 @media (max-width: 480px) {
     body {
-        zoom: 0.75; /* Further scale down for small phones */
+        zoom: 0.75; 
         -moz-transform: scale(0.75);
+    }
+} */
+
+/* Manteniamo solo le regole necessarie per la sidebar mobile senza lo zoom */
+@media (max-width: 992px) {
+    :root {
+        --sidebar-width: 0px !important; 
+    }
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        transition: margin-left 0.3s ease;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 10px;
+    }
+    
+    .sidebar-toggle-btn {
+        top: 10px;
+        left: 10px;
+        padding: 8px;
     }
 }
 
