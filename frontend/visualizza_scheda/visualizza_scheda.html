@@ -138,9 +138,31 @@
     <div id="exercise-detail-popup" class="popup-overlay">
         <div class="popup-card">
             <button class="close-popup-btn"><i class="fas fa-times"></i></button>
+            
             <img id="popup-exercise-gif" src="" alt="Esercizio GIF" class="popup-exercise-gif">
             <h3 id="popup-exercise-name" class="popup-exercise-name"></h3>
-            <div id="popup-exercise-description" class="popup-exercise-description"></div>
+
+            <div class="guide-separator">
+                <span>Guida</span>
+            </div>
+
+            <div class="popup-stepper">
+                <div id="popup-exercise-description" class="popup-exercise-description">
+                    <!-- Le istruzioni verranno caricate qui dinamicamente come 'popup-step' -->
+                </div>
+            </div>
+
+            <div class="popup-navigation">
+                <button class="popup-nav-btn prev">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="popup-dots">
+                    <!-- I pallini verranno generati dinamicamente -->
+                </div>
+                <button class="popup-nav-btn next">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
     </div>
     <script>
