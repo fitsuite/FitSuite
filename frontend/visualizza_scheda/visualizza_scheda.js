@@ -358,15 +358,25 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Dati esercizio trovati:", exerciseData);
             popupExerciseGif.src = exerciseData.gifUrl;
             popupExerciseName.textContent = languagePreference === 'it' ? exerciseData.name_it : exerciseData.name;
-            popupExerciseDescription.innerHTML = `<ol>${(languagePreference === 'it' ? exerciseData.instructions_it : exerciseData.instructions).map(instruction => `<li>${instruction}</li>`).join('')}</ol>`;
-            exerciseDetailPopup.classList.add('active');
+            const instructionsHtml = (languagePreference === 'it' ? exerciseData.instructions_it : exerciseData.instructions)
+                .map((instruction, index) => {
+                    // Rimuove "Step [numero]:" dall'inizio della stringa, se presente
+                    const cleanedInstruction = instruction.replace(/^Step\s*\d+:\s*/, '');
+                    return `<div class="step-card">
+                                <span class="step-number">${index + 1}</span>
+                                <p class="step-text">${cleanedInstruction}</p>
+                            </div>`;
+                })
+                .join('');
+            popupExerciseDescription.innerHTML = instructionsHtml;
+            exerciseDetailPopup.classList.add('show');
         } else {
             console.warn(`Dati per l'esercizio "${exerciseName}" non trovati.`);
         }
     }
 
     function hideExerciseDetailPopup() {
-        exerciseDetailPopup.classList.remove('active');
+        exerciseDetailPopup.classList.remove('show');
     }
 
     // Listener per chiudere il popup

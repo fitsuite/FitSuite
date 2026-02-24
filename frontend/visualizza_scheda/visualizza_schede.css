@@ -353,20 +353,104 @@
     flex-shrink: 0; /* Evita che il numero si rimpicciolisca */
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .popup-card {
-        padding: 20px;
+
+.exercise-detail-popup .popup-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 400px; /* Ridotta per un design più pulito */
+    padding: 20px;
+    background-color: #2c2c2c;
+    border-radius: 15px;
+    text-align: center;
+}
+
+.exercise-detail-popup .popup-exercise-gif {
+    width: 100%;
+    max-width: 300px; /* Dimensione massima per il GIF */
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.exercise-detail-popup .popup-exercise-name {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.exercise-detail-popup .popup-exercise-description {
+    width: 100%;
+    max-height: 200px; /* Altezza massima per l'area di scorrimento */
+    overflow-y: auto; /* Abilita lo scorrimento verticale */
+    padding-right: 10px; /* Spazio per la barra di scorrimento */
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Spazio tra le card ulteriormente aumentato */
+}
+
+.step-card {
+    background-color: #3a3a3a;
+    border-radius: 8px;
+    padding: 12px 15px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+}
+
+.step-number {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.step-text {
+    color: #e0e0e0;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Stile per la barra di scorrimento */
+.exercise-detail-popup .popup-exercise-description::-webkit-scrollbar {
+    width: 6px;
+}
+
+.exercise-detail-popup .popup-exercise-description::-webkit-scrollbar-track {
+    background: #2c2c2c;
+    border-radius: 3px;
+}
+
+.exercise-detail-popup .popup-exercise-description::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 3px;
+}
+
+.exercise-detail-popup .popup-exercise-description::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* Media query per schermi più piccoli */
+@media (max-width: 480px) {
+    .exercise-detail-popup .popup-card {
+        padding: 15px;
+        max-height: 80vh; /* Limita l'altezza su schermi piccoli */
     }
 
-    .popup-exercise-name {
-        font-size: 24px;
+    .exercise-detail-popup .popup-exercise-name {
+        font-size: 20px;
     }
 
-    .popup-exercise-description {
+    .exercise-detail-popup .popup-exercise-description {
         font-size: 14px;
+        max-height: 180px; /* Altezza leggermente ridotta per mobile */
     }
 }
+
 
 .exercises-list {
     display: flex;
