@@ -115,14 +115,45 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Function to check if username is unique
+    async function isUsernameUnique(username) {
+        try {
+            const snapshot = await db.collection('users')
+                .where('username', '==', username)
+                .get();
+            return snapshot.empty;
+        } catch (error) {
+            console.error('Error checking username uniqueness:', error);
+            return false;
+        }
+    }
+
     // Email/Password Registration
     const registrationForm = document.querySelector('.registration-form');
     if (registrationForm) {
         registrationForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = registrationForm.querySelector('#email').value;
+            const username = registrationForm.querySelector('#username').value.trim();
             const password = registrationForm.querySelector('#password').value;
             const confirmPassword = registrationForm.querySelector('#confirm-password').value;
+
+            // Validate username
+            if (!username || username.length < 3) {
+                displayMessage('registration-error-message', 'L\'username deve contenere almeno 3 caratteri.');
+                return;
+            }
+
+            if (username.length > 20) {
+                displayMessage('registration-error-message', 'L\'username non può superare i 20 caratteri.');
+                return;
+            }
+
+            // Validate username format (alphanumeric and underscores only)
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                displayMessage('registration-error-message', 'L\'username può contenere solo lettere, numeri e underscore.');
+                return;
+            }
 
             if (password !== confirmPassword) {
                 displayMessage('registration-error-message', 'Le password inserite non corrispondono.');
@@ -131,6 +162,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 clearMessages('registration-error-message');
+                
+                // Check if username is unique
+                const isUnique = await isUsernameUnique(username);
+                if (!isUnique) {
+                    displayMessage('registration-error-message', 'Questo username è già stato scelto da un altro utente. Scegline un altro.');
+                    return;
+                }
+                
                 sessionStorage.setItem('justLoggedIn', 'true');
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
@@ -138,6 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Crea il profilo utente nel database con campi predefiniti
                 await db.collection('users').doc(user.uid).set({
                     email: email,
+                    username: username,
                     phoneNumber: "",
                     preferences: {
                         color: "Arancione",
@@ -190,8 +230,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Controlla se il documento utente esiste già, altrimenti crealo
                     const userDoc = await db.collection('users').doc(user.uid).get();
                     if (!userDoc.exists) {
+                        // For Google sign-in, we don't have a username, so we'll use a default or ask for it later
                         await db.collection('users').doc(user.uid).set({
                             email: user.email,
+                            username: null, // Will be set later when user chooses one
                             phoneNumber: user.phoneNumber || "",
                             preferences: {
                                 color: "Arancione",

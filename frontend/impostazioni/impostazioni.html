@@ -45,8 +45,8 @@
 
             <div class="settings-container">
                 <div class="user-profile-large">
-                    <div class="user-avatar-large" id="user-initial-main">U</div>
-                    <div class="user-email-main" id="user-email-main">mario_rossi59@gmail.com</div>
+                    <div class="user-avatar-large" id="user-initial-main">K</div>
+                    <div class="user-username-main" id="user-username-main">@username</div>
                 </div>
 
                 <!-- Account Section -->
@@ -64,13 +64,13 @@
                     </div>
                     <div class="card-row">
                         <div class="row-info">
-                            <i class="fas fa-phone row-icon"></i>
+                            <i class="fas fa-envelope row-icon"></i>
                             <div>
-                                <span class="row-label">Numero di telefono</span>
-                                <span class="row-value" id="user-phone">+39 224 124 6747</span>
+                                <span class="row-label">Email</span>
+                                <span class="row-value" id="user-email-main">mario_rossi59@gmail.com</span>
                             </div>
                         </div>
-                        <button class="card-btn" id="change-phone-btn">Cambia Telefono</button>
+                        <button class="card-btn" id="change-email-btn">Cambia Email</button>
                     </div>
                     <div class="card-footer-action">
                         <p class="action-hint">Se procedi con l'eliminazione dell'account, perderai tutti i tuoi dati</p>
@@ -252,15 +252,15 @@
         </div>
     </div>
 
-    <!-- Modale per Cambia Telefono -->
-    <div id="change-phone-modal" class="modal">
+    <!-- Modale per Cambia Email -->
+    <div id="change-email-modal" class="modal">
         <div class="modal-content">
-            <h3>Cambia Numero di Telefono</h3>
-            <p>Inserisci il nuovo numero di telefono:</p>
-            <input type="tel" id="new-phone-input" placeholder="+39 123 456 7890" class="modal-input">
+            <h3>Cambia Email</h3>
+            <p>Inserisci la nuova email:</p>
+            <input type="email" id="new-email-input" placeholder="nuova@email.com" class="modal-input">
             <div class="modal-actions">
-                <button id="cancel-phone-change" class="modal-btn-secondary">Annulla</button>
-                <button id="confirm-phone-change" class="modal-btn-primary">Conferma</button>
+                <button id="cancel-email-change" class="modal-btn-secondary">Annulla</button>
+                <button id="confirm-email-change" class="modal-btn-primary">Conferma</button>
             </div>
         </div>
     </div>
