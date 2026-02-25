@@ -226,8 +226,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function generateRoutineWithGemini(userData, exercises) {
-        const apiKey = "AIzaSyCcNhs7-ihHVjao3Vi6c5oqh_duTvPPEyA"; // From .env
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const apiKey = "AIzaSyDNPxVF48XPgh3r2g-YYXi_RR0kzOPtjfk"; // From .env
+        
+        // Array of available models to try in order (with correct v1beta names)
+        const availableModels = [
+            'gemini-2.0-flash',
+            'gemini-2.5-flash',
+        ];
+        
+        let lastError = null;
+        const MAX_RETRIES = 0;
 
         const systemPrompt = `
 Sei un esperto personal trainer. Crea una scheda di allenamento in formato JSON basata sui dati dell'utente.
@@ -270,32 +278,108 @@ Struttura JSON richiesta:
 
         const payload = {
             contents: [{
+                role: "user",
                 parts: [{ text: systemPrompt }]
             }]
         };
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
+        // Try each model in order
+        for (const model of availableModels) {
+            let retries = 0;
+            while (retries <= MAX_RETRIES) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
 
-        if (!response.ok) {
-            throw new Error(`Gemini API Error: ${response.statusText}`);
+                    if (!response.ok) {
+                        // Try to parse error response for more details
+                        let errorData = null;
+                        let errorDetails = '';
+                        try {
+                            errorData = await response.clone().json();
+                            errorDetails = JSON.stringify(errorData, null, 2);
+                        } catch (e) {
+                            errorDetails = await response.text();
+                        }
+                        
+                        // Check if quota exceeded (429)
+                        if (response.status === 429) {
+                            const delay = (Math.pow(2, retries) * 1000) + Math.random() * 1000;
+                            console.warn(`Rate limit (429) su ${model}. Tentativo ${retries + 1}/${MAX_RETRIES + 1}. Attesa ${delay.toFixed(0)}ms...`);
+                            if (retries < MAX_RETRIES) {
+                                await new Promise(r => setTimeout(r, delay));
+                                retries++;
+                                continue; // Retry with exponential backoff
+                            } else {
+                                lastError = `Modello ${model}: QUOTA ESAURITA (Free Tier). Devi attivare un piano a pagamento o attendere il reset giornaliero.`;
+                                console.warn(lastError);
+                                break; // Exit retry loop, try next model
+                            }
+                        }
+                        
+                        // Other errors (like 404)
+                        lastError = `Modello ${model}: ${response.status} ${response.statusText}`;
+                        console.warn(`Modello ${model} non disponibile:`, errorDetails);
+                        break; // Exit retry loop, try next model
+                    }
+
+                    const result = await response.json();
+                    
+                    try {
+                        let text = result.candidates[0].content.parts[0].text;
+                        // Clean markdown if present
+                        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                        const parsedResult = JSON.parse(text);
+                        console.log(`Scheda generata con successo con modello: ${model}`);
+                        return parsedResult;
+                    } catch (e) {
+                        lastError = `Errore nel parsing con ${model}: ${e.message}`;
+                        console.warn(lastError);
+                        break; // Exit retry loop, try next model
+                    }
+
+                } catch (error) {
+                    lastError = `Errore con ${model}: ${error.message}`;
+                    console.warn(lastError);
+                    break; // Exit retry loop, try next model
+                }
+            }
         }
 
-        const result = await response.json();
-        
-        try {
-            let text = result.candidates[0].content.parts[0].text;
-            // Clean markdown if present
-            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            return JSON.parse(text);
-        } catch (e) {
-            throw new Error("Errore nel parsing della risposta AI: " + e.message);
+        // If all models failed, provide helpful error message
+        let errorMessage = `
+Non è stato possibile generare la scheda.
+
+Ultimo errore riscontrato:
+${lastError}
+
+Cosa puoi fare:
+`;
+
+        if (lastError && lastError.includes("QUOTA ESAURITA")) {
+            errorMessage += `
+1. ⚠️ HAI ESAURITO LA QUOTA FREE TIER DI GEMINI API
+   - La Google Gemini API free tier ha limite molto basso (poche richieste al giorno)
+   - Per continuare devi ATTIVARE UN PIANO A PAGAMENTO: https://console.cloud.google.com/billing
+   - Oppure attendi il reset giornaliero (24 ore dopo il primo utilizzo)
+
+2. Modelli disponibili in v1beta: ${availableModels.join(', ')}`;
+        } else {
+            errorMessage += `
+1. Verifica che la chiave API sia valida e attiva
+2. Controlla se la API Gemini è abilitata nella Google Cloud Console
+3. I modelli supportati sono: ${availableModels.join(', ')}
+4. Se hai superato la quota free tier, attiva un piano a pagamento`;
         }
+
+        throw new Error(errorMessage);
     }
 
     function mapRoutineToFullObjects(routine, fullList) {
