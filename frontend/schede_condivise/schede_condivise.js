@@ -407,15 +407,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     
-                    if (window.showAlert) {
-                        await window.showAlert('Scheda accettata con successo!', 'Condivisione accettata');
+                    if (window.showSuccessToast) {
+                        window.showSuccessToast('Scheda accettata con successo!', 'Condivisione accettata');
                     }
                 }
             }
         } catch (error) {
             console.error('Error accepting shared routine:', error);
-            if (window.showAlert) {
-                await window.showAlert('Errore durante l\'accettazione della scheda.', 'Errore');
+            if (window.showErrorToast) {
+                window.showErrorToast('Errore durante l\'accettazione della scheda.', 'Errore');
             }
         }
     }
@@ -448,14 +448,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.CacheManager.saveSharedRoutines(auth.currentUser.uid, allRoutines.slice(0, 20));
                 }
                 
-                if (window.showAlert) {
-                    await window.showAlert('Scheda rimossa con successo!', 'Scheda rimossa');
+                if (window.showSuccessToast) {
+                    window.showSuccessToast('Scheda rimossa con successo!', 'Scheda rimossa');
                 }
             }
         } catch (error) {
             console.error('Error removing shared routine:', error);
-            if (window.showAlert) {
-                await window.showAlert('Errore durante la rimozione della scheda.', 'Errore');
+            if (window.showErrorToast) {
+                window.showErrorToast('Errore durante la rimozione della scheda.', 'Errore');
             }
         }
     }

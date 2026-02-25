@@ -123,8 +123,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const routine = doc.data();
             
             if (routine.userId !== currentUser.uid) {
-                alert("Non hai il permesso di modificare questa scheda.");
-                window.location.href = '../lista_schede/lista_scheda.html';
+                if (window.showErrorToast) {
+                    window.showErrorToast("Non hai il permesso di modificare questa scheda.");
+                }
+                window.location.href = '../lista_schede/lista_schede.html';
                 return;
             }
 
@@ -876,7 +878,9 @@ document.addEventListener('DOMContentLoaded', () => {
     saveBtn.addEventListener('click', async () => {
         const nome = nomeSchedaInput.value.trim();
         if (!nome) {
-            alert('Inserisci un nome per la scheda');
+            if (window.showErrorToast) {
+                window.showErrorToast('Inserisci un nome per la scheda');
+            }
             return;
         }
 
@@ -960,11 +964,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Error updating cache:", cacheError);
             }
 
-            await alert('Scheda salvata con successo!');
+            if (window.showSuccessToast) {
+                window.showSuccessToast('Scheda salvata con successo!');
+            }
             window.location.href = '../lista_schede/lista_scheda.html';
         } catch (error) {
             console.error("Error saving routine:", error);
-            alert('Errore durante il salvataggio. Riprova.');
+            if (window.showErrorToast) {
+                window.showErrorToast('Errore durante il salvataggio. Riprova.');
+            }
             saveBtn.disabled = false;
             saveBtn.textContent = 'Salva';
         }

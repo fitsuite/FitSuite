@@ -189,8 +189,9 @@ body.list-body {
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.2s;
-    position: relative;
+    position: relative; /* Ensure stacking context */
     z-index: 1;
+    min-height: 60px; /* Ensure consistent height */
 }
 
 .routine-list-row:hover {
@@ -208,7 +209,51 @@ body.list-body {
 .col-menu {
     display: flex;
     justify-content: center;
+    align-items: center;
     position: relative;
+}
+
+.col-name {
+    color: white;
+    font-weight: 500;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    min-height: 24px; /* Ensure consistent line height */
+}
+
+.col-owner {
+    color: var(--text-gray);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.col-sessions {
+    color: var(--text-gray);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.col-date {
+    color: var(--text-gray);
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.col-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+/* Ensure the active row (with open menu) stays on top even if not hovered */
+.routine-list-row:has(.menu-dropdown.active) {
+    z-index: 100;
 }
 
 .menu-trigger {
@@ -224,41 +269,6 @@ body.list-body {
 .menu-trigger:hover {
     background: rgba(255, 255, 255, 0.1);
     color: white;
-}
-
-.col-name {
-    color: white;
-    font-weight: 500;
-    font-size: 16px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.col-owner {
-    color: var(--text-gray);
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.col-sessions {
-    color: var(--text-gray);
-    font-size: 14px;
-    white-space: nowrap;
-}
-
-.col-date {
-    color: var(--text-gray);
-    font-size: 14px;
-    white-space: nowrap;
-}
-
-.col-actions {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
 }
 
 .view-btn {

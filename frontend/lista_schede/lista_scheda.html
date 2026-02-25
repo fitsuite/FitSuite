@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="../components/session_control/session_control.css">
     <link rel="stylesheet" href="../components/popup/popup.css">
     <link rel="stylesheet" href="../components/share_popup/share_popup.css">
+    <link rel="stylesheet" href="../components/toast/toast.css">
+    <link rel="icon" type="image/x-icon" href="image/logo.ico">
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
@@ -48,7 +50,12 @@
                     <input type="text" id="search-bar" placeholder="Cerca schede...">
                     <i class="fas fa-search search-icon"></i>
                 </div>
-                <button class="logout-btn" id="logout-button">Logout</button>
+                <div class="header-actions">
+                    <button class="refresh-btn" id="refresh-btn" title="Aggiorna schede">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="logout-btn" id="logout-button">Logout</button>
+                </div>
             </header>
 
             <div class="routines-list-container">

@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = firebase.firestore();
     const routinesContainer = document.getElementById('routines-container');
     const searchInput = document.getElementById('search-bar');
+    const refreshBtn = document.getElementById('refresh-btn');
     const loadingScreen = document.getElementById('loading-screen');
 
     let allRoutines = []; // Store routines for client-side filtering
@@ -122,6 +123,25 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+
+    // Refresh functionality
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.classList.add('spinning');
+            try {
+                // Force cache refresh
+                if (window.CacheManager) {
+                    window.CacheManager.forceRefreshRoutines(auth.currentUser.uid);
+                }
+                // Fetch routines again
+                await fetchRoutines(auth.currentUser.uid);
+            } catch (error) {
+                console.error('Error refreshing routines:', error);
+            } finally {
+                refreshBtn.classList.remove('spinning');
+            }
+        });
+    }
 
     async function fetchRoutines(uid) {
         // 1. Load from Cache FIRST for speed
@@ -244,9 +264,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         </button>
                     </div>
                 </div>
-                <div class="col-name" title="${routine.name || 'Scheda senza nome'}">${routine.name || 'Scheda senza nome'}</div>
-                <div class="col-sessions">${seduteText}</div>
-                <div class="col-date">${periodText}</div>
+                <div class="col-name">
+                    <span class="routine-name">${routine.name || 'Scheda senza nome'}</span>
+                </div>
+                <div class="col-sessions">
+                    <span>${seduteText}</span>
+                </div>
+                <div class="col-date">
+                    <span>${periodText}</span>
+                </div>
                 <div class="col-actions">
                     <a href="../visualizza_scheda/visualizza_scheda.html?id=${routine.id}" class="view-btn">Visualizza</a>
                 </div>
@@ -309,7 +335,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             await db.collection('routines').doc(routine.id).update({ name: newName });
                         } catch (error) {
                             console.error("Error renaming routine:", error);
-                            alert("Errore durante la rinomina della scheda.");
+                            if (window.showErrorToast) {
+                                window.showErrorToast("Errore durante la rinomina della scheda.");
+                            }
                             // Revert
                             routine.name = oldName;
                             renderRoutines(allRoutines);
@@ -340,7 +368,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             await db.collection('routines').doc(routine.id).delete();
                         } catch (error) {
                             console.error("Error deleting routine:", error);
-                            alert("Errore durante l'eliminazione della scheda.");
+                            if (window.showErrorToast) {
+                                window.showErrorToast("Errore durante l'eliminazione della scheda.");
+                            }
                             // Revert
                             allRoutines = originalRoutines;
                             filterRoutines(searchTerm);

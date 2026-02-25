@@ -474,10 +474,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = auth.currentUser.email;
         try {
             await auth.sendPasswordResetEmail(email);
-            await alert(`Email di reset password inviata a ${email}`);
+            if (window.showSuccessToast) {
+                window.showSuccessToast(`Email di reset password inviata a ${email}`);
+            }
             changePasswordModal.classList.remove('active'); // Close modal after sending email
         } catch (error) {
-            alert("Errore nell'invio dell'email: " + error.message);
+            if (window.showErrorToast) {
+                window.showErrorToast("Errore nell'invio dell'email: " + error.message);
+            }
         }
     });
 
@@ -499,7 +503,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (newPhone) {
             if (!phoneRegex.test(newPhone.replace(/\s/g, ''))) {
-                alert("Per favore inserisci un numero di telefono valido (es. +39 333 1234567 o 3331234567). Deve contenere almeno 10 cifre.");
+                if (window.showErrorToast) {
+                    window.showErrorToast("Per favore inserisci un numero di telefono valido (es. +39 333 1234567 o 3331234567). Deve contenere almeno 10 cifre.");
+                }
                 return;
             }
 
@@ -512,13 +518,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateLocalUserProfile(currentUser.uid, { phoneNumber: newPhone });
                 
                 userPhone.textContent = newPhone;
-                await alert("Numero di telefono aggiornato con successo!");
+                if (window.showSuccessToast) {
+                    window.showSuccessToast("Numero di telefono aggiornato con successo!");
+                }
                 changePhoneModal.classList.remove('active'); // Close modal after successful update
             } catch (error) {
-                alert("Errore nell'aggiornamento: " + error.message);
+                if (window.showErrorToast) {
+                    window.showErrorToast("Errore nell'aggiornamento: " + error.message);
+                }
             }
         } else {
-            alert("Il numero di telefono non può essere vuoto.");
+            if (window.showErrorToast) {
+                window.showErrorToast("Il numero di telefono non può essere vuoto.");
+            }
         }
     });
 
@@ -546,10 +558,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 userLanguage.textContent = newLanguage;
                 updateLanguageFlag(newLanguage); // Update the flag icon
                 changeLanguageModal.classList.remove('active');
-                alert(`Lingua aggiornata a: ${newLanguage}`);
+                if (window.showSuccessToast) {
+                    window.showSuccessToast(`Lingua aggiornata a: ${newLanguage}`);
+                }
             } catch (error) {
                 console.error("Error updating language:", error);
-                alert("Errore durante l'aggiornamento della lingua: " + error.message);
+                if (window.showErrorToast) {
+                    window.showErrorToast("Errore durante l'aggiornamento della lingua: " + error.message);
+                }
             }
         });
     });
@@ -608,11 +624,15 @@ document.addEventListener('DOMContentLoaded', () => {
             updateLocalUserProfile(currentUser.uid, { 'preferences.notifications': selectedNotification });
 
             userNotifications.textContent = selectedNotification;
-            await alert(`Preferenze notifiche aggiornate a: ${selectedNotification}`);
+            if (window.showSuccessToast) {
+                window.showSuccessToast(`Preferenze notifiche aggiornate a: ${selectedNotification}`);
+            }
             changeNotificationsModal.classList.remove('active');
         } catch (error) {
             console.error("Error updating notifications:", error);
-            alert("Errore durante l'aggiornamento delle notifiche: " + error.message);
+            if (window.showErrorToast) {
+                window.showErrorToast("Errore durante l'aggiornamento delle notifiche: " + error.message);
+            }
         }
     });
     // Delete Account Logic
@@ -641,10 +661,14 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = '../auth/auth.html';
         } catch (error) {
             if (error.code === 'auth/requires-recent-login') {
-                await alert("Per eliminare l'account è necessario aver effettuato l'accesso di recente. Effettua il logout e rientra prima di riprovare.");
+                if (window.showWarningToast) {
+                    window.showWarningToast("Per eliminare l'account è necessario aver effettuato l'accesso di recente. Effettua il logout e rientra prima di riprovare.");
+                }
                 auth.signOut().then(() => window.location.href = '../auth/auth.html');
             } else {
-                alert("Errore durante l'eliminazione: " + error.message);
+                if (window.showErrorToast) {
+                    window.showErrorToast("Errore durante l'eliminazione: " + error.message);
+                }
             }
         }
     });
@@ -672,12 +696,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const feedback = feedbackTextarea.value.trim();
         
         if (!feedback) {
-            alert("Il campo feedback non può essere vuoto.");
+            if (window.showErrorToast) {
+                window.showErrorToast("Il campo feedback non può essere vuoto.");
+            }
             return;
         }
 
         if (!currentUser) {
-            alert("Errore: Utente non identificato. Riprova a effettuare il login.");
+            if (window.showErrorToast) {
+                window.showErrorToast("Errore: Utente non identificato. Riprova a effettuare il login.");
+            }
             return;
         }
 
@@ -697,14 +725,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             console.log("Feedback submitted successfully");
-            await alert("Grazie per il tuo feedback! La tua opinione è importante per noi.");
+            if (window.showSuccessToast) {
+                window.showSuccessToast("Grazie per il tuo feedback! La tua opinione è importante per noi.");
+            }
             
             giveFeedbackModal.classList.remove('active');
             feedbackTextarea.value = ''; // Clear textarea after submission
 
         } catch (error) {
             console.error("Error submitting feedback:", error);
-            alert("Si è verificato un errore durante l'invio del feedback: " + error.message);
+            if (window.showErrorToast) {
+                window.showErrorToast("Si è verificato un errore durante l'invio del feedback: " + error.message);
+            }
         } finally {
             // Ripristina il bottone
             submitFeedbackBtn.disabled = false;
@@ -743,7 +775,9 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = '../auth/auth.html'; // Redirect to login page
         } catch (error) {
             console.error("Error during logout:", error);
-            alert("Errore durante il logout: " + error.message);
+            if (window.showErrorToast) {
+                window.showErrorToast("Errore durante il logout: " + error.message);
+            }
         }
     });
 
@@ -754,7 +788,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Subscription Edit Modal Logic
     const openSubscriptionEditModal = async () => {
         if (!currentUser) {
-            alert("Devi essere loggato per modificare l'abbonamento.");
+            if (window.showErrorToast) {
+                window.showErrorToast("Devi essere loggato per modificare l'abbonamento.");
+            }
             return;
         }
         try {
@@ -778,7 +814,9 @@ document.addEventListener('DOMContentLoaded', () => {
             subscriptionEditModal.classList.add('active');
         } catch (error) {
             console.error("Error opening subscription edit modal:", error);
-            alert("Errore nel caricamento dei dati dell'abbonamento.");
+            if (window.showErrorToast) {
+                window.showErrorToast("Errore nel caricamento dei dati dell'abbonamento.");
+            }
         }
     };
 
@@ -792,7 +830,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     saveSubscriptionChangesBtn.addEventListener('click', async () => {
         if (!currentUser) {
-            alert("Devi essere loggato per salvare le modifiche.");
+            if (window.showErrorToast) {
+                window.showErrorToast("Devi essere loggato per salvare le modifiche.");
+            }
             return;
         }
 
@@ -805,11 +845,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const newNextPaymentDate = nextPaymentDateInput.value;
 
         if (!newSubscriptionType || !newStartDate || !newEndDate || !newPaymentMethod) {
-            alert("Tipo di abbonamento, Data Inizio, Data Scadenza e Metodo di Pagamento sono obbligatori.");
+            if (window.showErrorToast) {
+                window.showErrorToast("Tipo di abbonamento, Data Inizio, Data Scadenza e Metodo di Pagamento sono obbligatori.");
+            }
             return;
         }
         if (newAutoRenew && (!newLastPaymentDate || !newNextPaymentDate)) {
-            alert("Se il rinnovo automatico è attivo, Data Ultimo Pagamento e Data Prossimo Pagamento sono obbligatori.");
+            if (window.showErrorToast) {
+                window.showErrorToast("Se il rinnovo automatico è attivo, Data Ultimo Pagamento e Data Prossimo Pagamento sono obbligatori.");
+            }
             return;
         }
 
@@ -837,12 +881,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             updateLocalUserProfile(currentUser.uid, cacheUpdates);
 
-            await alert("Dati abbonamento aggiornati con successo!");
+            if (window.showSuccessToast) {
+                window.showSuccessToast("Dati abbonamento aggiornati con successo!");
+            }
             subscriptionEditModal.classList.remove('active');
             fetchUserData(currentUser.uid); // Refresh displayed data
         } catch (error) {
             console.error("Error updating subscription data:", error);
-            alert("Errore durante l'aggiornamento dei dati dell'abbonamento: " + error.message);
+            if (window.showErrorToast) {
+                window.showErrorToast("Errore durante l'aggiornamento dei dati dell'abbonamento: " + error.message);
+            }
         }
     });
 

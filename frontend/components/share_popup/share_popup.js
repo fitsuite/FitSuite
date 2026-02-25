@@ -59,8 +59,8 @@ class SharePopup {
                     </div>
 
                     <div class="share-popup-actions">
-                        <button class="custom-popup-btn secondary" id="cancel-share-btn">Annulla</button>
-                        <button class="custom-popup-btn primary" id="send-share-btn">Invia condivisione</button>
+                        <button class="custom-popup-btn secondary" id="cancel-share-btn">Chiudi</button>
+                        <button class="custom-popup-btn primary" id="send-share-btn">Conferma</button>
                     </div>
                 </div>
             </div>
@@ -398,11 +398,9 @@ class SharePopup {
     }
 
     async sendShare() {
-        // This function now just shows a success message since auto-save handles the actual saving
-        if (window.showAlert) {
-            await window.showAlert('Condivisione salvata con successo!', 'Condivisione completata');
-        } else {
-            alert('Condivisione salvata con successo!');
+        // This function now shows a toast notification
+        if (window.showSuccessToast) {
+            window.showSuccessToast('Condivisione salvata con successo!', 'Condivisione completata');
         }
         
         this.hide();

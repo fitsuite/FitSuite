@@ -290,8 +290,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.CacheManager.forceRefreshSharedRoutines(currentUser.uid);
                 }
                 
-                if (window.showAlert) {
-                    await window.showAlert('Scheda rimossa con successo!', 'Scheda rimossa');
+                if (window.showSuccessToast) {
+                    window.showSuccessToast('Scheda rimossa con successo!', 'Scheda rimossa');
                 }
                 
                 // Redirect to shared routines page
@@ -299,8 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error removing shared routine:', error);
-            if (window.showAlert) {
-                await window.showAlert('Errore durante la rimozione della scheda.', 'Errore');
+            if (window.showErrorToast) {
+                window.showErrorToast('Errore durante la rimozione della scheda.', 'Errore');
             }
         }
     }
