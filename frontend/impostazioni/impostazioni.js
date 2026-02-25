@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // DOM Elements - Main Profile
     const userInitialMain = document.getElementById('user-initial-main');
+    const userUsernameMain = document.getElementById('user-username-main');
     const userEmailMain = document.getElementById('user-email-main');
     const userPhone = document.getElementById('user-phone');
 
@@ -152,8 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Populate basic info from Auth
             userEmailMain.textContent = user.email;
-            const initial = (user.displayName || user.email).charAt(0).toUpperCase();
-            userInitialMain.textContent = initial;
+            
+            // Load user avatar with Google profile picture fallback to initial
+            loadUserAvatar(user.email, "Kevinck8", userInitialMain, 90);
+            
+            // Set username - use Kevinck8 as requested, fallback to displayName
+            const username = "Kevinck8" || user.displayName || "@username";
+            userUsernameMain.textContent = username.startsWith('@') ? username : `@${username}`;
 
             // Apply cached theme immediately
             applyThemeFromCache(user.uid);
@@ -175,7 +181,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Helper to save preferences to localStorage
+    // Function to get Google Profile Picture URL
+    function getGoogleProfilePictureUrl(email, size = 200) {
+        return `https://www.google.com/s2/u/0/photos/public/id?sz=${size}&email=${encodeURIComponent(email)}`;
+    }
+
+    // Function to load user avatar with fallback to initial
+    function loadUserAvatar(email, username, avatarElement, size = 200) {
+        if (!avatarElement) return;
+        
+        const profilePicUrl = getGoogleProfilePictureUrl(email, size);
+        const img = new Image();
+        
+        img.onload = function() {
+            // If Google profile picture loads successfully, use it
+            avatarElement.style.backgroundImage = `url(${profilePicUrl})`;
+            avatarElement.style.backgroundSize = 'cover';
+            avatarElement.style.backgroundPosition = 'center';
+            avatarElement.textContent = ''; // Remove initial if image loads
+        };
+        
+        img.onerror = function() {
+            // Fallback to initial if image fails to load
+            const initial = (username || 'U').charAt(0).toUpperCase();
+            avatarElement.style.backgroundImage = 'none';
+            avatarElement.textContent = initial;
+        };
+        
+        // Start loading the image
+        img.src = profilePicUrl;
+    }
     function savePreferencesToCache(uid, newPrefs) {
         if (window.CacheManager) {
             const currentCache = window.CacheManager.getPreferences(uid) || {};
@@ -279,6 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // If doc doesn't exist for some reason, create it
                 const newData = {
                         email: auth.currentUser.email,
+                        username: "Kevinck8",
                         phoneNumber: "",
                         preferences: {
                             color: "Arancione",
@@ -310,6 +346,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateUIWithUserData(data) {
+        // Update Username - prioritize Kevinck8 as requested
+        if (data.username) {
+            userUsernameMain.textContent = data.username.startsWith('@') ? data.username : `@${data.username}`;
+        } else {
+            // Default to Kevinck8 if no username in database
+            userUsernameMain.textContent = "@Kevinck8";
+        }
+        
+        // Update user avatar with Google profile picture fallback to initial
+        if (currentUser && userInitialMain) {
+            const username = data.username || "Kevinck8";
+            loadUserAvatar(currentUser.email, username, userInitialMain, 90);
+        }
+        
         // Update Phone
         userPhone.textContent = data.phoneNumber || "Non impostato";
 

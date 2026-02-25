@@ -256,7 +256,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const oldName = routine.name;
                     routine.name = newName;
                     renderRoutines(allRoutines);
-                    if (window.CacheManager) window.CacheManager.saveRoutines(auth.currentUser.uid, allRoutines.slice(0, 20));
+                    if (window.CacheManager) {
+                        window.CacheManager.updateSingleRoutineInCache(auth.currentUser.uid, routine);
+                    }
 
                     try {
                         await db.collection('routines').doc(routine.id).update({ name: newName });
@@ -266,7 +268,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Revert
                         routine.name = oldName;
                         renderRoutines(allRoutines);
-                        if (window.CacheManager) window.CacheManager.saveRoutines(auth.currentUser.uid, allRoutines.slice(0, 20));
+                        if (window.CacheManager) {
+                            window.CacheManager.updateSingleRoutineInCache(auth.currentUser.uid, routine);
+                        }
                     }
                 }
             });
@@ -282,7 +286,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     allRoutines = allRoutines.filter(r => r.id !== routine.id);
                     const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
                     filterRoutines(searchTerm);
-                    if (window.CacheManager) window.CacheManager.saveRoutines(auth.currentUser.uid, allRoutines.slice(0, 20));
+                    if (window.CacheManager) {
+                        window.CacheManager.removeRoutineFromCache(auth.currentUser.uid, routine.id);
+                    }
 
                     try {
                         await db.collection('routines').doc(routine.id).delete();
@@ -292,7 +298,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Revert
                         allRoutines = originalRoutines;
                         filterRoutines(searchTerm);
-                        if (window.CacheManager) window.CacheManager.saveRoutines(auth.currentUser.uid, allRoutines.slice(0, 20));
+                        if (window.CacheManager) {
+                            window.CacheManager.saveRoutines(auth.currentUser.uid, allRoutines.slice(0, 20));
+                        }
                     }
                 }
             });

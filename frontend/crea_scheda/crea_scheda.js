@@ -942,22 +942,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 savedId = docRef.id;
             }
 
-            // Update Local Cache immediately
+            // Update Cache immediately using CacheManager
             try {
-                const currentCache = getLocalRoutinesCache(currentUser.uid) || [];
-                const newRoutineForCache = {
-                    ...routineData,
-                    id: docRef.id,
-                    // Use current date for cache instead of serverTimestamp placeholder
-                    createdAt: { toDate: () => new Date() },
-                    startDate: selectedStartDate ? { toDate: () => selectedStartDate } : null,
-                    endDate: selectedEndDate ? { toDate: () => selectedEndDate } : null
-                };
-                // Add to list and update cache
-                currentCache.push(newRoutineForCache);
-                updateLocalRoutinesCache(currentUser.uid, currentCache);
+                if (window.CacheManager) {
+                    const newRoutineForCache = {
+                        ...routineData,
+                        id: savedId,
+                        // Use current date for cache instead of serverTimestamp placeholder
+                        createdAt: { toDate: () => new Date() },
+                        startDate: selectedStartDate ? { toDate: () => selectedStartDate } : null,
+                        endDate: selectedEndDate ? { toDate: () => selectedEndDate } : null
+                    };
+                    // Use CacheManager to update the cache
+                    window.CacheManager.updateSingleRoutineInCache(currentUser.uid, newRoutineForCache);
+                }
             } catch (cacheError) {
-                console.error("Error updating local cache:", cacheError);
+                console.error("Error updating cache:", cacheError);
             }
 
             await alert('Scheda salvata con successo!');

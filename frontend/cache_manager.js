@@ -195,6 +195,42 @@ const CacheManager = {
         } else {
             console.log('Routines loaded from cache');
         }
+    },
+
+    // Funzioni helper per compatibilità
+    getLocalRoutinesCache: function(uid) {
+        return this.getRoutines(uid);
+    },
+
+    updateLocalRoutinesCache: function(uid, routines) {
+        this.saveRoutines(uid, routines);
+    },
+
+    // Aggiorna una singola routine nella cache
+    updateSingleRoutineInCache: function(uid, routine) {
+        let routines = this.getRoutines(uid) || [];
+        const index = routines.findIndex(r => r.id === routine.id);
+        
+        if (index !== -1) {
+            // Aggiorna la routine esistente
+            routines[index] = routine;
+        } else {
+            // Aggiungi la nuova routine all'inizio
+            routines.unshift(routine);
+        }
+        
+        // Mantiene solo le prime 20
+        routines = routines.slice(0, 20);
+        this.saveRoutines(uid, routines);
+        console.log('Single routine updated in cache:', routine.id);
+    },
+
+    // Rimuovi una routine dalla cache
+    removeRoutineFromCache: function(uid, routineId) {
+        let routines = this.getRoutines(uid) || [];
+        routines = routines.filter(r => r.id !== routineId);
+        this.saveRoutines(uid, routines);
+        console.log('Routine removed from cache:', routineId);
     }
 };
 
