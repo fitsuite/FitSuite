@@ -429,8 +429,11 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Caricate ${totalSteps} istruzioni:`, instructions);
 
             popupExerciseDescription.innerHTML = instructions.map((instruction, index) => {
-                // Rimuovi il prefisso "Step:X:" se presente
-                const cleanedInstruction = instruction.replace(/^Step\s*\d+:\s*/, '');
+                // Rimuovi i primi 6 caratteri ('Step:X:')
+                let cleanedInstruction = instruction.substring(6).trim();
+                console.log(`Istruzione originale ${index}:`, instruction);
+                console.log(`Istruzione pulita ${index}:`, cleanedInstruction);
+                
                 return `<div class="popup-step" data-step="${index}">
                             <div class="step-card">
                                 <span class="step-number">${index + 1}</span>
