@@ -262,11 +262,11 @@
 
 .popup-card {
     background: var(--bg-card);
-    border-radius: 15px;
-    padding: 40px 20px;
+    border-radius: 16px;
+    padding: 20px 16px;
     width: 90%;
-    max-width: 400px; /* Ridotto per un layout più verticale */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-width: 320px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     position: relative;
     display: flex;
     flex-direction: column;
@@ -274,8 +274,9 @@
     text-align: center;
     transform: scale(0.9);
     transition: transform 0.3s ease;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
+    margin: 10px;
 }
 
 .popup-overlay.active .popup-card {
@@ -300,18 +301,22 @@
 
 .popup-exercise-gif {
     width: 100%;
-    max-width: 200px; /* Rimpicciolita l'immagine */
+    max-width: 180px;
     height: auto;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    object-fit: cover;
 }
 
 .popup-exercise-name {
     color: var(--primary-color);
-    font-size: 28px;
+    font-size: 18px;
     font-weight: 700;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
+    text-align: center;
+    word-wrap: break-word;
+    line-height: 1.3;
 }
 
 .guide-separator {
@@ -319,8 +324,10 @@
     display: flex;
     align-items: center;
     text-align: center;
-    margin: 20px 0;
+    margin: 16px 0;
     color: var(--text-gray);
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .guide-separator::before,
@@ -335,19 +342,20 @@
 }
 
 .popup-exercise-description {
-    display: flex;
-    transition: transform 0.3s ease-in-out;
+    width: 100%;
+    height: auto;
+    overflow: visible;
 }
 
 /* Stili per lo stepper */
 .popup-stepper {
     width: 100%;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .popup-step {
-    min-width: 100%;
-    flex-shrink: 0;
+    width: 100%;
+    display: none; /* Hidden by default, shown by JavaScript */
 }
 
 /* Stili per la navigazione */
@@ -394,6 +402,18 @@
     color: white;
 }
 
+.popup-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: #555;
+    color: #555;
+}
+
+.popup-nav-btn:disabled:hover {
+    background: transparent;
+    color: #555;
+}
+
 .dot {
     width: 8px;
     height: 8px;
@@ -409,42 +429,174 @@
 .step-card {
     background-color: #3a3a3a;
     border-radius: 8px;
-    padding: 15px;
+    padding: 12px;
     display: flex;
-    align-items: center;
-    gap: 15px;
+    align-items: flex-start;
+    gap: 10px;
     text-align: left;
-    min-height: 80px;
+    height: auto;
+    width: 100%;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow: visible;
 }
 
 .step-number {
     color: var(--primary-color);
     font-weight: 700;
-    font-size: 18px;
+    font-size: 16px;
+    min-width: 24px;
+    flex-shrink: 0;
 }
 
 .step-text {
     color: var(--text-white);
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 13px;
+    line-height: 1.4;
     margin: 0;
     white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    flex: 1;
+    height: auto;
+    overflow: visible;
+}
+
+/* Media query per schermi medi */
+@media (max-width: 768px) and (min-width: 481px) {
+    .popup-card {
+        padding: 18px 14px;
+        margin: 8px;
+        max-width: 300px;
+    }
+
+    .popup-exercise-name {
+        font-size: 17px;
+        margin-bottom: 10px;
+    }
+
+    .popup-exercise-gif {
+        max-width: 160px;
+        margin-bottom: 14px;
+    }
+
+    .guide-separator {
+        margin: 14px 0;
+        font-size: 13px;
+    }
+
+    .step-card {
+        padding: 10px;
+        gap: 8px;
+        min-height: auto;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .step-number {
+        font-size: 15px;
+        min-width: 22px;
+    }
+
+    .step-text {
+        font-size: 12px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
+}
+
+/* Media query per schermi grandi */
+@media (min-width: 1200px) {
+    .popup-card {
+        max-width: 340px;
+        padding: 22px 18px;
+    }
+
+    .popup-exercise-name {
+        font-size: 19px;
+    }
+
+    .popup-exercise-gif {
+        max-width: 200px;
+    }
+
+    .step-card {
+        padding: 14px;
+        gap: 12px;
+        min-height: auto;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .step-number {
+        font-size: 17px;
+        min-width: 26px;
+    }
+
+    .step-text {
+        font-size: 14px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
 }
 
 /* Media query per schermi più piccoli */
 @media (max-width: 480px) {
     .popup-card {
-        padding: 20px 15px;
+        padding: 16px 12px;
+        margin: 5px;
+        width: calc(100% - 10px);
+        max-width: 280px;
     }
 
     .popup-exercise-name {
-        font-size: 22px;
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+
+    .popup-exercise-gif {
+        max-width: 140px;
+        margin-bottom: 12px;
+    }
+
+    .guide-separator {
+        margin: 12px 0;
+        font-size: 14px;
+    }
+
+    .step-card {
+        padding: 8px;
+        gap: 6px;
+        min-height: auto;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .step-number {
+        font-size: 16px;
+        min-width: 20px;
+    }
+
+    .step-text {
+        font-size: 14px;
+        line-height: 1.3;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
     }
 
     .popup-nav-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 9px;
+        width: 40px;
+        height: 40px;
+        font-size: 12px;
+    }
+
+    .popup-navigation {
+        margin-top: 15px;
     }
 }
 
