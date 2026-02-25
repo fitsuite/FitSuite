@@ -341,42 +341,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const popupExerciseDescription = document.getElementById('popup-exercise-description');
     const closePopupBtn = document.querySelector('.close-popup-btn');
 
-    function showExerciseDetailPopup(exerciseName) {
-        console.log("Tentativo di mostrare popup per esercizio:", exerciseName);
-
-        // Recupera la preferenza linguistica dalla cache
-        const languagePreference = localStorage.getItem('languagePreference') || 'it'; // Default a 'it'
-
-        let exerciseData;
-        if (languagePreference === 'it') {
-            exerciseData = allExercisesData.find(ex => ex.name_it === exerciseName);
-        } else {
-            exerciseData = allExercisesData.find(ex => ex.name === exerciseName);
-        }
-        
-        if (exerciseData) {
-            console.log("Dati esercizio trovati:", exerciseData);
-            popupExerciseGif.src = exerciseData.gifUrl;
-            popupExerciseName.textContent = languagePreference === 'it' ? exerciseData.name_it : exerciseData.name;
-            const instructionsHtml = (languagePreference === 'it' ? exerciseData.instructions_it : exerciseData.instructions)
-                .map((instruction, index) => {
-                    // Rimuove "Step [numero]:" dall'inizio della stringa, se presente
-                    const cleanedInstruction = instruction.replace(/^Step\s*\d+:\s*/, '');
-                    return `<div class="step-card">
-                                <span class="step-number">${index + 1}</span>
-                                <p class="step-text">${cleanedInstruction}</p>
-                            </div>`;
-                })
-                .join('');
-            popupExerciseDescription.innerHTML = instructionsHtml;
-            exerciseDetailPopup.classList.add('show');
-        } else {
-            console.warn(`Dati per l'esercizio "${exerciseName}" non trovati.`);
-        }
-    }
-
     function hideExerciseDetailPopup() {
-        exerciseDetailPopup.classList.remove('show');
+        exerciseDetailPopup.classList.remove('active');
     }
 
     // Listener per chiudere il popup
@@ -390,5 +356,109 @@ document.addEventListener('DOMContentLoaded', () => {
                 hideExerciseDetailPopup();
             }
         });
+    }
+
+    // Stepper Logic
+    const prevBtn = document.querySelector('.popup-nav-btn.prev');
+    const nextBtn = document.querySelector('.popup-nav-btn.next');
+    const dotsContainer = document.querySelector('.popup-dots');
+    let currentStep = 0;
+    let totalSteps = 0;
+
+    function updateStepper() {
+        const steps = document.querySelectorAll('.popup-step');
+        const dots = document.querySelectorAll('.dot');
+        
+        console.log(`Updating stepper: currentStep=${currentStep}, totalSteps=${totalSteps}`);
+        
+        // Hide all steps and show only the current step
+        steps.forEach((step, index) => {
+            step.style.display = index === currentStep ? 'block' : 'none';
+        });
+
+        // Update dots active state
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentStep);
+        });
+
+        // Update button states
+        prevBtn.disabled = currentStep === 0;
+        nextBtn.disabled = currentStep === totalSteps - 1;
+        
+        console.log(`Step ${currentStep} displayed, Prev disabled: ${prevBtn.disabled}, Next disabled: ${nextBtn.disabled}`);
+    }
+
+    prevBtn.addEventListener('click', () => {
+        console.log(`Prev button clicked. Current step: ${currentStep}`);
+        if (currentStep > 0) {
+            currentStep--;
+            console.log(`Moving to step: ${currentStep}`);
+            updateStepper();
+        } else {
+            console.log('Already at first step, cannot go back');
+        }
+    });
+
+    nextBtn.addEventListener('click', () => {
+        console.log(`Next button clicked. Current step: ${currentStep}, Total steps: ${totalSteps - 1}`);
+        if (currentStep < totalSteps - 1) {
+            currentStep++;
+            console.log(`Moving to step: ${currentStep}`);
+            updateStepper();
+        } else {
+            console.log('Already at last step, cannot go forward');
+        }
+    });
+
+    function showExerciseDetailPopup(exerciseName) {
+        console.log("Tentativo di mostrare popup per esercizio:", exerciseName);
+
+        const languagePreference = localStorage.getItem('languagePreference') || 'it';
+        const exerciseData = allExercisesData.find(ex => (languagePreference === 'it' ? ex.name_it : ex.name) === exerciseName);
+
+        if (exerciseData) {
+            console.log("Dati esercizio trovati:", exerciseData);
+            popupExerciseGif.src = exerciseData.gifUrl;
+            popupExerciseName.textContent = languagePreference === 'it' ? exerciseData.name_it : exerciseData.name;
+
+            // Usa sempre instructions_it per avere le istruzioni in italiano
+            const instructions = exerciseData.instructions_it || exerciseData.instructions;
+            totalSteps = instructions.length;
+            currentStep = 0;
+            
+            console.log(`Caricate ${totalSteps} istruzioni:`, instructions);
+
+            popupExerciseDescription.innerHTML = instructions.map((instruction, index) => {
+                // Rimuovi i primi 6 caratteri ('Step:X:')
+                let cleanedInstruction = instruction.substring(6).trim();
+                console.log(`Istruzione originale ${index}:`, instruction);
+                console.log(`Istruzione pulita ${index}:`, cleanedInstruction);
+                
+                return `<div class="popup-step" data-step="${index}">
+                            <div class="step-card">
+                                <span class="step-number">${index + 1}</span>
+                                <p class="step-text">${cleanedInstruction}</p>
+                            </div>
+                        </div>`;
+            }).join('');
+
+            dotsContainer.innerHTML = instructions.map((_, index) => 
+                `<span class="dot ${index === 0 ? 'active' : ''}" data-step="${index}"></span>`
+            ).join('');
+
+            // Aggiungi event listeners ai pallini
+            const dots = dotsContainer.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', () => {
+                    currentStep = index;
+                    updateStepper();
+                });
+            });
+
+            updateStepper();
+            exerciseDetailPopup.classList.add('active');
+        } else {
+            console.warn(`Dati per l'esercizio "${exerciseName}" non trovati.`);
+        }
     }
 });

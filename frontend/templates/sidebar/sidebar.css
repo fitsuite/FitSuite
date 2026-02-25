@@ -112,31 +112,30 @@
     border-radius: 12px;
 }
 
-/* AI Button Specific Style */
-.new-routine-btn.ai-btn {
-    background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%); /* Purple Gradient */
-    margin-top: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.user-details {
+    flex-grow: 1;
 }
 
-.new-routine-btn.ai-btn:hover {
-    background: linear-gradient(135deg, #9b4dff 0%, #5a1ae0 100%);
-    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+.user-username-sidebar {
+    font-size: 16px;
+    font-weight: 500;
+    color: white;
 }
 
 .user-avatar-small {
-    width: 35px;
-    height: 35px;
+    width: 45px;
+    height: 45px;
     background-color: var(--primary-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 500;
+    font-size: 18px;
 }
 
 .user-name-sidebar {
-    font-size: 14px;
+    font-size: 18px;
     flex-grow: 1;
 }
 

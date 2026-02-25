@@ -183,17 +183,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Function to update sidebar elements
-            const updateSidebar = () => {
+            const updateSidebar = async () => {
                 const userInitialSidebar = document.getElementById('user-initial-sidebar');
                 const userRoutineListSidebar = document.getElementById('user-routine-list-sidebar');
-                const userEmailSidebar = document.getElementById('user-email-sidebar');
+                const userUsernameSidebar = document.getElementById('user-username-sidebar');
 
-                if (userEmailSidebar) {
-                    userEmailSidebar.textContent = user.email.split('@')[0];
+                let username = '@utente';
+                
+                // Load and display username from database
+                if (userUsernameSidebar) {
+                    try {
+                        const userDoc = await db.collection('users').doc(user.uid).get();
+                        if (userDoc.exists) {
+                            const userData = userDoc.data();
+                            if (userData.username) {
+                                username = userData.username;
+                                userUsernameSidebar.textContent = `@${userData.username}`;
+                            } else {
+                                userUsernameSidebar.textContent = '@utente';
+                            }
+                        } else {
+                            userUsernameSidebar.textContent = '@utente';
+                        }
+                    } catch (error) {
+                        console.error('Error loading username:', error);
+                        userUsernameSidebar.textContent = '@utente';
+                    }
                 }
                 
+                // Use username initial for avatar
                 if (userInitialSidebar) {
-                    const initial = (user.displayName || user.email).charAt(0).toUpperCase();
+                    const initial = username.charAt(0).toUpperCase();
                     userInitialSidebar.textContent = initial;
                 }
 
