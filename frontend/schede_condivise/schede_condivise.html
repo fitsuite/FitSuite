@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Le Mie Schede | FitSuite</title>
+    <title>Schede Condivise | FitSuite</title>
     <link rel="stylesheet" href="../../style.css">
-    <link rel="stylesheet" href="./lista_schede.css">
+    <link rel="stylesheet" href="./schede_condivise.css">
     <link rel="stylesheet" href="../templates/sidebar/sidebar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../components/loading_screen/loading_screen.css">
     <link rel="stylesheet" href="../components/session_control/session_control.css">
     <link rel="stylesheet" href="../components/popup/popup.css">
-    <link rel="stylesheet" href="../components/share_popup/share_popup.css">
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
@@ -43,32 +42,36 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="content-header">
-                <h1>Le Mie Schede</h1>
+                <h1>Schede Condivise</h1>
                 <div class="search-wrapper">
-                    <input type="text" id="search-bar" placeholder="Cerca schede...">
+                    <input type="text" id="search-bar" placeholder="Cerca schede condivise...">
                     <i class="fas fa-search search-icon"></i>
                 </div>
-                <button class="logout-btn" id="logout-button">Logout</button>
+                <div class="header-actions">
+                    <button class="refresh-btn" id="refresh-btn" title="Aggiorna schede condivise">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="logout-btn" id="logout-button">Logout</button>
+                </div>
             </header>
 
             <div class="routines-list-container">
                 <div class="list-header">
                     <span class="col-menu"></span> <!-- Placeholder for alignment -->
                     <span class="col-name">Nome</span>
+                    <span class="col-owner">Condivisa da</span>
                     <span class="col-sessions">Sedute</span>
-                    <span class="col-date">Periodo</span>
                     <span class="col-actions">Azioni</span>
                 </div>
                 <div class="routines-list" id="routines-container">
-                    <!-- Le schede verranno caricate qui -->
+                    <!-- Le schede condivise verranno caricate qui -->
                 </div>
             </div>
         </main>
     </div>
 
     <script src="../templates/sidebar/sidebar.js"></script>
-    <script src="../components/share_popup/share_popup.js"></script>
-    <script src="./lista_schede.js"></script>
+    <script src="./schede_condivise.js"></script>
     <script src="../components/session_control/session_control.js"></script>
     <script src="../components/popup/popup.js"></script>
     <script>
@@ -96,7 +99,7 @@
                 if (!user) {
                     window.location.href = '../auth/auth.html';
                 }
-                // loadingScreen.style.display = 'none'; // Moved to lista_schede.js after data load
+                // loadingScreen.style.display = 'none'; // Moved to schede_condivise.js after data load
             });
         });
     </script>

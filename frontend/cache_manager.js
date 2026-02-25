@@ -1,6 +1,7 @@
 const CacheManager = {
     PREFS_KEY_PREFIX: 'userPreferences_',
     ROUTINES_KEY_PREFIX: 'cachedRoutines_',
+    SHARED_ROUTINES_KEY_PREFIX: 'cachedSharedRoutines_',
 
     GLOBAL_THEME_KEY: 'globalThemePrefs',
 
@@ -231,6 +232,117 @@ const CacheManager = {
         routines = routines.filter(r => r.id !== routineId);
         this.saveRoutines(uid, routines);
         console.log('Routine removed from cache:', routineId);
+    },
+
+    // SHARED ROUTINES CACHE METHODS
+
+    // Salva le schede condivise nella cache
+    saveSharedRoutines: function(uid, sharedRoutines) {
+        const key = this.SHARED_ROUTINES_KEY_PREFIX + uid;
+        
+        // Remove duplicates before saving
+        const uniqueRoutines = [];
+        const seenIds = new Set();
+        
+        for (const routine of sharedRoutines) {
+            if (!seenIds.has(routine.id)) {
+                seenIds.add(routine.id);
+                uniqueRoutines.push(routine);
+            }
+        }
+        
+        const dataToCache = {
+            timestamp: Date.now(),
+            routines: uniqueRoutines
+        };
+        
+        try {
+            localStorage.setItem(key, JSON.stringify(dataToCache));
+            console.log('Shared routines cached for user:', uid, 'Count:', uniqueRoutines.length);
+        } catch (error) {
+            console.warn('Failed to cache shared routines:', error);
+            this.clearOldSharedRoutines(uid);
+            try {
+                localStorage.setItem(key, JSON.stringify(dataToCache));
+            } catch (retryError) {
+                console.warn('Retry failed for shared routines cache:', retryError);
+            }
+        }
+    },
+
+    // Ottieni le schede condivise dalla cache
+    getSharedRoutines: function(uid) {
+        const key = this.SHARED_ROUTINES_KEY_PREFIX + uid;
+        try {
+            const cached = localStorage.getItem(key);
+            if (cached) {
+                const data = JSON.parse(cached);
+                if (data && data.routines) {
+                    console.log('Shared routines loaded from cache for user:', uid, 'Count:', data.routines.length);
+                    return this._reviveDates(data.routines);
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to load shared routines from cache:', error);
+            localStorage.removeItem(key);
+        }
+        return null;
+    },
+
+    // Ottieni il timestamp della cache delle schede condivise
+    getSharedRoutinesCacheTimestamp: function(uid) {
+        const key = this.SHARED_ROUTINES_KEY_PREFIX + uid;
+        try {
+            const cached = localStorage.getItem(key);
+            if (cached) {
+                const data = JSON.parse(cached);
+                if (data && data.timestamp) {
+                    return data.timestamp;
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to get shared routines cache timestamp:', error);
+        }
+        return 0;
+    },
+
+    // Controlla se la cache delle schede condivise è scaduta (5 minuti)
+    isSharedRoutinesCacheExpired: function(uid) {
+        const timestamp = this.getSharedRoutinesCacheTimestamp(uid);
+        const now = Date.now();
+        const cacheDuration = 5 * 60 * 1000; // 5 minuti
+        return (now - timestamp) > cacheDuration;
+    },
+
+    // Forza l'aggiornamento della cache delle schede condivise
+    forceRefreshSharedRoutines: function(uid) {
+        const key = this.SHARED_ROUTINES_KEY_PREFIX + uid;
+        localStorage.removeItem(key);
+        console.log('Forced refresh of shared routines cache for user:', uid);
+    },
+
+    // Rimuovi una scheda condivisa dalla cache
+    removeSharedRoutineFromCache: function(uid, routineId) {
+        let sharedRoutines = this.getSharedRoutines(uid) || [];
+        sharedRoutines = sharedRoutines.filter(r => r.id !== routineId);
+        this.saveSharedRoutines(uid, sharedRoutines);
+        console.log('Shared routine removed from cache:', routineId);
+    },
+
+    // Pulisci le vecchie schede condivise (mantieni solo le più recenti)
+    clearOldSharedRoutines: function(uid) {
+        const key = this.SHARED_ROUTINES_KEY_PREFIX + uid;
+        try {
+            const sharedRoutines = this.getSharedRoutines(uid) || [];
+            if (sharedRoutines.length > 50) {
+                // Mantieni solo le prime 50 schede condivise
+                const recentSharedRoutines = sharedRoutines.slice(0, 50);
+                localStorage.setItem(key, JSON.stringify(recentSharedRoutines));
+                console.log('Cleared old shared routines, kept:', recentSharedRoutines.length);
+            }
+        } catch (error) {
+            console.warn('Failed to clear old shared routines:', error);
+        }
     }
 };
 

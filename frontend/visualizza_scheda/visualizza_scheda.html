@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../components/loading_screen/loading_screen.css">
     <link rel="stylesheet" href="../components/session_control/session_control.css">
     <link rel="stylesheet" href="../components/popup/popup.css">
+    <link rel="stylesheet" href="../components/share_popup/share_popup.css">
     <link rel="icon" type="image/x-icon" href="image/logo.ico">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
@@ -48,8 +49,9 @@
             <header class="content-header">
                 <h1>Visualizza Scheda</h1>
                 <div class="header-right">
-                    <button class="edit-btn"><i class="fas fa-pencil-alt"></i> Modifica</button>
-                    <button class="share-btn">Condividi <i class="fas fa-chevron-down"></i></button>
+                    <button class="edit-btn" id="edit-btn"><i class="fas fa-pencil-alt"></i> Modifica</button>
+                    <button class="share-btn" id="share-btn">Condividi <i class="fas fa-chevron-down"></i></button>
+                    <button class="remove-saved-btn" id="remove-saved-btn" style="display: none;"><i class="fas fa-trash-alt"></i> Elimina Scheda Salvata</button>
                 </div>
             </header>
             
@@ -131,6 +133,7 @@
     </div>
 
     <script src="../templates/sidebar/sidebar.js"></script>
+    <script src="../components/share_popup/share_popup.js"></script>
     <script src="./visualizza_scheda.js"></script>
     <script src="../components/session_control/session_control.js"></script>
     <script src="../components/popup/popup.js"></script>

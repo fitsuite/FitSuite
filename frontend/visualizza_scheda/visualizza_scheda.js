@@ -186,7 +186,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleEditButton(routine) {
         const editBtn = document.querySelector('.edit-btn');
-        if (!editBtn) return;
+        const shareBtn = document.querySelector('.share-btn');
+        const removeSavedBtn = document.querySelector('.remove-saved-btn');
+        
+        if (!editBtn || !shareBtn || !removeSavedBtn) return;
 
         const modal = document.getElementById('edit-confirm-modal');
         const confirmBtn = document.getElementById('confirm-edit-btn');
@@ -199,8 +202,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isOwner && isDesktop) {
                 editBtn.style.display = 'flex';
-            } else {
+                shareBtn.style.display = 'flex';
+                removeSavedBtn.style.display = 'none';
+            } else if (!isOwner && isDesktop) {
                 editBtn.style.display = 'none';
+                shareBtn.style.display = 'none';
+                removeSavedBtn.style.display = 'flex';
+            } else {
+                // Mobile: hide all buttons
+                editBtn.style.display = 'none';
+                shareBtn.style.display = 'none';
+                removeSavedBtn.style.display = 'none';
             }
         }
 
@@ -209,10 +221,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // Aggiorna visibilità al resize
         window.addEventListener('resize', updateButtonVisibility);
 
-        // Gestione click
+        // Gestione click Edit
         editBtn.onclick = (e) => {
             e.preventDefault();
             if (modal) modal.classList.add('active');
+        };
+
+        // Gestione click Share
+        shareBtn.onclick = (e) => {
+            e.preventDefault();
+            if (window.showSharePopup) {
+                window.showSharePopup(routine.id);
+            }
+        };
+
+        // Gestione click Remove Saved
+        removeSavedBtn.onclick = async (e) => {
+            e.preventDefault();
+            if (await window.showConfirm(`Sei sicuro di voler rimuovere la scheda "${routine.name || 'Scheda'}" dalle tue schede salvate?`, "Rimuovi Scheda Salvata")) {
+                await removeSharedRoutine(routine.id);
+            }
         };
 
         if (confirmBtn) {
@@ -226,14 +254,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (modal) modal.classList.remove('active');
             };
         }
+    }
 
-        // Close on click outside
-        if (modal) {
-            modal.addEventListener('click', (event) => {
-                if (event.target === modal) {
-                    modal.classList.remove('active');
+    // Close on click outside
+    const modal = document.getElementById('edit-confirm-modal');
+    if (modal) {
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    }
+
+    async function removeSharedRoutine(routineId) {
+        try {
+            const routineRef = db.collection('routines').doc(routineId);
+            const doc = await routineRef.get();
+            
+            if (doc.exists) {
+                const routineData = doc.data();
+                const condivisioni = routineData.condivisioni || [];
+                const acceptedUsers = routineData.acceptedUsers || [];
+                
+                // Remove user from condivisioni and acceptedUsers
+                const updatedCondivisioni = condivisioni.filter(uid => uid !== currentUser.uid);
+                const updatedAcceptedUsers = acceptedUsers.filter(uid => uid !== currentUser.uid);
+                
+                await routineRef.update({ 
+                    condivisioni: updatedCondivisioni,
+                    acceptedUsers: updatedAcceptedUsers
+                });
+                
+                // Update cache if available
+                if (window.CacheManager) {
+                    window.CacheManager.forceRefreshSharedRoutines(currentUser.uid);
                 }
-            });
+                
+                if (window.showAlert) {
+                    await window.showAlert('Scheda rimossa con successo!', 'Scheda rimossa');
+                }
+                
+                // Redirect to shared routines page
+                window.location.href = '../schede_condivise/schede_condivise.html';
+            }
+        } catch (error) {
+            console.error('Error removing shared routine:', error);
+            if (window.showAlert) {
+                await window.showAlert('Errore durante la rimozione della scheda.', 'Errore');
+            }
         }
     }
 
@@ -332,6 +400,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             seduteContainer.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 40px;">Nessuna seduta trovata per questa scheda.</p>';
         }
+        
+        // Handle button visibility based on ownership
+        handleEditButton(routine);
     }
 
     // Funzioni per la gestione del popup
