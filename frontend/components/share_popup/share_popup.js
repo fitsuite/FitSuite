@@ -125,7 +125,10 @@ class SharePopup {
         this.overlay.classList.add('show');
     }
 
-    hide() {
+    async hide() {
+        // Auto-save before closing
+        await this.saveShareChanges();
+        
         this.overlay.classList.remove('show');
         this.currentRoutineId = null;
         this.currentRoutine = null;
@@ -306,59 +309,45 @@ class SharePopup {
         }
     }
 
-    addShare(user) {
-        // Check if user is already shared
-        if (this.sharedUsers.some(u => u.uid === user.uid)) {
+    async addShare(userId, username, email) {
+        // Check if user is already in shared list
+        if (this.sharedUsers.some(u => u.uid === userId)) {
             return;
         }
 
         this.sharedUsers.push({
-            ...user,
+            uid: userId,
+            username: username,
+            email: email,
             role: 'viewer'
         });
 
         this.renderSharedUsers();
         this.hideSearchResults();
         document.getElementById('user-search-input').value = '';
+        
+        // Auto-save immediately when adding a user
+        await this.saveShareChanges();
     }
 
     async removeShare(userId) {
         this.sharedUsers = this.sharedUsers.filter(u => u.uid !== userId);
         this.renderSharedUsers();
         
+        // Auto-save immediately when removing a user
+        await this.saveShareChanges();
+        
         // Trigger cache refresh for the removed user
         if (window.CacheManager) {
             window.CacheManager.forceRefreshSharedRoutines(userId);
         }
-
-        // Also remove from acceptedUsers in the database
-        if (this.currentRoutineId) {
-            try {
-                const routineRef = this.db.collection('routines').doc(this.currentRoutineId);
-                const doc = await routineRef.get();
-                
-                if (doc.exists) {
-                    const routineData = doc.data();
-                    const acceptedUsers = routineData.acceptedUsers || [];
-                    
-                    if (acceptedUsers.includes(userId)) {
-                        const updatedAcceptedUsers = acceptedUsers.filter(uid => uid !== userId);
-                        await routineRef.update({ acceptedUsers: updatedAcceptedUsers });
-                        console.log("Removed user from acceptedUsers:", userId);
-                    }
-                }
-            } catch (error) {
-                console.error('Error removing user from acceptedUsers:', error);
-            }
-        }
     }
 
-    async sendShare() {
+    async saveShareChanges() {
         if (!this.currentRoutineId) return;
 
         try {
-            console.log("Sending share for routine:", this.currentRoutineId);
-            console.log("Current shared users:", this.sharedUsers);
+            console.log("Auto-saving share changes for routine:", this.currentRoutineId);
             
             const sharedUserIds = this.sharedUsers
                 .filter(u => u.role === 'viewer')
@@ -383,11 +372,11 @@ class SharePopup {
                 updateData.acceptedUsers = updatedAcceptedUsers;
             }
 
-            console.log("Updating document with:", updateData);
+            console.log("Auto-saving document with:", updateData);
             
             await routineRef.update(updateData);
             
-            console.log("Share successfully saved to database");
+            console.log("Share changes auto-saved successfully");
 
             // Trigger cache refresh for all affected users
             for (const userId of sharedUserIds) {
@@ -403,24 +392,20 @@ class SharePopup {
                 }
             }
 
-            // Show success message
-            if (window.showAlert) {
-                await window.showAlert('Scheda condivisa con successo!', 'Condivisione completata');
-            } else {
-                alert('Scheda condivisa con successo!');
-            }
-
-            this.hide();
         } catch (error) {
-            console.error('Error sharing routine:', error);
-            console.error('Error details:', error.message, error.code);
-            
-            if (window.showAlert) {
-                await window.showAlert('Errore durante la condivisione della scheda: ' + error.message, 'Errore');
-            } else {
-                alert('Errore durante la condivisione della scheda: ' + error.message);
-            }
+            console.error('Error auto-saving share changes:', error);
         }
+    }
+
+    async sendShare() {
+        // This function now just shows a success message since auto-save handles the actual saving
+        if (window.showAlert) {
+            await window.showAlert('Condivisione salvata con successo!', 'Condivisione completata');
+        } else {
+            alert('Condivisione salvata con successo!');
+        }
+        
+        this.hide();
     }
 
     getInitials(name) {
