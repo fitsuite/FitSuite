@@ -197,6 +197,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             console.error("Error loading AI routine:", e);
         }
+    }
+
+    async function loadRoutineForEdit(routineId) {
         try {
             const doc = await db.collection('routines').doc(routineId).get();
             if (!doc.exists) {

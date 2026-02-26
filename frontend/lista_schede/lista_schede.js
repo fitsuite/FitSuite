@@ -242,6 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="menu-item share-btn">
                             <i class="fas fa-share-alt"></i> Condividi
                         </button>
+                        <button class="menu-item edit-btn">
+                            <i class="fas fa-edit"></i> Modifica Scheda
+                        </button>
                         <button class="menu-item rename-btn">
                             <i class="fas fa-edit"></i> Rinomina
                         </button>
@@ -282,11 +285,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Show/hide actions based on ownership
             const shareMenuItem = routineItem.querySelector('.share-btn');
+            const editMenuItem = routineItem.querySelector('.edit-btn');
             const renameMenuItem = routineItem.querySelector('.rename-btn');
             const deleteMenuItem = routineItem.querySelector('.delete-btn');
             
             if (!isOwner) {
                 if (shareMenuItem) shareMenuItem.style.display = 'none';
+                if (editMenuItem) editMenuItem.style.display = 'none';
                 if (renameMenuItem) renameMenuItem.style.display = 'none';
                 if (deleteMenuItem) deleteMenuItem.style.display = 'none';
             }
@@ -299,6 +304,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.showSharePopup) {
                         await window.showSharePopup(routine.id);
                     }
+                });
+            }
+
+            // Edit Action
+            if (editMenuItem && isOwner) {
+                editMenuItem.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    menuDropdown.classList.remove('active');
+                    window.location.href = `../crea_scheda/crea_scheda.html?id=${routine.id}`;
                 });
             }
 
