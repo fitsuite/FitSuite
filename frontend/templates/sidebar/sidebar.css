@@ -166,7 +166,7 @@
     cursor: pointer;
     transition: all 0.2s;
     font-size: 14px;
-    margin-bottom: 15px; /* Add margin bottom to separate buttons */
+    margin-bottom: 8px; /* Reduced margin between buttons */
 }
 
 .new-routine-btn.ai-btn {
@@ -186,7 +186,7 @@
 .sidebar-divider {
     border: none;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin: 20px 0;
+    margin: 12px 0; /* Reduced margin around divider */
 }
 
 .view-routines-btn {
@@ -201,7 +201,7 @@
     justify-content: center;
     gap: 10px;
     cursor: pointer;
-    margin-bottom: 30px;
+    margin-bottom: 10px; /* Reduced margin between buttons */
     transition: transform 0.2s, background-color 0.2s;
 }
 
@@ -301,9 +301,9 @@
 }
 
 .sidebar-footer {
-    margin-top: auto;
+    margin-top: 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 20px;
+    padding-top: 12px; /* Reduced padding to bring settings closer */
     flex-shrink: 0; /* Don't shrink - keeps settings button always visible */
 }
 

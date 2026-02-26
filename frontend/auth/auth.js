@@ -118,12 +118,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to check if username is unique
     async function isUsernameUnique(username) {
         try {
+            console.log('Checking username uniqueness for:', username);
             const snapshot = await db.collection('users')
                 .where('username', '==', username)
                 .get();
+            
+            console.log('Query result - snapshot.empty:', snapshot.empty);
+            console.log('Query result - snapshot.size:', snapshot.size);
+            
+            if (!snapshot.empty) {
+                console.log('Username already exists, found documents:');
+                snapshot.forEach(doc => {
+                    console.log('Document ID:', doc.id, 'Username:', doc.data().username);
+                });
+            }
+            
             return snapshot.empty;
         } catch (error) {
             console.error('Error checking username uniqueness:', error);
+            console.error('Error details:', error.code, error.message);
             return false;
         }
     }
@@ -273,6 +286,91 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayMessage('forgot-password-error-message', getFirebaseErrorMessage(error.code));
             }
         });
+    }
+
+    // Function to check if user has username
+    async function checkUserHasUsername(userId) {
+        try {
+            const userDoc = await db.collection('users').doc(userId).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                return userData.username && userData.username.trim() !== '';
+            }
+            return false;
+        } catch (error) {
+            console.error('Error checking user username:', error);
+            return false;
+        }
+    }
+
+    // Function to show username selection popup
+    async function showUsernameSelectionPopup() {
+        return new Promise(async (resolve) => {
+            let selectedUsername = null;
+            let isValid = false;
+
+            const showPopup = async () => {
+                const username = await window.showPrompt(
+                    'Scegli un username obbligatorio (3-20 caratteri, solo lettere, numeri e _):',
+                    '',
+                    'Username Richiesto'
+                );
+
+                if (username === null) {
+                    // User cancelled
+                    resolve(null);
+                    return;
+                }
+
+                const trimmedUsername = username.trim();
+
+                // Validate username
+                if (trimmedUsername.length < 3) {
+                    await window.alert('L\'username deve contenere almeno 3 caratteri.');
+                    showPopup();
+                    return;
+                }
+
+                if (trimmedUsername.length > 20) {
+                    await window.alert('L\'username non può superare i 20 caratteri.');
+                    showPopup();
+                    return;
+                }
+
+                if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
+                    await window.alert('L\'username può contenere solo lettere, numeri e underscore.');
+                    showPopup();
+                    return;
+                }
+
+                // Check if username is unique
+                const isUnique = await isUsernameUnique(trimmedUsername);
+                if (!isUnique) {
+                    await window.alert('Questo username è già stato scelto da un altro utente. Scegline un altro.');
+                    showPopup();
+                    return;
+                }
+
+                selectedUsername = trimmedUsername;
+                resolve(selectedUsername);
+            };
+
+            showPopup();
+        });
+    }
+
+    // Function to update user username in Firestore
+    async function updateUserUsername(userId, username) {
+        try {
+            await db.collection('users').doc(userId).update({
+                username: username
+            });
+            console.log('Username updated successfully');
+            return true;
+        } catch (error) {
+            console.error('Error updating username:', error);
+            return false;
+        }
     }
 
     // Handle authentication state changes
