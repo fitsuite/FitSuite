@@ -357,14 +357,8 @@
             .then(response => response.text())
             .then(html => {
                 document.getElementById('sidebar-placeholder').innerHTML = html;
-                // Initialize sidebar functionality after HTML is loaded
-                if (window.sidebarInitialized) {
-                    // Re-initialize sidebar components if needed
-                    const event = new CustomEvent('sidebarLoaded');
-                    document.dispatchEvent(event);
-                }
             })
-            .catch(err => console.error('Error loading sidebar:', err));
+            .catch(error => console.error('Error loading sidebar:', error));
     </script>
 </body>
 </html>

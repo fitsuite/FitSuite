@@ -40,12 +40,12 @@ body.settings-body {
 
 .content-header {
     width: 100%;
-    margin-bottom: 50px;
+    max-width: 1200px;
+    margin: 0 auto 50px auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: relative;
-    padding: 0 5%; /* Fallback padding */
+    padding: 0 20px;
 }
 
 /* Posizionamento specifico per h1 e logout richiesto dall'utente */
@@ -53,9 +53,7 @@ body.settings-body {
     color: var(--primary-color);
     font-size: 32px;
     font-weight: 500;
-    position: absolute;
-    left: calc((100% - 600px) / 4);
-    transform: translateX(-50%);
+    flex: 1;
 }
 
 .logout-btn {
@@ -68,9 +66,6 @@ body.settings-body {
     transition: all 0.2s;
     font-size: 14px;
     font-weight: 500;
-    position: absolute;
-    right: calc((100% - 600px) / 4);
-    transform: translateX(50%);
     min-width: 160px; /* Come contattaci */
 }
 
@@ -518,28 +513,24 @@ body.settings-body {
     .content-header {
         max-width: 900px; /* Constrain width to keep elements closer */
         margin: 0 auto 30px auto;
-        padding: 0; /* Remove internal padding as main-content has it */
+        padding: 0 20px; /* Maintain consistent padding */
         justify-content: space-between;
     }
 
     .content-header h1 {
-        position: static;
-        transform: none;
-        left: auto;
         font-size: 28px;
+        flex: 1;
     }
 
     .logout-btn {
-        position: static;
-        transform: none;
-        right: auto;
         padding: 10px 25px;
+        min-width: 140px;
     }
 
     .settings-container {
         max-width: 100%; /* Allow full width up to max */
         width: 100%;
-        padding: 0;
+        padding: 0 20px;
     }
 
     .settings-card {
@@ -548,6 +539,11 @@ body.settings-body {
 }
 
 @media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 40px 20px;
+    }
+    
     .content-header {
         flex-direction: column;
         gap: 15px;

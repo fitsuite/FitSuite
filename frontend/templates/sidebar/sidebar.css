@@ -6,7 +6,7 @@
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 20px 15px; /* Adjusted padding for exact match */
     position: fixed;
     top: 0;
     bottom: 0;
@@ -104,7 +104,7 @@
 }
 
 .sidebar-header {
-    margin-bottom: 25px;
+    margin-bottom: 15px; /* Reduced from 25px to match other pages */
 }
 
 .user-info {
@@ -235,7 +235,7 @@
     padding-left: 25px;
     overflow-y: auto;
     flex-grow: 1;
-    max-height: calc(100vh - 480px); /* Further reduced to ensure footer is always visible */
+    max-height: calc(100vh - 460px); /* Adjusted to make space for the footer */
 }
 
 /* For mobile */
@@ -306,9 +306,11 @@
 .sidebar-footer {
     margin-top: auto;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 20px; /* Reduced padding to bring settings closer */
+    padding-top: 15px;
+    padding-bottom: 0px; /* Remove bottom padding to sit at very bottom */
     flex-shrink: 0; /* Don't shrink - keeps settings button always visible */
-    position: relative;
+    position: sticky;
+    bottom: 0;
     background-color: #1a1a1a;
 }
 
@@ -321,6 +323,10 @@
     padding: 12px;
     border-radius: 10px;
     transition: background 0.2s;
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 1;
+    position: relative;
 }
 
 .nav-item.active {
