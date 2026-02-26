@@ -180,6 +180,32 @@ const AddExerciseModal = {
         }
     },
 
+    resetFilters: function() {
+        // Clear all selected filters
+        this.selectedBodyParts.clear();
+        this.selectedEquipments.clear();
+        this.selectedTargetMuscles.clear();
+        
+        // Uncheck all checkboxes
+        const filtersContainer = document.getElementById('dynamic-filters');
+        if (filtersContainer) {
+            const checkboxes = filtersContainer.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+            });
+        }
+        
+        // Clear search input
+        const searchInput = document.getElementById('exercise-search');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        // Reset filtered exercises and re-render
+        this.filteredExercises = this.allExercises;
+        this.renderExercises();
+    },
+
     setupListeners: function() {
         const searchInput = document.getElementById('exercise-search');
         if (searchInput) {
@@ -192,6 +218,13 @@ const AddExerciseModal = {
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
                 this.close();
+            });
+        }
+
+        const resetBtn = document.getElementById('reset-filters-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.resetFilters();
             });
         }
 

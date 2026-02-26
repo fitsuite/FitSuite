@@ -47,6 +47,32 @@
     color: var(--primary-color);
 }
 
+.reset-filters-btn {
+    width: 100%;
+    background-color: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    font-size: 14px;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.reset-filters-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.reset-filters-btn i {
+    font-size: 12px;
+}
+
 .modal-body {
     display: flex;
     flex-grow: 1;
