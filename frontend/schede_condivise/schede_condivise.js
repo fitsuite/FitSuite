@@ -167,7 +167,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const cachedSharedRoutines = window.CacheManager.getSharedRoutines(uid);
             if (cachedSharedRoutines !== null) {
                 console.log("Shared routines loaded from cache, skipping DB");
-                allRoutines = cachedSharedRoutines;
+                // Remove duplicates from cache data before using
+                const uniqueRoutines = [];
+                const seenIds = new Set();
+                
+                for (const routine of cachedSharedRoutines) {
+                    if (!seenIds.has(routine.id)) {
+                        seenIds.add(routine.id);
+                        uniqueRoutines.push(routine);
+                    }
+                }
+                
+                allRoutines = uniqueRoutines;
                 renderRoutines(allRoutines);
                 return;
             }
@@ -250,14 +261,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderRoutines(routines) {
+        // Remove duplicates before rendering
+        const uniqueRoutines = [];
+        const seenIds = new Set();
+        
+        for (const routine of routines) {
+            if (!seenIds.has(routine.id)) {
+                seenIds.add(routine.id);
+                uniqueRoutines.push(routine);
+            }
+        }
+        
         routinesContainer.innerHTML = '';
 
-        if (routines.length === 0) {
+        if (uniqueRoutines.length === 0) {
             routinesContainer.innerHTML = '<div style="text-align: center; color: var(--text-gray); padding: 40px;">Nessuna scheda condivisa trovata.</div>';
             return;
         }
 
-        routines.forEach(routine => {
+        uniqueRoutines.forEach(routine => {
             const routineItem = document.createElement('div');
             routineItem.className = 'routine-list-row';
             

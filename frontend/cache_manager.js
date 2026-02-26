@@ -407,16 +407,25 @@ const CacheManager = {
     saveSharedRoutines: function(uid, sharedRoutines) {
         const key = this.SHARED_ROUTINES_KEY_PREFIX + uid;
         
-        // Remove duplicates before saving
+        // Remove duplicates before saving - more robust approach
         const uniqueRoutines = [];
         const seenIds = new Set();
         
         for (const routine of sharedRoutines) {
+            if (!routine.id) {
+                console.warn('Skipping routine without ID:', routine);
+                continue;
+            }
+            
             if (!seenIds.has(routine.id)) {
                 seenIds.add(routine.id);
                 uniqueRoutines.push(routine);
+            } else {
+                console.log('Removing duplicate routine from cache:', routine.id);
             }
         }
+        
+        console.log('Deduplicated shared routines:', sharedRoutines.length, '->', uniqueRoutines.length);
         
         // Store dates as simple objects or strings that can be serialized
         const toSave = uniqueRoutines.map(r => {
