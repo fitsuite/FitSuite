@@ -97,11 +97,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     waitForSidebar()
                 ]);
 
-                // Check for routine ID in URL
-                const params = new URLSearchParams(window.location.search);
-                const routineId = params.get('id');
-                if (routineId) {
-                    await loadRoutineForEdit(routineId);
+                // Check for AI generated routine in sessionStorage  
+                const aiRoutineJSON = sessionStorage.getItem('aiGeneratedRoutine');
+                if (aiRoutineJSON) {
+                    const aiRoutine = JSON.parse(aiRoutineJSON);
+                    sessionStorage.removeItem('aiGeneratedRoutine'); // Clean up
+                    await loadAIGeneratedRoutine(aiRoutine);
+                } else {
+                    // Check for routine ID in URL
+                    const params = new URLSearchParams(window.location.search);
+                    const routineId = params.get('id');
+                    if (routineId) {
+                        await loadRoutineForEdit(routineId);
+                    }
                 }
             } catch (error) {
                 console.error("Error during initialization:", error);
@@ -113,7 +121,82 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    async function loadRoutineForEdit(routineId) {
+    async function loadAIGeneratedRoutine(aiRoutine) {
+        try {
+            document.querySelector('.content-header h1').textContent = "Modifica Scheda Generata";
+            nomeSchedaInput.value = aiRoutine.nome_scheda || '';
+            
+            seduteContainer.innerHTML = '';
+            seduteCount = 0;
+
+            if (aiRoutine.sedute && aiRoutine.sedute.length > 0) {
+                aiRoutine.sedute.forEach(seduta => {
+                    seduteCount++;
+                    const sedutaCard = document.createElement('div');
+                    sedutaCard.className = 'card-section seduta-card';
+                    sedutaCard.dataset.sedutaId = seduteCount;
+                    sedutaCard.innerHTML = createSedutaHTML(seduteCount);
+                    
+                    const label = sedutaCard.querySelector('.section-label');
+                    label.textContent = seduta.nome_seduta || `Seduta ${seduteCount}`;
+                    if (seduta.nome_seduta && seduta.nome_seduta !== `Seduta ${seduteCount}`) {
+                        label.dataset.customName = "true";
+                    }
+
+                    seduteContainer.appendChild(sedutaCard);
+                    initSedutaEvents(sedutaCard);
+
+                    const exercisesList = sedutaCard.querySelector('.exercises-list');
+                    if (seduta.esercizi && seduta.esercizi.length > 0) {
+                        seduta.esercizi.forEach(ex => {
+                            const exerciseRow = document.createElement('div');
+                            exerciseRow.className = 'exercise-row';
+                            exerciseRow.dataset.exerciseId = ex.originalData?.id || '';
+                            
+                            const mockEx = {
+                                name: ex.nome,
+                                gifUrl: ex.originalData?.gifUrl || 'https://via.placeholder.com/90'
+                            };
+                            
+                            exerciseRow.innerHTML = createExerciseRowHTML(mockEx);
+                            
+                            const repInput = exerciseRow.querySelector('.col-rep input');
+                            if (repInput) repInput.value = ex.ripetizioni || '';
+                            
+                            const setInput = exerciseRow.querySelector('.col-set input');
+                            if (setInput) setInput.value = ex.serie || '';
+                            
+                            const restInput = exerciseRow.querySelector('.col-rest input');
+                            if (restInput) {
+                                // Parse recupero (e.g., "60s" -> "60")
+                                const restValue = ex.recupero ? ex.recupero.replace('s', '').replace('m', '0') : '';
+                                restInput.value = restValue || '';
+                            }
+                            
+                            const weightInput = exerciseRow.querySelector('.col-weight input');
+                            if (weightInput) weightInput.value = '';
+                            
+                            const noteInput = exerciseRow.querySelector('.col-note textarea');
+                            if (noteInput) noteInput.value = ex.note || '';
+
+                            exercisesList.appendChild(exerciseRow);
+                            initExerciseRowEvents(exerciseRow, mockEx);
+                        });
+                    }
+                    updateSedutaSummary(sedutaCard);
+                });
+            } else {
+                seduteCount++;
+                const sedutaCard = document.createElement('div');
+                sedutaCard.className = 'card-section seduta-card';
+                sedutaCard.dataset.sedutaId = seduteCount;
+                sedutaCard.innerHTML = createSedutaHTML(seduteCount);
+                seduteContainer.appendChild(sedutaCard);
+                initSedutaEvents(sedutaCard);
+            }
+        } catch (e) {
+            console.error("Error loading AI routine:", e);
+        }
         try {
             const doc = await db.collection('routines').doc(routineId).get();
             if (!doc.exists) {

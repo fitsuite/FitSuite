@@ -9,6 +9,6 @@ window.CONFIG = {
         measurementId: "G-W4ME455MH5"
     },
     GEMINI: {
-        API_KEY: "AIzaSyCakF62uxuf0Z2w1ShI5-j3xBAfLVt16p0"
+        API_KEY: "AIzaSyDNPxVF48XPgh3r2g-YYXi_RR0kzOPtjfk"
     }
 };

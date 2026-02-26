@@ -226,11 +226,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function generateRoutineWithGemini(userData, exercises) {
-        const apiKey = "AIzaSyDNPxVF48XPgh3r2g-YYXi_RR0kzOPtjfk"; // From .env
+        const apiKey = window.CONFIG.GEMINI.API_KEY; // From config.js (which reads from .env)
         
         // Array of available models to try in order (with correct v1beta names)
         const availableModels = [
-            'gemini-2.0-flash',
             'gemini-2.5-flash',
         ];
         
@@ -406,20 +405,12 @@ Cosa puoi fare:
     }
 
     function exportRoutineToPDF(routineData) {
-        console.log("Dati pronti per esportazione PDF:", routineData);
+        console.log("Dati pronti per esportazione al crea_scheda:", routineData);
         
-        // Placeholder for user's existing PDF export function.
-        // If you have a function like 'generatePDF(data)' or 'window.exportToPDF(data)', call it here.
-        // Example:
-        // if (typeof window.exportToPDF === 'function') {
-        //     window.exportToPDF(routineData);
-        // } else {
-        //     console.warn("Funzione exportToPDF non trovata. Uso fallback.");
-        //     alert("Scheda generata! Controlla la console per i dati. (Funzione PDF non trovata)");
-        // }
-
-        // Fallback: Simple alert and console log for now, as requested function was not found.
-        alert("Scheda generata con successo! I dati sono pronti per l'esportazione.");
-        console.log(JSON.stringify(routineData, null, 2));
+        // Salva i dati in sessionStorage  
+        sessionStorage.setItem('aiGeneratedRoutine', JSON.stringify(routineData));
+        
+        // Redirect a crea_scheda.js
+        window.location.href = '../crea_scheda/crea_scheda.html';
     }
 });
