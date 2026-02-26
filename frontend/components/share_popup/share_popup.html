@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Popup</title>
+    <link rel="stylesheet" href="../toast/toast.css">
+    <link rel="stylesheet" href="../popup/popup.css">
+    <link rel="stylesheet" href="./share_popup.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <script src="../toast/toast.js"></script>
+    <!-- Share Popup Overlay -->
+    <div id="share-popup-overlay" class="popup-overlay">
+        <div class="share-popup-content">
+            <div class="share-popup-header">
+                <h2 class="share-popup-title">Condividi '<span id="share-routine-name">Scheda</span>'</h2>
+                <button class="close-btn" id="close-share-popup">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="share-popup-body">
+                <!-- Search Users -->
+                <div class="search-users-section">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input 
+                            type="text" 
+                            id="user-search-input" 
+                            placeholder="Aggiungi persone, gruppi, spazi ed eventi di calendario"
+                            class="search-input"
+                        >
+                    </div>
+                    <div id="search-results" class="search-results"></div>
+                </div>
+
+                <!-- Shared Users List -->
+                <div class="shared-users-section">
+                    <h3 class="section-title">Persone con accesso</h3>
+                    <div id="shared-users-list" class="shared-users-list">
+                        <!-- Shared users will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="share-popup-actions">
+                <button class="custom-popup-btn secondary" id="cancel-share-btn">Chiudi</button>
+                <button class="custom-popup-btn primary" id="send-share-btn">Conferma</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

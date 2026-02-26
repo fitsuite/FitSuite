@@ -206,8 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const routine = doc.data();
             
             if (routine.userId !== currentUser.uid) {
-                alert("Non hai il permesso di modificare questa scheda.");
-                window.location.href = '../lista_schede/lista_scheda.html';
+                if (window.showErrorToast) {
+                    window.showErrorToast("Non hai il permesso di modificare questa scheda.");
+                }
+                window.location.href = '../lista_schede/lista_schede.html';
                 return;
             }
 
@@ -959,7 +961,9 @@ document.addEventListener('DOMContentLoaded', () => {
     saveBtn.addEventListener('click', async () => {
         const nome = nomeSchedaInput.value.trim();
         if (!nome) {
-            alert('Inserisci un nome per la scheda');
+            if (window.showErrorToast) {
+                window.showErrorToast('Inserisci un nome per la scheda');
+            }
             return;
         }
 
@@ -1025,29 +1029,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 savedId = docRef.id;
             }
 
-            // Update Local Cache immediately
+            // Update Cache immediately using CacheManager
             try {
-                const currentCache = getLocalRoutinesCache(currentUser.uid) || [];
-                const newRoutineForCache = {
-                    ...routineData,
-                    id: docRef.id,
-                    // Use current date for cache instead of serverTimestamp placeholder
-                    createdAt: { toDate: () => new Date() },
-                    startDate: selectedStartDate ? { toDate: () => selectedStartDate } : null,
-                    endDate: selectedEndDate ? { toDate: () => selectedEndDate } : null
-                };
-                // Add to list and update cache
-                currentCache.push(newRoutineForCache);
-                updateLocalRoutinesCache(currentUser.uid, currentCache);
+                if (window.CacheManager) {
+                    const newRoutineForCache = {
+                        ...routineData,
+                        id: savedId,
+                        // Use current date for cache instead of serverTimestamp placeholder
+                        createdAt: { toDate: () => new Date() },
+                        startDate: selectedStartDate ? { toDate: () => selectedStartDate } : null,
+                        endDate: selectedEndDate ? { toDate: () => selectedEndDate } : null
+                    };
+                    // Use CacheManager to update the cache
+                    window.CacheManager.updateSingleRoutineInCache(currentUser.uid, newRoutineForCache);
+                }
             } catch (cacheError) {
-                console.error("Error updating local cache:", cacheError);
+                console.error("Error updating cache:", cacheError);
             }
 
-            await alert('Scheda salvata con successo!');
+            if (window.showSuccessToast) {
+                window.showSuccessToast('Scheda salvata con successo!');
+            }
             window.location.href = '../lista_schede/lista_scheda.html';
         } catch (error) {
             console.error("Error saving routine:", error);
-            alert('Errore durante il salvataggio. Riprova.');
+            if (window.showErrorToast) {
+                window.showErrorToast('Errore durante il salvataggio. Riprova.');
+            }
             saveBtn.disabled = false;
             saveBtn.textContent = 'Salva';
         }

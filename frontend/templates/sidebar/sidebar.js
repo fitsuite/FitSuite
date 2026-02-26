@@ -182,6 +182,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 setPrimaryColor('Arancione');
             }
 
+            // Function to get Google Profile Picture URL
+            function getGoogleProfilePictureUrl(email, size = 200) {
+                return `https://www.google.com/s2/u/0/photos/public/id?sz=${size}&email=${encodeURIComponent(email)}`;
+            }
+
+            // Function to load user avatar with fallback to initial
+            function loadUserAvatar(email, username, avatarElement, size = 200) {
+                if (!avatarElement) return;
+                
+                const profilePicUrl = getGoogleProfilePictureUrl(email, size);
+                const img = new Image();
+                
+                img.onload = function() {
+                    // If Google profile picture loads successfully, use it
+                    avatarElement.style.backgroundImage = `url(${profilePicUrl})`;
+                    avatarElement.style.backgroundSize = 'cover';
+                    avatarElement.style.backgroundPosition = 'center';
+                    avatarElement.textContent = ''; // Remove initial if image loads
+                };
+                
+                img.onerror = function() {
+                    // Fallback to initial if image fails to load
+                    const initial = (username || 'U').charAt(0).toUpperCase();
+                    avatarElement.style.backgroundImage = 'none';
+                    avatarElement.textContent = initial;
+                };
+                
+                // Start loading the image
+                img.src = profilePicUrl;
+            }
+
             // Function to update sidebar elements
             const updateSidebar = async () => {
                 const userInitialSidebar = document.getElementById('user-initial-sidebar');
@@ -211,10 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
                 
-                // Use username initial for avatar
+                // Load user avatar with Google profile picture fallback to initial
                 if (userInitialSidebar) {
-                    const initial = username.charAt(0).toUpperCase();
-                    userInitialSidebar.textContent = initial;
+                    loadUserAvatar(user.email, username.replace('@', ''), userInitialSidebar, 45);
                 }
 
                 if (userRoutineListSidebar) {

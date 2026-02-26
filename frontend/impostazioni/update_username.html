@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Username - FitSuite</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #ff6600;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #e55500;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Aggiorna Username FitSuite</h1>
+        <p>Questo script aggiornerà il tuo username nel database a "Kevinck8".</p>
+        
+        <button onclick="updateUsername()">Aggiorna Username a Kevinck8</button>
+        <button onclick="checkCurrentUsername()">Controlla Username Attuale</button>
+        
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCEgbB9rBBKOov3aDma0DMn-EuU0bGMMYo",
+            authDomain: "fitsuite-a7b6c.firebaseapp.com",
+            projectId: "fitsuite-a7b6c",
+            storageBucket: "fitsuite-a7b6c.firebasestorage.app",
+            messagingSenderId: "721614273457",
+            appId: "1:721614273457:web:195f48279fafd01a1f5b90",
+            measurementId: "G-W4ME455MH5"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function showStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status ' + (isError ? 'error' : 'success');
+        }
+
+        async function checkCurrentUsername() {
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    showStatus('Nessun utente loggato. Effettua prima il login.', true);
+                    return;
+                }
+
+                const doc = await db.collection('users').doc(user.uid).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    const currentUsername = data.username || 'Non impostato';
+                    showStatus(`Username attuale: ${currentUsername}`);
+                } else {
+                    showStatus('Nessun documento utente trovato nel database.', true);
+                }
+            } catch (error) {
+                showStatus('Errore nel controllo username: ' + error.message, true);
+            }
+        }
+
+        async function updateUsername() {
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    showStatus('Nessun utente loggato. Effettua prima il login.', true);
+                    return;
+                }
+
+                showStatus('Aggiornamento username in corso...');
+
+                // Update the user document with username
+                await db.collection('users').doc(user.uid).update({
+                    username: "Kevinck8"
+                });
+
+                // Clear cache
+                localStorage.removeItem(`userProfile_${user.uid}`);
+
+                showStatus('Username aggiornato con successo a "Kevinck8"! Cache pulita. Ricarica la pagina delle impostazioni per vedere le modifiche.');
+
+            } catch (error) {
+                if (error.code === 'not-found') {
+                    // Document doesn't exist, create it
+                    try {
+                        const newData = {
+                            email: user.email,
+                            username: "Kevinck8",
+                            phoneNumber: "",
+                            preferences: {
+                                color: "Arancione",
+                                language: "Italiano",
+                                notifications: "Consenti tutti"
+                            },
+                            subscription: {
+                                type: "Nessuno",
+                                startDate: null,
+                                endDate: null,
+                                status: "inactive",
+                                autoRenew: false,
+                                lastPaymentDate: null,
+                                nextPaymentDate: null,
+                                paymentMethod: "Non impostato"
+                            },
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        
+                        await db.collection('users').doc(user.uid).set(newData);
+                        localStorage.removeItem(`userProfile_${user.uid}`);
+                        showStatus('Nuovo documento utente creato con username "Kevinck8"!');
+                    } catch (createError) {
+                        showStatus('Errore nella creazione del documento: ' + createError.message, true);
+                    }
+                } else {
+                    showStatus('Errore nell\'aggiornamento: ' + error.message, true);
+                }
+            }
+        }
+
+        // Check if user is logged in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                showStatus(`Utente loggato: ${user.email}`);
+            } else {
+                showStatus('Nessun utente loggato. Effettua il login prima di procedere.', true);
+            }
+        });
+    </script>
+</body>
+</html>

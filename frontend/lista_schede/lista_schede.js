@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = firebase.firestore();
     const routinesContainer = document.getElementById('routines-container');
     const searchInput = document.getElementById('search-bar');
+    const refreshBtn = document.getElementById('refresh-btn');
     const loadingScreen = document.getElementById('loading-screen');
 
     let allRoutines = []; // Store routines for client-side filtering
@@ -123,6 +124,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Refresh functionality
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.classList.add('spinning');
+            try {
+                // Force cache refresh
+                if (window.CacheManager) {
+                    window.CacheManager.forceRefreshRoutines(auth.currentUser.uid);
+                }
+                // Fetch routines again
+                await fetchRoutines(auth.currentUser.uid);
+            } catch (error) {
+                console.error('Error refreshing routines:', error);
+            } finally {
+                refreshBtn.classList.remove('spinning');
+            }
+        });
+    }
+
     async function fetchRoutines(uid) {
         // 1. Load from Cache FIRST for speed
         if (window.CacheManager) {
@@ -137,25 +157,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             console.log("Routines not in cache, fetching from DB");
-            // 2. Fetch from Network (Initial Load)
-            const snapshot = await db.collection('routines')
-                .where('userId', '==', uid)
-                .get();
+            
+            // 2. Fetch owned routines and shared routines
+            const [ownedSnapshot, sharedSnapshot] = await Promise.all([
+                db.collection('routines').where('userId', '==', uid).get(),
+                db.collection('routines').where('condivisioni', 'array-contains', uid).get()
+            ]);
 
-            if (snapshot.empty) {
-                allRoutines = [];
+            allRoutines = [];
+            
+            // Process owned routines
+            ownedSnapshot.forEach(doc => {
+                allRoutines.push({ id: doc.id, ...doc.data(), isOwned: true });
+            });
+            
+            // Process shared routines
+            sharedSnapshot.forEach(doc => {
+                const routineData = doc.data();
+                // Don't duplicate if user is also the owner
+                if (routineData.userId !== uid) {
+                    allRoutines.push({ id: doc.id, ...routineData, isOwned: false });
+                }
+            });
+
+            if (allRoutines.length === 0) {
                 renderRoutines([]);
                 if (window.CacheManager) window.CacheManager.saveRoutines(uid, []);
                 return;
             }
 
-            allRoutines = [];
-            snapshot.forEach(doc => {
-                allRoutines.push({ id: doc.id, ...doc.data() });
-            });
-
-            // Sort by createdAt descending (same as sidebar.js)
+            // Sort by createdAt descending (shared routines after owned ones)
             allRoutines.sort((a, b) => {
+                // First sort by ownership (owned first)
+                if (a.isOwned !== b.isOwned) {
+                    return a.isOwned ? -1 : 1;
+                }
+                // Then by date
                 const dateA = a.createdAt ? a.createdAt.toDate() : new Date(0);
                 const dateB = b.createdAt ? b.createdAt.toDate() : new Date(0);
                 return dateB - dateA;
@@ -216,6 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <i class="fas fa-ellipsis-v"></i>
                     </button>
                     <div class="menu-dropdown">
+                        <button class="menu-item share-btn">
+                            <i class="fas fa-share-alt"></i> Condividi
+                        </button>
                         <button class="menu-item rename-btn">
                             <i class="fas fa-edit"></i> Rinomina
                         </button>
@@ -224,9 +264,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         </button>
                     </div>
                 </div>
-                <div class="col-name" title="${routine.name || 'Scheda senza nome'}">${routine.name || 'Scheda senza nome'}</div>
-                <div class="col-sessions">${seduteText}</div>
-                <div class="col-date">${periodText}</div>
+                <div class="col-name">
+                    <span class="routine-name">${routine.name || 'Scheda senza nome'}</span>
+                </div>
+                <div class="col-sessions">
+                    <span>${seduteText}</span>
+                </div>
+                <div class="col-date">
+                    <span>${periodText}</span>
+                </div>
                 <div class="col-actions">
                     <a href="../visualizza_scheda/visualizza_scheda.html?id=${routine.id}" class="view-btn">Visualizza</a>
                 </div>
@@ -245,57 +291,96 @@ document.addEventListener('DOMContentLoaded', () => {
                 menuDropdown.classList.toggle('active');
             });
 
-            // Rename Action
-            const renameBtn = routineItem.querySelector('.rename-btn');
-            renameBtn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                menuDropdown.classList.remove('active');
-                const newName = await window.showPrompt("Inserisci il nuovo nome della scheda:", routine.name, "Rinomina Scheda");
-                if (newName && newName.trim() !== "" && newName !== routine.name) {
-                    // Optimistic update
-                    const oldName = routine.name;
-                    routine.name = newName;
-                    renderRoutines(allRoutines);
-                    if (window.CacheManager) window.CacheManager.saveRoutines(auth.currentUser.uid, allRoutines.slice(0, 20));
+            // Check if user is owner
+            const isOwner = routine.isOwned !== false; // Default to true for backward compatibility
+            
+            // Show/hide actions based on ownership
+            const shareMenuItem = routineItem.querySelector('.share-btn');
+            const renameMenuItem = routineItem.querySelector('.rename-btn');
+            const deleteMenuItem = routineItem.querySelector('.delete-btn');
+            
+            if (!isOwner) {
+                if (shareMenuItem) shareMenuItem.style.display = 'none';
+                if (renameMenuItem) renameMenuItem.style.display = 'none';
+                if (deleteMenuItem) deleteMenuItem.style.display = 'none';
+            }
 
-                    try {
-                        await db.collection('routines').doc(routine.id).update({ name: newName });
-                    } catch (error) {
-                        console.error("Error renaming routine:", error);
-                        alert("Errore durante la rinomina della scheda.");
-                        // Revert
-                        routine.name = oldName;
-                        renderRoutines(allRoutines);
-                        if (window.CacheManager) window.CacheManager.saveRoutines(auth.currentUser.uid, allRoutines.slice(0, 20));
+            // Share Action
+            if (shareMenuItem && isOwner) {
+                shareMenuItem.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    menuDropdown.classList.remove('active');
+                    if (window.showSharePopup) {
+                        await window.showSharePopup(routine.id);
                     }
-                }
-            });
+                });
+            }
+
+            // Rename Action
+            if (renameMenuItem) {
+                renameMenuItem.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    menuDropdown.classList.remove('active');
+                    const newName = await window.showPrompt("Inserisci il nuovo nome della scheda:", routine.name, "Rinomina Scheda");
+                    if (newName && newName.trim() !== "" && newName !== routine.name) {
+                        // Optimistic update
+                        const oldName = routine.name;
+                        routine.name = newName;
+                        renderRoutines(allRoutines);
+                        if (window.CacheManager) {
+                            window.CacheManager.updateSingleRoutineInCache(auth.currentUser.uid, routine);
+                        }
+
+                        try {
+                            await db.collection('routines').doc(routine.id).update({ name: newName });
+                        } catch (error) {
+                            console.error("Error renaming routine:", error);
+                            if (window.showErrorToast) {
+                                window.showErrorToast("Errore durante la rinomina della scheda.");
+                            }
+                            // Revert
+                            routine.name = oldName;
+                            renderRoutines(allRoutines);
+                            if (window.CacheManager) {
+                                window.CacheManager.updateSingleRoutineInCache(auth.currentUser.uid, routine);
+                            }
+                        }
+                    }
+                });
+            }
 
             // Delete Action
-            const deleteBtn = routineItem.querySelector('.delete-btn');
-            deleteBtn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                menuDropdown.classList.remove('active');
-                if (await window.showConfirm(`Sei sicuro di voler eliminare la scheda "${routine.name}"?`, "Elimina Scheda")) {
-                    // Optimistic update
-                    const originalRoutines = [...allRoutines];
-                    allRoutines = allRoutines.filter(r => r.id !== routine.id);
-                    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-                    filterRoutines(searchTerm);
-                    if (window.CacheManager) window.CacheManager.saveRoutines(auth.currentUser.uid, allRoutines.slice(0, 20));
-
-                    try {
-                        await db.collection('routines').doc(routine.id).delete();
-                    } catch (error) {
-                        console.error("Error deleting routine:", error);
-                        alert("Errore durante l'eliminazione della scheda.");
-                        // Revert
-                        allRoutines = originalRoutines;
+            if (deleteMenuItem) {
+                deleteMenuItem.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    menuDropdown.classList.remove('active');
+                    if (await window.showConfirm(`Sei sicuro di voler eliminare la scheda "${routine.name}"?`, "Elimina Scheda")) {
+                        // Optimistic update
+                        const originalRoutines = [...allRoutines];
+                        allRoutines = allRoutines.filter(r => r.id !== routine.id);
+                        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
                         filterRoutines(searchTerm);
-                        if (window.CacheManager) window.CacheManager.saveRoutines(auth.currentUser.uid, allRoutines.slice(0, 20));
+                        if (window.CacheManager) {
+                            window.CacheManager.removeRoutineFromCache(auth.currentUser.uid, routine.id);
+                        }
+
+                        try {
+                            await db.collection('routines').doc(routine.id).delete();
+                        } catch (error) {
+                            console.error("Error deleting routine:", error);
+                            if (window.showErrorToast) {
+                                window.showErrorToast("Errore durante l'eliminazione della scheda.");
+                            }
+                            // Revert
+                            allRoutines = originalRoutines;
+                            filterRoutines(searchTerm);
+                            if (window.CacheManager) {
+                                window.CacheManager.saveRoutines(auth.currentUser.uid, allRoutines.slice(0, 20));
+                            }
+                        }
                     }
-                }
-            });
+                });
+            }
 
             routinesContainer.appendChild(routineItem);
         });

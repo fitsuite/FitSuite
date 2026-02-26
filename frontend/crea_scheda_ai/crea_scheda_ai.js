@@ -133,12 +133,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Validation
             if (data.focus.length === 0) {
-                alert("Seleziona almeno un focus muscolare o 'Full Body'.");
+                if (window.showErrorToast) {
+                    window.showErrorToast("Seleziona almeno un focus muscolare o 'Full Body'.");
+                }
                 return;
             }
             
             if (data.attrezzatura.length === 0) {
-                alert("Seleziona almeno un tipo di attrezzatura.");
+                if (window.showErrorToast) {
+                    window.showErrorToast("Seleziona almeno un tipo di attrezzatura.");
+                }
                 return;
             }
 
@@ -164,7 +168,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error("Errore durante la generazione:", error);
-                alert("Si è verificato un errore: " + error.message);
+                if (window.showErrorToast) {
+                    window.showErrorToast("Si è verificato un errore: " + error.message);
+                }
             } finally {
                 if (loadingScreen) loadingScreen.style.display = 'none';
             }

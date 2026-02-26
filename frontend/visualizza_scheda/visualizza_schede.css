@@ -107,6 +107,28 @@
     transform: translateY(-2px);
 }
 
+.remove-saved-btn {
+    background-color: transparent;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.remove-saved-btn:hover {
+    background-color: #ff4444;
+    color: white;
+    transform: translateY(-2px);
+}
+
 .visualizza-scheda-wrapper {
     width: 100%;
     max-width: 1200px;
