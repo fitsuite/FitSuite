@@ -348,7 +348,6 @@
 
     <script src="../templates/sidebar/sidebar.js"></script>
     <script src="../components/toast/toast.js"></script>
-    <script src="../templates/sidebar/sidebar.js"></script>
     <script src="../components/session_control/session_control.js"></script>
     <script src="../components/popup/popup.js"></script>
     <script src="./impostazioni.js"></script>
@@ -358,6 +357,12 @@
             .then(response => response.text())
             .then(html => {
                 document.getElementById('sidebar-placeholder').innerHTML = html;
+                // Initialize sidebar functionality after HTML is loaded
+                if (window.sidebarInitialized) {
+                    // Re-initialize sidebar components if needed
+                    const event = new CustomEvent('sidebarLoaded');
+                    document.dispatchEvent(event);
+                }
             })
             .catch(err => console.error('Error loading sidebar:', err));
     </script>

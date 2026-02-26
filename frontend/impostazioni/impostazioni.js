@@ -347,21 +347,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateUIWithUserData(data) {
         // Update Username - prioritize Kevinck8 as requested
-        if (data.username) {
-            userUsernameMain.textContent = data.username.startsWith('@') ? data.username : `@${data.username}`;
+        if (userUsernameMain) {
+            if (data.username) {
+                userUsernameMain.textContent = data.username.startsWith('@') ? data.username : `@${data.username}`;
+            } else {
+                // Default to Kevinck8 if no username in database
+                userUsernameMain.textContent = "@Kevinck8";
+            }
         } else {
-            // Default to Kevinck8 if no username in database
-            userUsernameMain.textContent = "@Kevinck8";
+            console.warn('Elemento con ID "user-username-main" non trovato nell\'HTML');
         }
         
         // Update user avatar with Google profile picture fallback to initial
         if (currentUser && userInitialMain) {
             const username = data.username || "Kevinck8";
             loadUserAvatar(currentUser.email, username, userInitialMain, 90);
+        } else if (!userInitialMain) {
+            console.warn('Elemento con ID "user-initial-main" non trovato nell\'HTML');
         }
         
         // Update Phone
-        userPhone.textContent = data.phoneNumber || "Non impostato";
+        if (userPhone) {
+            userPhone.textContent = data.phoneNumber || "Non impostato";
+        } else {
+            console.warn('Elemento con ID "user-phone" non trovato nell\'HTML');
+        }
 
         // Update Subscription Info
         if (data.subscription) {
@@ -373,24 +383,69 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             const endDate = formatDate(data.subscription.endDate);
-            subscriptionExpiry.textContent = endDate ? endDate.toLocaleDateString() : "Nessun abbonamento attivo";
+            if (subscriptionExpiry) {
+                subscriptionExpiry.textContent = endDate ? endDate.toLocaleDateString() : "Nessun abbonamento attivo";
+            } else {
+                console.warn('Elemento con ID "subscription-expiry" non trovato nell\'HTML');
+            }
             
-            paymentMethod.textContent = data.subscription.paymentMethod || "Non impostato";
+            if (paymentMethod) {
+                paymentMethod.textContent = data.subscription.paymentMethod || "Non impostato";
+            } else {
+                console.warn('Elemento con ID "payment-method" non trovato nell\'HTML');
+            }
+            
             // Initialize new subscription fields
-            autoRenewInput.checked = data.subscription.autoRenew || false;
+            if (autoRenewInput) {
+                autoRenewInput.checked = data.subscription.autoRenew || false;
+            } else {
+                console.warn('Elemento con ID "auto-renew-input" non trovato nell\'HTML');
+            }
             
             const lastPayment = formatDate(data.subscription.lastPaymentDate);
-            lastPaymentDateInput.value = lastPayment ? lastPayment.toISOString().split('T')[0] : '';
+            if (lastPaymentDateInput) {
+                lastPaymentDateInput.value = lastPayment ? lastPayment.toISOString().split('T')[0] : '';
+            } else {
+                console.warn('Elemento con ID "last-payment-date-input" non trovato nell\'HTML');
+            }
             
             const nextPayment = formatDate(data.subscription.nextPaymentDate);
-            nextPaymentDateInput.value = nextPayment ? nextPayment.toISOString().split('T')[0] : '';
+            if (nextPaymentDateInput) {
+                nextPaymentDateInput.value = nextPayment ? nextPayment.toISOString().split('T')[0] : '';
+            } else {
+                console.warn('Elemento con ID "next-payment-date-input" non trovato nell\'HTML');
+            }
         } else {
-            subscriptionExpiry.textContent = "Nessun abbonamento attivo";
-            paymentMethod.textContent = "Non impostato";
+            if (subscriptionExpiry) {
+                subscriptionExpiry.textContent = "Nessun abbonamento attivo";
+            } else {
+                console.warn('Elemento con ID "subscription-expiry" non trovato nell\'HTML');
+            }
+            
+            if (paymentMethod) {
+                paymentMethod.textContent = "Non impostato";
+            } else {
+                console.warn('Elemento con ID "payment-method" non trovato nell\'HTML');
+            }
+            
             // Reset new subscription fields
-            autoRenewInput.checked = false;
-            lastPaymentDateInput.value = '';
-            nextPaymentDateInput.value = '';
+            if (autoRenewInput) {
+                autoRenewInput.checked = false;
+            } else {
+                console.warn('Elemento con ID "auto-renew-input" non trovato nell\'HTML');
+            }
+            
+            if (lastPaymentDateInput) {
+                lastPaymentDateInput.value = '';
+            } else {
+                console.warn('Elemento con ID "last-payment-date-input" non trovato nell\'HTML');
+            }
+            
+            if (nextPaymentDateInput) {
+                nextPaymentDateInput.value = '';
+            } else {
+                console.warn('Elemento con ID "next-payment-date-input" non trovato nell\'HTML');
+            }
         }
         
         // Update Preferences
@@ -398,9 +453,23 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save to localStorage (legacy/backup)
             savePreferencesToCache(currentUser ? currentUser.uid : '', data.preferences);
 
-            currentColorLabel.textContent = data.preferences.color || "Arancione";
-            userLanguage.textContent = data.preferences.language || "Italiano";
-            userNotifications.textContent = data.preferences.notifications || "Consenti tutti";
+            if (currentColorLabel) {
+                currentColorLabel.textContent = data.preferences.color || "Arancione";
+            } else {
+                console.warn('Elemento con ID "current-color" non trovato nell\'HTML');
+            }
+            
+            if (userLanguage) {
+                userLanguage.textContent = data.preferences.language || "Italiano";
+            } else {
+                console.warn('Elemento con ID "user-language" non trovato nell\'HTML');
+            }
+            
+            if (userNotifications) {
+                userNotifications.textContent = data.preferences.notifications || "Consenti tutti";
+            } else {
+                console.warn('Elemento con ID "user-notifications" non trovato nell\'HTML');
+            }
             
             // Set active color dot
             setActiveColorDot(data.preferences.color);
@@ -462,86 +531,118 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Change Password
-    changePasswordBtn.addEventListener('click', () => {
-        changePasswordModal.classList.add('active');
-    });
+    if (changePasswordBtn) {
+        changePasswordBtn.addEventListener('click', () => {
+            changePasswordModal.classList.add('active');
+        });
+    } else {
+        console.warn('Elemento con ID "change-password-btn" non trovato nell\'HTML');
+    }
 
-    cancelPasswordChangeBtn.addEventListener('click', () => {
-        changePasswordModal.classList.remove('active');
-    });
+    if (cancelPasswordChangeBtn) {
+        cancelPasswordChangeBtn.addEventListener('click', () => {
+            changePasswordModal.classList.remove('active');
+        });
+    } else {
+        console.warn('Elemento con ID "cancel-password-change" non trovato nell\'HTML');
+    }
 
-    sendPasswordResetEmailBtn.addEventListener('click', async () => {
-        const email = auth.currentUser.email;
-        try {
-            await auth.sendPasswordResetEmail(email);
-            if (window.showSuccessToast) {
-                window.showSuccessToast(`Email di reset password inviata a ${email}`);
-            }
-            changePasswordModal.classList.remove('active'); // Close modal after sending email
-        } catch (error) {
-            if (window.showErrorToast) {
-                window.showErrorToast("Errore nell'invio dell'email: " + error.message);
-            }
-        }
-    });
-
-    // Change Phone
-    changePhoneBtn.addEventListener('click', () => {
-        newPhoneInput.value = userPhone.textContent === "Non impostato" ? "" : userPhone.textContent; // Pre-fill with current phone if available
-        changePhoneModal.classList.add('active');
-    });
-
-    cancelPhoneChangeBtn.addEventListener('click', () => {
-        changePhoneModal.classList.remove('active');
-    });
-
-    confirmPhoneChangeBtn.addEventListener('click', async () => {
-        const newPhone = newPhoneInput.value.trim();
-        
-        // Regola di validazione: almeno 10 cifre, opzionale + all'inizio
-        const phoneRegex = /^\+?[0-9]{10,15}$/;
-
-        if (newPhone) {
-            if (!phoneRegex.test(newPhone.replace(/\s/g, ''))) {
-                if (window.showErrorToast) {
-                    window.showErrorToast("Per favore inserisci un numero di telefono valido (es. +39 333 1234567 o 3331234567). Deve contenere almeno 10 cifre.");
-                }
-                return;
-            }
-
+    if (sendPasswordResetEmailBtn) {
+        sendPasswordResetEmailBtn.addEventListener('click', async () => {
+            const email = auth.currentUser.email;
             try {
-                await db.collection('users').doc(currentUser.uid).update({
-                    phoneNumber: newPhone
-                });
-                
-                // Update Cache
-                updateLocalUserProfile(currentUser.uid, { phoneNumber: newPhone });
-                
-                userPhone.textContent = newPhone;
+                await auth.sendPasswordResetEmail(email);
                 if (window.showSuccessToast) {
-                    window.showSuccessToast("Numero di telefono aggiornato con successo!");
+                    window.showSuccessToast(`Email di reset password inviata a ${email}`);
                 }
-                changePhoneModal.classList.remove('active'); // Close modal after successful update
+                changePasswordModal.classList.remove('active'); // Close modal after sending email
             } catch (error) {
                 if (window.showErrorToast) {
-                    window.showErrorToast("Errore nell'aggiornamento: " + error.message);
+                    window.showErrorToast("Errore nell'invio dell'email: " + error.message);
                 }
             }
-        } else {
-            if (window.showErrorToast) {
-                window.showErrorToast("Il numero di telefono non può essere vuoto.");
+        });
+    } else {
+        console.warn('Elemento con ID "send-password-reset-email" non trovato nell\'HTML');
+    }
+
+    // Change Phone
+    if (changePhoneBtn) {
+        changePhoneBtn.addEventListener('click', () => {
+            newPhoneInput.value = userPhone.textContent === "Non impostato" ? "" : userPhone.textContent; // Pre-fill with current phone if available
+            changePhoneModal.classList.add('active');
+        });
+    } else {
+        console.warn('Elemento con ID "change-phone-btn" non trovato nell\'HTML');
+    }
+
+    if (cancelPhoneChangeBtn) {
+        cancelPhoneChangeBtn.addEventListener('click', () => {
+            changePhoneModal.classList.remove('active');
+        });
+    } else {
+        console.warn('Elemento con ID "cancel-phone-change" non trovato nell\'HTML');
+    }
+
+    if (confirmPhoneChangeBtn) {
+        confirmPhoneChangeBtn.addEventListener('click', async () => {
+            const newPhone = newPhoneInput.value.trim();
+            
+            // Regola di validazione: almeno 10 cifre, opzionale + all'inizio
+            const phoneRegex = /^\+?[0-9]{10,15}$/;
+
+            if (newPhone) {
+                if (!phoneRegex.test(newPhone.replace(/\s/g, ''))) {
+                    if (window.showErrorToast) {
+                        window.showErrorToast("Per favore inserisci un numero di telefono valido (es. +39 333 1234567 o 3331234567). Deve contenere almeno 10 cifre.");
+                    }
+                    return;
+                }
+
+                try {
+                    await db.collection('users').doc(currentUser.uid).update({
+                        phoneNumber: newPhone
+                    });
+                    
+                    // Update Cache
+                    updateLocalUserProfile(currentUser.uid, { phoneNumber: newPhone });
+                    
+                    userPhone.textContent = newPhone;
+                    if (window.showSuccessToast) {
+                        window.showSuccessToast("Numero di telefono aggiornato con successo!");
+                    }
+                    changePhoneModal.classList.remove('active'); // Close modal after successful update
+                } catch (error) {
+                    if (window.showErrorToast) {
+                        window.showErrorToast("Errore nell'aggiornamento: " + error.message);
+                    }
+                }
+            } else {
+                if (window.showErrorToast) {
+                    window.showErrorToast("Il numero di telefono non può essere vuoto.");
+                }
             }
-        }
-    });
+        });
+    } else {
+        console.warn('Elemento con ID "confirm-phone-change" non trovato nell\'HTML');
+    }
 
     // Change Language
-    changeLanguageBtn.addEventListener('click', () => {
-        changeLanguageModal.classList.add('active');
-    });
+    if (changeLanguageBtn) {
+        changeLanguageBtn.addEventListener('click', () => {
+            changeLanguageModal.classList.add('active');
+        });
+    } else {
+        console.warn('Elemento con ID "change-language-btn" non trovato nell\'HTML');
+    }
 
-    cancelLanguageChangeBtn.addEventListener('click', () => {
-        changeLanguageModal.classList.remove('active');
-    });
+    if (cancelLanguageChangeBtn) {
+        cancelLanguageChangeBtn.addEventListener('click', () => {
+            changeLanguageModal.classList.remove('active');
+        });
+    } else {
+        console.warn('Elemento con ID "cancel-language-change" non trovato nell\'HTML');
+    }
 
     languageOptions.forEach(option => {
         option.addEventListener('click', async () => {
@@ -597,193 +698,260 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Change Notifications
-    changeNotificationsBtn.addEventListener('click', () => {
-        changeNotificationsModal.classList.add('active');
-        // Pre-select current notification preference
-        const currentNotification = userNotifications.textContent;
-        notificationOptions.forEach(radio => {
-            if (radio.value === currentNotification) {
-                radio.checked = true;
+    if (changeNotificationsBtn) {
+        changeNotificationsBtn.addEventListener('click', () => {
+            if (changeNotificationsModal) {
+                changeNotificationsModal.classList.add('active');
+                // Pre-select current notification preference
+                const currentNotification = userNotifications.textContent;
+                notificationOptions.forEach(radio => {
+                    if (radio.value === currentNotification) {
+                        radio.checked = true;
+                    }
+                });
+            } else {
+                console.warn('Elemento con ID "change-notifications-modal" non trovato nell\'HTML');
             }
         });
-    });
+    } else {
+        console.warn('Elemento con ID "change-notifications-btn" non trovato nell\'HTML');
+    }
 
-    cancelNotificationsChangeBtn.addEventListener('click', () => {
-        changeNotificationsModal.classList.remove('active');
-    });
-
-    confirmNotificationsChangeBtn.addEventListener('click', async () => {
-        const selectedNotification = document.querySelector('input[name="notifications"]:checked').value;
-        try {
-            await db.collection('users').doc(currentUser.uid).update({
-                'preferences.notifications': selectedNotification
-            });
-            
-            // Update cache
-            savePreferencesToCache(currentUser.uid, { notifications: selectedNotification });
-            updateLocalUserProfile(currentUser.uid, { 'preferences.notifications': selectedNotification });
-
-            userNotifications.textContent = selectedNotification;
-            if (window.showSuccessToast) {
-                window.showSuccessToast(`Preferenze notifiche aggiornate a: ${selectedNotification}`);
+    if (cancelNotificationsChangeBtn) {
+        cancelNotificationsChangeBtn.addEventListener('click', () => {
+            if (changeNotificationsModal) {
+                changeNotificationsModal.classList.remove('active');
             }
-            changeNotificationsModal.classList.remove('active');
-        } catch (error) {
-            console.error("Error updating notifications:", error);
-            if (window.showErrorToast) {
-                window.showErrorToast("Errore durante l'aggiornamento delle notifiche: " + error.message);
-            }
-        }
-    });
-    // Delete Account Logic
-    deleteAccountTrigger.addEventListener('click', () => {
-        deleteModal.classList.add('active');
-    });
+        });
+    } else {
+        console.warn('Elemento con ID "cancel-notifications-change" non trovato nell\'HTML');
+    }
 
-    cancelDeleteBtn.addEventListener('click', () => {
-        deleteModal.classList.remove('active');
-    });
+    if (confirmNotificationsChangeBtn) {
+        confirmNotificationsChangeBtn.addEventListener('click', async () => {
+            const selectedNotification = document.querySelector('input[name="notifications"]:checked').value;
+            try {
+                await db.collection('users').doc(currentUser.uid).update({
+                    'preferences.notifications': selectedNotification
+                });
+                
+                // Update cache
+                savePreferencesToCache(currentUser.uid, { notifications: selectedNotification });
+                updateLocalUserProfile(currentUser.uid, { 'preferences.notifications': selectedNotification });
 
-    confirmDeleteBtn.addEventListener('click', async () => {
-        try {
-            const user = auth.currentUser;
-            const uid = user.uid;
-
-            // 1. Delete Firestore Data
-            await db.collection('users').doc(uid).delete();
-            
-            // Note: You might want to delete routines/subcollections here too
-            
-            // 2. Delete Auth Account
-            await user.delete();
-            
-            console.log("Account deleted successfully");
-            window.location.href = '../auth/auth.html';
-        } catch (error) {
-            if (error.code === 'auth/requires-recent-login') {
-                if (window.showWarningToast) {
-                    window.showWarningToast("Per eliminare l'account è necessario aver effettuato l'accesso di recente. Effettua il logout e rientra prima di riprovare.");
+                userNotifications.textContent = selectedNotification;
+                if (window.showSuccessToast) {
+                    window.showSuccessToast(`Preferenze notifiche aggiornate a: ${selectedNotification}`);
                 }
-                auth.signOut().then(() => window.location.href = '../auth/auth.html');
-            } else {
+                changeNotificationsModal.classList.remove('active');
+            } catch (error) {
+                console.error("Error updating notifications:", error);
                 if (window.showErrorToast) {
-                    window.showErrorToast("Errore durante l'eliminazione: " + error.message);
+                    window.showErrorToast("Errore durante l'aggiornamento delle notifiche: " + error.message);
                 }
             }
-        }
-    });
+        });
+    } else {
+        console.warn('Elemento con ID "confirm-notifications-change" non trovato nell\'HTML');
+    }
+
+    // Delete Account Logic
+    if (deleteAccountTrigger) {
+        deleteAccountTrigger.addEventListener('click', () => {
+            deleteModal.classList.add('active');
+        });
+    } else {
+        console.warn('Elemento con ID "delete-account-trigger" non trovato nell\'HTML');
+    }
+
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', () => {
+            deleteModal.classList.remove('active');
+        });
+    } else {
+        console.warn('Elemento con ID "cancel-delete" non trovato nell\'HTML');
+    }
+
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', async () => {
+            try {
+                const user = auth.currentUser;
+                const uid = user.uid;
+
+                // 1. Delete Firestore Data
+                await db.collection('users').doc(uid).delete();
+                
+                // Note: You might want to delete routines/subcollections here too
+                
+                // 2. Delete Auth Account
+                await user.delete();
+                
+                console.log("Account deleted successfully");
+                window.location.href = '../auth/auth.html';
+            } catch (error) {
+                if (error.code === 'auth/requires-recent-login') {
+                    if (window.showWarningToast) {
+                        window.showWarningToast("Per eliminare l'account è necessario aver effettuato l'accesso di recente. Effettua il logout e rientra prima di riprovare.");
+                    }
+                    auth.signOut().then(() => window.location.href = '../auth/auth.html');
+                } else {
+                    if (window.showErrorToast) {
+                        window.showErrorToast("Errore durante l'eliminazione: " + error.message);
+                    }
+                }
+            }
+        });
+    } else {
+        console.warn('Elemento con ID "confirm-delete" non trovato nell\'HTML');
+    }
 
     // Contact Us Modal
-    contactUsBtn.addEventListener('click', () => {
-        contactUsModal.classList.add('active');
-    });
+    if (contactUsBtn) {
+        contactUsBtn.addEventListener('click', () => {
+            contactUsModal.classList.add('active');
+        });
+    } else {
+        console.warn('Elemento con ID "contact-us-btn" non trovato nell\'HTML');
+    }
 
-    closeContactModalBtn.addEventListener('click', () => {
-        contactUsModal.classList.remove('active');
-    });
+    if (closeContactModalBtn) {
+        closeContactModalBtn.addEventListener('click', () => {
+            contactUsModal.classList.remove('active');
+        });
+    } else {
+        console.warn('Elemento con ID "close-contact-modal" non trovato nell\'HTML');
+    }
 
     // Give Feedback Modal
-    giveFeedbackBtn.addEventListener('click', () => {
-        giveFeedbackModal.classList.add('active');
-    });
+    if (giveFeedbackBtn) {
+        giveFeedbackBtn.addEventListener('click', () => {
+            giveFeedbackModal.classList.add('active');
+        });
+    } else {
+        console.warn('Elemento con ID "give-feedback-btn" non trovato nell\'HTML');
+    }
 
-    cancelFeedbackBtn.addEventListener('click', () => {
-        giveFeedbackModal.classList.remove('active');
-        feedbackTextarea.value = ''; // Clear textarea on cancel
-    });
-
-    submitFeedbackBtn.addEventListener('click', async () => {
-        const feedback = feedbackTextarea.value.trim();
-        
-        if (!feedback) {
-            if (window.showErrorToast) {
-                window.showErrorToast("Il campo feedback non può essere vuoto.");
-            }
-            return;
-        }
-
-        if (!currentUser) {
-            if (window.showErrorToast) {
-                window.showErrorToast("Errore: Utente non identificato. Riprova a effettuare il login.");
-            }
-            return;
-        }
-
-        try {
-            // Feedback visivo durante l'invio
-            const originalBtnText = submitFeedbackBtn.textContent;
-            submitFeedbackBtn.disabled = true;
-            submitFeedbackBtn.textContent = "Invio...";
-
-            // Salvataggio su Firestore nella raccolta 'feedback'
-            await db.collection('feedback').add({
-                uid: currentUser.uid,
-                email: currentUser.email,
-                message: feedback,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                read: false // Campo utile per segnare se il feedback è stato letto dagli admin
-            });
-
-            console.log("Feedback submitted successfully");
-            if (window.showSuccessToast) {
-                window.showSuccessToast("Grazie per il tuo feedback! La tua opinione è importante per noi.");
-            }
-            
+    if (cancelFeedbackBtn) {
+        cancelFeedbackBtn.addEventListener('click', () => {
             giveFeedbackModal.classList.remove('active');
-            feedbackTextarea.value = ''; // Clear textarea after submission
+            feedbackTextarea.value = ''; // Clear textarea on cancel
+        });
+    } else {
+        console.warn('Elemento con ID "cancel-feedback" non trovato nell\'HTML');
+    }
 
-        } catch (error) {
-            console.error("Error submitting feedback:", error);
-            if (window.showErrorToast) {
-                window.showErrorToast("Si è verificato un errore durante l'invio del feedback: " + error.message);
+    if (submitFeedbackBtn) {
+        submitFeedbackBtn.addEventListener('click', async () => {
+            const feedback = feedbackTextarea.value.trim();
+            
+            if (!feedback) {
+                if (window.showErrorToast) {
+                    window.showErrorToast("Il campo feedback non può essere vuoto.");
+                }
+                return;
             }
-        } finally {
-            // Ripristina il bottone
-            submitFeedbackBtn.disabled = false;
-            submitFeedbackBtn.textContent = "Invia Feedback";
-        }
-    });
+
+            if (!currentUser) {
+                if (window.showErrorToast) {
+                    window.showErrorToast("Errore: Utente non identificato. Riprova a effettuare il login.");
+                }
+                return;
+            }
+
+            try {
+                // Feedback visivo durante l'invio
+                const originalBtnText = submitFeedbackBtn.textContent;
+                submitFeedbackBtn.disabled = true;
+                submitFeedbackBtn.textContent = "Invio...";
+
+                // Salvataggio su Firestore nella raccolta 'feedback'
+                await db.collection('feedback').add({
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    message: feedback,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    read: false // Campo utile per segnare se il feedback è stato letto dagli admin
+                });
+
+                console.log("Feedback submitted successfully");
+                if (window.showSuccessToast) {
+                    window.showSuccessToast("Grazie per il tuo feedback! La tua opinione è importante per noi.");
+                }
+                
+                giveFeedbackModal.classList.remove('active');
+                feedbackTextarea.value = ''; // Clear textarea after submission
+
+            } catch (error) {
+                console.error("Error submitting feedback:", error);
+                if (window.showErrorToast) {
+                    window.showErrorToast("Si è verificato un errore durante l'invio del feedback: " + error.message);
+                }
+            } finally {
+                // Ripristina il bottone
+                submitFeedbackBtn.disabled = false;
+                submitFeedbackBtn.textContent = "Invia Feedback";
+            }
+        });
+    } else {
+        console.warn('Elemento con ID "submit-feedback" non trovato nell\'HTML');
+    }
 
     // Billing History Modal
-    viewBillingHistoryBtn.addEventListener('click', () => {
-        billingHistoryModal.classList.add('active');
-        // In a real application, fetch and display billing history here
-        console.log("Fetching billing history...");
-    });
+    if (viewBillingHistoryBtn) {
+        viewBillingHistoryBtn.addEventListener('click', () => {
+            billingHistoryModal.classList.add('active');
+            // In a real application, fetch and display billing history here
+            console.log("Fetching billing history...");
+        });
+    } else {
+        console.warn('Elemento con ID "view-billing-history-btn" non trovato nell\'HTML');
+    }
 
-    closeBillingHistoryModalBtn.addEventListener('click', () => {
-        billingHistoryModal.classList.remove('active');
-    });
+    if (closeBillingHistoryModalBtn) {
+        closeBillingHistoryModalBtn.addEventListener('click', () => {
+            billingHistoryModal.classList.remove('active');
+        });
+    } else {
+        console.warn('Elemento con ID "close-billing-history-modal" non trovato nell\'HTML');
+    }
 
     // Logout functionality
-    logoutTrigger.addEventListener('click', () => {
-        console.log('Logout button clicked - Event Listener Triggered');
-        logoutConfirmModal.classList.add('active');
-    });
+    if (logoutTrigger) {
+        logoutTrigger.addEventListener('click', () => {
+            console.log('Logout button clicked - Event Listener Triggered');
+            logoutConfirmModal.classList.add('active');
+        });
+    } else {
+        console.warn('Elemento con ID "logout-trigger" non trovato nell\'HTML');
+    }
 
-    cancelLogoutBtn.addEventListener('click', () => {
-        console.log('Cancel Logout button clicked - Event Listener Triggered');
-        logoutConfirmModal.classList.remove('active');
-    });
+    if (cancelLogoutBtn) {
+        cancelLogoutBtn.addEventListener('click', () => {
+            console.log('Cancel Logout button clicked - Event Listener Triggered');
+            logoutConfirmModal.classList.remove('active');
+        });
+    } else {
+        console.warn('Elemento con ID "cancel-logout" non trovato nell\'HTML');
+    }
 
-    confirmLogoutBtn.addEventListener('click', async () => {
-        console.log('Confirm Logout button clicked - Event Listener Triggered');
-        try {
-            console.log('Attempting to sign out...');
-            await auth.signOut();
-            console.log("User signed out successfully.");
-            window.location.href = '../auth/auth.html'; // Redirect to login page
-        } catch (error) {
-            console.error("Error during logout:", error);
-            if (window.showErrorToast) {
-                window.showErrorToast("Errore durante il logout: " + error.message);
+    if (confirmLogoutBtn) {
+        confirmLogoutBtn.addEventListener('click', async () => {
+            console.log('Confirm Logout button clicked - Event Listener Triggered');
+            try {
+                console.log('Attempting to sign out...');
+                await auth.signOut();
+                console.log("User signed out successfully.");
+                window.location.href = '../auth/auth.html'; // Redirect to login page
+            } catch (error) {
+                console.error("Error during logout:", error);
+                if (window.showErrorToast) {
+                    window.showErrorToast("Errore durante il logout: " + error.message);
+                }
             }
-        }
-    });
-
-    closeBillingHistoryModalBtn.addEventListener('click', () => {
-        billingHistoryModal.classList.remove('active');
-    });
+        });
+    } else {
+        console.warn('Elemento con ID "confirm-logout" non trovato nell\'HTML');
+    }
 
     // Subscription Edit Modal Logic
     const openSubscriptionEditModal = async () => {
@@ -820,79 +988,101 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    editSubscriptionExpiryBtn.addEventListener('click', openSubscriptionEditModal);
-    editPaymentMethodBtn.addEventListener('click', openSubscriptionEditModal);
-    cancelSubscriptionBtn.addEventListener('click', openSubscriptionEditModal);
+    if (editSubscriptionExpiryBtn) {
+        editSubscriptionExpiryBtn.addEventListener('click', openSubscriptionEditModal);
+    } else {
+        console.warn('Elemento con ID "edit-subscription-expiry" non trovato nell\'HTML');
+    }
 
-    cancelSubscriptionEditBtn.addEventListener('click', () => {
-        subscriptionEditModal.classList.remove('active');
-    });
+    if (editPaymentMethodBtn) {
+        editPaymentMethodBtn.addEventListener('click', openSubscriptionEditModal);
+    } else {
+        console.warn('Elemento con ID "edit-payment-method" non trovato nell\'HTML');
+    }
 
-    saveSubscriptionChangesBtn.addEventListener('click', async () => {
-        if (!currentUser) {
-            if (window.showErrorToast) {
-                window.showErrorToast("Devi essere loggato per salvare le modifiche.");
-            }
-            return;
-        }
+    if (cancelSubscriptionBtn) {
+        cancelSubscriptionBtn.addEventListener('click', openSubscriptionEditModal);
+    } else {
+        console.warn('Elemento con ID "cancel-subscription-btn" non trovato nell\'HTML');
+    }
 
-        const newSubscriptionType = subscriptionTypeInput.value;
-        const newStartDate = subscriptionStartDateInput.value;
-        const newEndDate = subscriptionEndDateInput.value;
-        const newPaymentMethod = paymentMethodInput.value.trim();
-        const newAutoRenew = autoRenewInput.checked;
-        const newLastPaymentDate = lastPaymentDateInput.value;
-        const newNextPaymentDate = nextPaymentDateInput.value;
-
-        if (!newSubscriptionType || !newStartDate || !newEndDate || !newPaymentMethod) {
-            if (window.showErrorToast) {
-                window.showErrorToast("Tipo di abbonamento, Data Inizio, Data Scadenza e Metodo di Pagamento sono obbligatori.");
-            }
-            return;
-        }
-        if (newAutoRenew && (!newLastPaymentDate || !newNextPaymentDate)) {
-            if (window.showErrorToast) {
-                window.showErrorToast("Se il rinnovo automatico è attivo, Data Ultimo Pagamento e Data Prossimo Pagamento sono obbligatori.");
-            }
-            return;
-        }
-
-        try {
-            const subscriptionUpdates = {
-                'subscription.type': newSubscriptionType,
-                'subscription.startDate': firebase.firestore.Timestamp.fromDate(new Date(newStartDate)),
-                'subscription.endDate': firebase.firestore.Timestamp.fromDate(new Date(newEndDate)),
-                'subscription.paymentMethod': newPaymentMethod,
-                'subscription.status': newSubscriptionType === "Nessuno" ? "inactive" : "active",
-                'subscription.autoRenew': newAutoRenew,
-                'subscription.lastPaymentDate': newLastPaymentDate ? firebase.firestore.Timestamp.fromDate(new Date(newLastPaymentDate)) : null,
-                'subscription.nextPaymentDate': newNextPaymentDate ? firebase.firestore.Timestamp.fromDate(new Date(newNextPaymentDate)) : null
-            };
-
-            await db.collection('users').doc(currentUser.uid).update(subscriptionUpdates);
-            
-            // Update Cache with strings
-            const cacheUpdates = { ...subscriptionUpdates };
-            // Convert timestamps to strings for cache
-            if (cacheUpdates['subscription.startDate']) cacheUpdates['subscription.startDate'] = new Date(newStartDate).toISOString();
-            if (cacheUpdates['subscription.endDate']) cacheUpdates['subscription.endDate'] = new Date(newEndDate).toISOString();
-            if (cacheUpdates['subscription.lastPaymentDate']) cacheUpdates['subscription.lastPaymentDate'] = newLastPaymentDate ? new Date(newLastPaymentDate).toISOString() : null;
-            if (cacheUpdates['subscription.nextPaymentDate']) cacheUpdates['subscription.nextPaymentDate'] = newNextPaymentDate ? new Date(newNextPaymentDate).toISOString() : null;
-
-            updateLocalUserProfile(currentUser.uid, cacheUpdates);
-
-            if (window.showSuccessToast) {
-                window.showSuccessToast("Dati abbonamento aggiornati con successo!");
-            }
+    if (cancelSubscriptionEditBtn) {
+        cancelSubscriptionEditBtn.addEventListener('click', () => {
             subscriptionEditModal.classList.remove('active');
-            fetchUserData(currentUser.uid); // Refresh displayed data
-        } catch (error) {
-            console.error("Error updating subscription data:", error);
-            if (window.showErrorToast) {
-                window.showErrorToast("Errore durante l'aggiornamento dei dati dell'abbonamento: " + error.message);
+        });
+    } else {
+        console.warn('Elemento con ID "cancel-subscription-edit" non trovato nell\'HTML');
+    }
+
+    if (saveSubscriptionChangesBtn) {
+        saveSubscriptionChangesBtn.addEventListener('click', async () => {
+            if (!currentUser) {
+                if (window.showErrorToast) {
+                    window.showErrorToast("Devi essere loggato per salvare le modifiche.");
+                }
+                return;
             }
-        }
-    });
+
+            const newSubscriptionType = subscriptionTypeInput.value;
+            const newStartDate = subscriptionStartDateInput.value;
+            const newEndDate = subscriptionEndDateInput.value;
+            const newPaymentMethod = paymentMethodInput.value.trim();
+            const newAutoRenew = autoRenewInput.checked;
+            const newLastPaymentDate = lastPaymentDateInput.value;
+            const newNextPaymentDate = nextPaymentDateInput.value;
+
+            if (!newSubscriptionType || !newStartDate || !newEndDate || !newPaymentMethod) {
+                if (window.showErrorToast) {
+                    window.showErrorToast("Tipo di abbonamento, Data Inizio, Data Scadenza e Metodo di Pagamento sono obbligatori.");
+                }
+                return;
+            }
+            if (newAutoRenew && (!newLastPaymentDate || !newNextPaymentDate)) {
+                if (window.showErrorToast) {
+                    window.showErrorToast("Se il rinnovo automatico è attivo, Data Ultimo Pagamento e Data Prossimo Pagamento sono obbligatori.");
+                }
+                return;
+            }
+
+            try {
+                const subscriptionUpdates = {
+                    'subscription.type': newSubscriptionType,
+                    'subscription.startDate': firebase.firestore.Timestamp.fromDate(new Date(newStartDate)),
+                    'subscription.endDate': firebase.firestore.Timestamp.fromDate(new Date(newEndDate)),
+                    'subscription.paymentMethod': newPaymentMethod,
+                    'subscription.status': newSubscriptionType === "Nessuno" ? "inactive" : "active",
+                    'subscription.autoRenew': newAutoRenew,
+                    'subscription.lastPaymentDate': newLastPaymentDate ? firebase.firestore.Timestamp.fromDate(new Date(newLastPaymentDate)) : null,
+                    'subscription.nextPaymentDate': newNextPaymentDate ? firebase.firestore.Timestamp.fromDate(new Date(newNextPaymentDate)) : null
+                };
+
+                await db.collection('users').doc(currentUser.uid).update(subscriptionUpdates);
+                
+                // Update Cache with strings
+                const cacheUpdates = { ...subscriptionUpdates };
+                // Convert timestamps to strings for cache
+                if (cacheUpdates['subscription.startDate']) cacheUpdates['subscription.startDate'] = new Date(newStartDate).toISOString();
+                if (cacheUpdates['subscription.endDate']) cacheUpdates['subscription.endDate'] = new Date(newEndDate).toISOString();
+                if (cacheUpdates['subscription.lastPaymentDate']) cacheUpdates['subscription.lastPaymentDate'] = newLastPaymentDate ? new Date(newLastPaymentDate).toISOString() : null;
+                if (cacheUpdates['subscription.nextPaymentDate']) cacheUpdates['subscription.nextPaymentDate'] = newNextPaymentDate ? new Date(newNextPaymentDate).toISOString() : null;
+
+                updateLocalUserProfile(currentUser.uid, cacheUpdates);
+
+                if (window.showSuccessToast) {
+                    window.showSuccessToast("Dati abbonamento aggiornati con successo!");
+                }
+                subscriptionEditModal.classList.remove('active');
+                fetchUserData(currentUser.uid); // Refresh displayed data
+            } catch (error) {
+                console.error("Error updating subscription data:", error);
+                if (window.showErrorToast) {
+                    window.showErrorToast("Errore durante l'aggiornamento dei dati dell'abbonamento: " + error.message);
+                }
+            }
+        });
+    } else {
+        console.warn('Elemento con ID "save-subscription-changes" non trovato nell\'HTML');
+    }
 
     // Support Actions
     const contactBtn = document.querySelector('.card-btn.primary');

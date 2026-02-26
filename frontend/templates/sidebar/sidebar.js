@@ -111,8 +111,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Initialize mobile sidebar
-    initMobileSidebar();
+    // Function to wait for sidebar to be loaded
+    function waitForSidebar(callback, maxAttempts = 50) {
+        let attempts = 0;
+        const checkSidebar = () => {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                callback();
+            } else if (attempts < maxAttempts) {
+                attempts++;
+                setTimeout(checkSidebar, 100);
+            }
+        };
+        checkSidebar();
+    }
+
+    // Initialize mobile sidebar when DOM is ready
+    waitForSidebar(initMobileSidebar);
 
     // Optimistic Load
     const lastUid = localStorage.getItem('lastUserId');
@@ -158,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      // Try to fetch if not in cache (fallback)
                      // Or just rely on CacheManager.initCache() if it was called elsewhere
                      // But sidebar might be standalone
-                     // Let's keep the fallback logic but use CacheManager to save
+                     // Let's keep of fallback logic but use CacheManager to save
                      try {
                         const userDoc = await db.collection('users').doc(user.uid).get();
                         if (userDoc.exists) {
@@ -255,7 +270,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
-            updateSidebar();
+            // Wait for sidebar to be loaded before updating
+            waitForSidebar(updateSidebar);
         } else {
             console.log('No user signed in, redirecting to login...');
             window.location.href = '../auth/auth.html';
@@ -320,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // If we want to strictly follow "20 most recent" for sidebar too:
         // routines = routines.slice(0, 20); 
-        // But the user didn't explicitly say "limit sidebar to 20", just "save... 20 most recent".
+        // But user didn't explicitly say "limit sidebar to 20", just "save... 20 most recent".
         // I'll keep it as is (render all passed), but cache is limited.
         // Wait, if I render all, but cache has 20, then on reload I see 20, then 50.
         // That's a UI jump.
@@ -384,4 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
             container.appendChild(routineItem);
         });
     }
+
+    // Mark sidebar as initialized
+    window.sidebarInitialized = true;
 });
