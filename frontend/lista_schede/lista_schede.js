@@ -142,6 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    
+    // Listen for cross-tab updates
+    window.addEventListener('routinesUpdatedFromOtherTab', () => {
+        console.log('Routines updated in another tab, refreshing...');
+        fetchRoutines(auth.currentUser.uid, true);
+    });
 
     async function fetchRoutines(uid, forceRefresh = false) {
         // 1. Check if we should force refresh

@@ -140,6 +140,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    
+    // Listen for cross-tab updates
+    window.addEventListener('sharedRoutinesUpdatedFromOtherTab', () => {
+        console.log('Shared routines updated in another tab, refreshing...');
+        fetchSharedRoutines(auth.currentUser.uid, true);
+    });
 
     // Close menus when clicking outside
     document.addEventListener('click', (e) => {
