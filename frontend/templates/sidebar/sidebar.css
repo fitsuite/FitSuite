@@ -13,6 +13,7 @@
     left: 0;
     transition: transform 0.3s ease, width 0.3s ease;
     z-index: 1000;
+    overflow: hidden; /* Prevent sidebar itself from scrolling */
 }
 
 /* Mobile Sidebar Styles */
@@ -103,7 +104,7 @@
 }
 
 .sidebar-header {
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 }
 
 .user-info {
@@ -121,8 +122,10 @@
 
 .user-username-sidebar {
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
     color: white;
+    letter-spacing: 0.5px;
+    text-transform: none;
 }
 
 .user-avatar-small {
@@ -166,7 +169,7 @@
     cursor: pointer;
     transition: all 0.2s;
     font-size: 14px;
-    margin-bottom: 8px; /* Reduced margin between buttons */
+    margin-bottom: 12px;
 }
 
 .new-routine-btn.ai-btn {
@@ -186,7 +189,7 @@
 .sidebar-divider {
     border: none;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin: 12px 0; /* Reduced margin around divider */
+    margin: 18px 0;
 }
 
 .view-routines-btn {
@@ -201,7 +204,7 @@
     justify-content: center;
     gap: 10px;
     cursor: pointer;
-    margin-bottom: 10px; /* Reduced margin between buttons */
+    margin-bottom: 15px;
     transition: transform 0.2s, background-color 0.2s;
 }
 
@@ -223,7 +226,7 @@
     gap: 10px;
     font-size: 14px;
     color: var(--text-gray);
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     flex-shrink: 0; /* Don't shrink */
 }
 
@@ -232,13 +235,13 @@
     padding-left: 25px;
     overflow-y: auto;
     flex-grow: 1;
-    max-height: calc(100vh - 400px); /* Adjust based on header and footer height */
+    max-height: calc(100vh - 480px); /* Further reduced to ensure footer is always visible */
 }
 
 /* For mobile */
 @media (max-width: 992px) {
     .routine-list {
-        max-height: calc(100vh - 350px); /* Less space on mobile */
+        max-height: calc(100vh - 440px); /* Further adjusted for mobile to ensure footer is always visible */
     }
 }
 
@@ -301,10 +304,12 @@
 }
 
 .sidebar-footer {
-    margin-top: 20px;
+    margin-top: auto;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 12px; /* Reduced padding to bring settings closer */
+    padding-top: 20px; /* Reduced padding to bring settings closer */
     flex-shrink: 0; /* Don't shrink - keeps settings button always visible */
+    position: relative;
+    background-color: #1a1a1a;
 }
 
 .nav-item {
