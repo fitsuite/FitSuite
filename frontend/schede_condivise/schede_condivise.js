@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.CacheManager) {
                     window.CacheManager.forceRefreshSharedRoutines(auth.currentUser.uid);
                 }
-                await fetchSharedRoutines(auth.currentUser.uid);
+                await fetchSharedRoutines(auth.currentUser.uid, true);
             } catch (error) {
                 console.error('Error refreshing shared routines:', error);
             } finally {
@@ -150,9 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    async function fetchSharedRoutines(uid) {
+    async function fetchSharedRoutines(uid, forceRefresh = false) {
         // 1. Check if we should force refresh or cache is expired
-        const shouldRefresh = !window.CacheManager || 
+        const shouldRefresh = forceRefresh || !window.CacheManager || 
                              window.CacheManager.isSharedRoutinesCacheExpired(uid) ||
                              !window.CacheManager.getSharedRoutines(uid);
 

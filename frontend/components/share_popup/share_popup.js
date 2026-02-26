@@ -235,8 +235,17 @@ class SharePopup {
             return;
         }
 
+        // Check if user is authenticated
+        if (!this.auth.currentUser) {
+            console.error('No authenticated user found for search');
+            return;
+        }
+
         try {
             console.log("Searching for users with query:", query);
+            console.log("Current user UID:", this.auth.currentUser.uid);
+            console.log("Already shared users:", this.sharedUsers.map(u => u.uid));
+            
             // Search users by username
             const snapshot = await this.db.collection('users')
                 .where('username', '>=', query)
@@ -247,18 +256,21 @@ class SharePopup {
             this.searchResults = [];
             snapshot.forEach(doc => {
                 const userData = doc.data();
+                console.log("Found user:", doc.id, userData.username);
+                
                 // Don't show current user or already shared users
-                if (doc.id !== this.auth.currentUser?.uid && 
+                if (doc.id !== this.auth.currentUser.uid && 
                     !this.sharedUsers.some(u => u.uid === doc.id)) {
                     this.searchResults.push({
                         uid: doc.id,
                         username: userData.username || 'Utente',
                         email: userData.email || ''
                     });
+                    console.log("Added to search results:", userData.username);
                 }
             });
 
-            console.log("Search results found:", this.searchResults.length);
+            console.log("Final search results:", this.searchResults.length);
             this.renderSearchResults();
             this.showSearchResults(); // Show results after rendering
         } catch (error) {
@@ -268,14 +280,25 @@ class SharePopup {
 
     renderSearchResults() {
         const container = document.getElementById('search-results');
-        if (!container) return;
+        console.log("renderSearchResults called");
+        console.log("Container:", container);
+        console.log("Search results to render:", this.searchResults);
+        
+        if (!container) {
+            console.log("Container not found!");
+            return;
+        }
 
+        // Add test message to verify container is visible
         if (this.searchResults.length === 0) {
             container.innerHTML = '<div class="no-results">Nessun utente trovato</div>';
+            console.log("No results message set");
             return;
         }
 
         container.innerHTML = '';
+        console.log("Clearing container and rendering", this.searchResults.length, "users");
+        
         this.searchResults.forEach(user => {
             const userEl = document.createElement('div');
             userEl.className = 'search-result-item';
@@ -286,19 +309,27 @@ class SharePopup {
                 <div class="search-result-avatar">${initials}</div>
                 <div class="search-result-info">
                     <div class="search-result-username">${user.username}</div>
-                    <div class="search-result-email">${user.email}</div>
                 </div>
             `;
 
             userEl.addEventListener('click', () => this.addShare(user));
             container.appendChild(userEl);
+            console.log("Added user to results:", user.username);
         });
     }
 
     showSearchResults() {
         const container = document.getElementById('search-results');
+        console.log("showSearchResults called");
+        console.log("Container:", container);
+        console.log("Search results length:", this.searchResults.length);
+        console.log("Search results:", this.searchResults);
+        
         if (container && this.searchResults.length > 0) {
             container.classList.add('show');
+            console.log("Added 'show' class to container");
+        } else {
+            console.log("Not showing results - container missing or no results");
         }
     }
 
@@ -309,16 +340,16 @@ class SharePopup {
         }
     }
 
-    async addShare(userId, username, email) {
+    async addShare(user) {
         // Check if user is already in shared list
-        if (this.sharedUsers.some(u => u.uid === userId)) {
+        if (this.sharedUsers.some(u => u.uid === user.uid)) {
             return;
         }
 
         this.sharedUsers.push({
-            uid: userId,
-            username: username,
-            email: email,
+            uid: user.uid,
+            username: user.username,
+            email: user.email,
             role: 'viewer'
         });
 

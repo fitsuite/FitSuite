@@ -221,7 +221,8 @@ body.list-body {
     overflow: hidden;
     text-overflow: ellipsis;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     min-height: 24px; /* Ensure consistent line height */
 }
 
@@ -326,6 +327,8 @@ body.list-body {
     display: flex;
     align-items: center;
     gap: 10px;
+    touch-action: manipulation;
+    min-height: 44px; /* Touch target size */
 }
 
 .menu-item:hover {
@@ -339,6 +342,19 @@ body.list-body {
 
 .menu-item.delete {
     color: #ff4444;
+}
+
+/* Touch-friendly improvements for all buttons */
+.menu-trigger, .view-btn, .accept-btn, .reject-btn, .refresh-btn, .logout-btn {
+    touch-action: manipulation;
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Ensure proper spacing for touch targets */
+.routine-list-row {
+    padding: 15px 20px;
+    min-height: 60px;
 }
 
 /* Shared Cards Specific Styles */
@@ -432,6 +448,51 @@ body.list-body {
     align-items: center;
     gap: 0.5rem;
     margin-top: 0.25rem;
+    flex-wrap: wrap;
+}
+
+/* Tablet/Laptop scaling */
+@media (max-width: 1366px) {
+    .main-content {
+        padding: 40px 20px;
+    }
+
+    .routines-list-container {
+        padding: 0 10px;
+    }
+
+    .list-header, .routine-list-row {
+        grid-template-columns: 40px 2fr 1.5fr 1fr 120px; /* Reduce fixed columns */
+        padding: 10px 15px;
+        font-size: 13px;
+        gap: 10px;
+    }
+    
+    .col-name {
+        font-size: 15px;
+    }
+
+    .search-wrapper {
+        max-width: 400px;
+        margin: 0 10px;
+    }
+    
+    .content-header h1 {
+        font-size: 26px;
+        /* Ensure static positioning */
+        position: static; 
+        transform: none;
+        left: auto;
+    }
+    
+    .logout-btn {
+        padding: 8px 15px;
+        font-size: 13px;
+        /* Ensure static positioning */
+        position: static;
+        transform: none;
+        right: auto;
+    }
 }
 
 /* Responsive Design */
@@ -446,44 +507,78 @@ body.list-body {
 }
 
 @media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 40px 20px;
+    }
+    
     .content-header {
         flex-direction: column;
-        gap: 15px;
-        padding: 0 20px;
+        gap: 20px;
+        position: static;
+        text-align: center;
     }
     
-    .search-wrapper {
-        margin: 0;
-        max-width: 100%;
+    .content-header h1, .logout-btn {
+        position: static;
+        transform: none;
+        width: 100%;
     }
-    
+
     .list-header {
-        grid-template-columns: 50px 1.5fr 1fr 80px;
+        grid-template-columns: 30px 1fr 0.4fr 110px;
         font-size: 12px;
+        gap: 10px;
     }
     
     .routine-list-row {
-        grid-template-columns: 50px 1.5fr 1fr 80px;
+        grid-template-columns: 30px 1fr 0.4fr 110px;
         padding: 12px 15px;
+        gap: 10px;
     }
     
-    .col-date, .col-sessions {
-        display: none;
+    .col-sessions {
+        display: none !important;
+    }
+    
+    .col-name {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        word-wrap: break-word;
+        line-height: 1.3;
+    }
+    
+    .col-owner {
+        text-align: center;
+        justify-self: center;
+        font-size: 12px;
     }
     
     .shared-by-badge {
         font-size: 0.625rem;
         padding: 0.2rem 0.5rem;
+        justify-self: center;
     }
     
     .accept-reject-buttons {
         flex-direction: column;
-        gap: 0.25rem;
+        gap: 0.5rem;
+        min-width: 90px;
     }
     
     .accept-btn, .reject-btn {
-        font-size: 0.625rem;
-        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        min-height: 36px;
+        border-radius: 8px;
+        touch-action: manipulation;
+    }
+    
+    .view-btn {
+        padding: 6px 12px;
+        min-height: 36px;
+        touch-action: manipulation;
     }
     
     /* Fix dropdown menu on mobile */
@@ -509,15 +604,53 @@ body.list-body {
     }
     
     .list-header {
-        grid-template-columns: 50px 1fr 60px;
+        grid-template-columns: 30px 1fr 90px;
+        font-size: 12px;
     }
     
     .routine-list-row {
-        grid-template-columns: 50px 1fr 60px;
+        grid-template-columns: 30px 1fr 90px;
+        padding: 15px;
+        min-height: 80px;
     }
     
     .col-owner {
         display: none;
+    }
+    
+    .col-name {
+        font-size: 15px;
+        line-height: 1.4;
+        margin-bottom: 0.5rem;
+    }
+    
+    .shared-status {
+        margin-top: 0.5rem;
+    }
+    
+    .pending-badge, .accepted-badge {
+        font-size: 0.625rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .accept-reject-buttons {
+        min-width: 80px;
+        gap: 0.4rem;
+    }
+    
+    .accept-btn, .reject-btn {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.6rem;
+        min-height: 32px;
+        border-radius: 6px;
+        touch-action: manipulation;
+    }
+    
+    .view-btn {
+        padding: 5px 10px;
+        font-size: 12px;
+        min-height: 32px;
+        touch-action: manipulation;
     }
     
     /* Fix dropdown menu on small mobile */
@@ -525,5 +658,11 @@ body.list-body {
         right: auto !important;
         left: 5px !important;
         min-width: 150px !important;
+    }
+    
+    .menu-item {
+        padding: 10px 12px;
+        font-size: 13px;
+        touch-action: manipulation;
     }
 }

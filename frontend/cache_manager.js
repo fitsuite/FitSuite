@@ -234,6 +234,13 @@ const CacheManager = {
         console.log('Routine removed from cache:', routineId);
     },
 
+    // Forza l'aggiornamento della cache delle schede possedute
+    forceRefreshRoutines: function(uid) {
+        const key = this.ROUTINES_KEY_PREFIX + uid;
+        localStorage.removeItem(key);
+        console.log('Forced refresh of routines cache for user:', uid);
+    },
+
     // SHARED ROUTINES CACHE METHODS
 
     // Salva le schede condivise nella cache

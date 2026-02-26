@@ -133,8 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.CacheManager) {
                     window.CacheManager.forceRefreshRoutines(auth.currentUser.uid);
                 }
-                // Fetch routines again
-                await fetchRoutines(auth.currentUser.uid);
+                // Fetch routines again with force refresh
+                await fetchRoutines(auth.currentUser.uid, true);
             } catch (error) {
                 console.error('Error refreshing routines:', error);
             } finally {
@@ -143,9 +143,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function fetchRoutines(uid) {
-        // 1. Load from Cache FIRST for speed
-        if (window.CacheManager) {
+    async function fetchRoutines(uid, forceRefresh = false) {
+        // 1. Check if we should force refresh
+        const shouldRefresh = forceRefresh || !window.CacheManager || !window.CacheManager.getRoutines(uid);
+
+        // 2. Load from Cache FIRST if valid and not forced refresh
+        if (!shouldRefresh && window.CacheManager) {
             const cachedRoutines = window.CacheManager.getRoutines(uid);
             if (cachedRoutines !== null) {
                 console.log("Routines loaded from cache, skipping DB");
@@ -156,28 +159,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            console.log("Routines not in cache, fetching from DB");
+            console.log("Routines not in cache or forced refresh, fetching from DB");
             
-            // 2. Fetch owned routines and shared routines
-            const [ownedSnapshot, sharedSnapshot] = await Promise.all([
-                db.collection('routines').where('userId', '==', uid).get(),
-                db.collection('routines').where('condivisioni', 'array-contains', uid).get()
-            ]);
+            // 3. Fetch ONLY owned routines
+            const ownedSnapshot = await db.collection('routines').where('userId', '==', uid).get();
 
             allRoutines = [];
             
-            // Process owned routines
+            // Process owned routines only
             ownedSnapshot.forEach(doc => {
                 allRoutines.push({ id: doc.id, ...doc.data(), isOwned: true });
-            });
-            
-            // Process shared routines
-            sharedSnapshot.forEach(doc => {
-                const routineData = doc.data();
-                // Don't duplicate if user is also the owner
-                if (routineData.userId !== uid) {
-                    allRoutines.push({ id: doc.id, ...routineData, isOwned: false });
-                }
             });
 
             if (allRoutines.length === 0) {
@@ -186,13 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Sort by createdAt descending (shared routines after owned ones)
+            // Sort by createdAt descending
             allRoutines.sort((a, b) => {
-                // First sort by ownership (owned first)
-                if (a.isOwned !== b.isOwned) {
-                    return a.isOwned ? -1 : 1;
-                }
-                // Then by date
                 const dateA = a.createdAt ? a.createdAt.toDate() : new Date(0);
                 const dateB = b.createdAt ? b.createdAt.toDate() : new Date(0);
                 return dateB - dateA;
