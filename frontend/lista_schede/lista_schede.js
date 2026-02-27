@@ -8,6 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let allRoutines = []; // Store routines for client-side filtering
 
+    // Function to check if device is mobile
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
+
     const colorMap = {
         'Arancione': '#ff6600',
         'Verde': '#4ade80',
@@ -147,6 +152,14 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('routinesUpdatedFromOtherTab', () => {
         console.log('Routines updated in another tab, refreshing...');
         fetchRoutines(auth.currentUser.uid, true);
+    });
+
+    // Listen for window resize to update menu visibility
+    window.addEventListener('resize', () => {
+        // Re-render routines to update menu visibility based on new screen size
+        if (auth.currentUser && allRoutines.length > 0) {
+            renderRoutines(allRoutines);
+        }
     });
 
     async function fetchRoutines(uid, forceRefresh = false) {
@@ -289,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Check if user is owner
             const isOwner = routine.isOwned !== false; // Default to true for backward compatibility
             
-            // Show/hide actions based on ownership
+            // Show/hide actions based on ownership and mobile device
             const shareMenuItem = routineItem.querySelector('.share-btn');
             const editMenuItem = routineItem.querySelector('.edit-btn');
             const renameMenuItem = routineItem.querySelector('.rename-btn');
@@ -300,6 +313,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (editMenuItem) editMenuItem.style.display = 'none';
                 if (renameMenuItem) renameMenuItem.style.display = 'none';
                 if (deleteMenuItem) deleteMenuItem.style.display = 'none';
+            }
+            
+            // Hide "Modifica Scheda" on mobile devices
+            if (isMobile() && editMenuItem) {
+                editMenuItem.style.display = 'none';
             }
 
             // Share Action

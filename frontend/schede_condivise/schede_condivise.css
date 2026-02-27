@@ -294,7 +294,7 @@ body.list-body {
 .menu-dropdown {
     position: absolute;
     top: 100%;
-    right: 0;
+    left: 100%;
     background: var(--bg-card);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -306,6 +306,7 @@ body.list-body {
     transform: translateY(-10px);
     transition: all 0.2s ease;
     margin-top: 5px;
+    margin-left: 5px;
 }
 
 .menu-dropdown.active {
