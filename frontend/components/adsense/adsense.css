@@ -1,0 +1,225 @@
+/* AdSense Banner Styles */
+.adsense-banner {
+    width: 100%;
+    background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+    border: 2px solid #ff6600;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 30px 0;
+    text-align: center;
+    color: #ff6600;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 15px rgba(255, 102, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.adsense-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 102, 0, 0.1), transparent);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.adsense-banner.top {
+    margin-top: 0;
+    margin-bottom: 40px;
+}
+
+.adsense-banner.bottom {
+    margin-top: 40px;
+    margin-bottom: 0;
+}
+
+/* Mobile First Responsive Design */
+@media (max-width: 480px) {
+    .adsense-banner {
+        min-height: 60px;
+        padding: 12px;
+        font-size: 11px;
+        margin: 15px 0;
+        border-radius: 8px;
+        border-width: 1.5px;
+    }
+    
+    .adsense-banner.top {
+        margin-bottom: 20px;
+    }
+    
+    .adsense-banner.bottom {
+        margin-top: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .adsense-banner {
+        min-height: 70px;
+        padding: 15px;
+        font-size: 12px;
+        margin: 20px 0;
+        border-radius: 10px;
+    }
+    
+    .adsense-banner.top {
+        margin-bottom: 25px;
+    }
+    
+    .adsense-banner.bottom {
+        margin-top: 25px;
+    }
+}
+
+/* Tablet styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .adsense-banner {
+        min-height: 85px;
+        padding: 20px;
+        font-size: 14px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .adsense-banner.top {
+        margin-bottom: 35px;
+    }
+    
+    .adsense-banner.bottom {
+        margin-top: 35px;
+    }
+}
+
+/* Desktop styles */
+@media (min-width: 1025px) {
+    .adsense-banner {
+        min-height: 100px;
+        padding: 25px;
+        font-size: 16px;
+        max-width: 728px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .adsense-banner.top {
+        margin-bottom: 50px;
+    }
+    
+    .adsense-banner.bottom {
+        margin-top: 50px;
+    }
+}
+
+/* Large Desktop */
+@media (min-width: 1440px) {
+    .adsense-banner {
+        max-width: 970px;
+        min-height: 90px;
+        padding: 20px;
+    }
+}
+
+/* AdSense placeholder content */
+.adsense-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.adsense-icon {
+    font-size: 24px;
+    opacity: 0.9;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.adsense-text {
+    font-size: inherit;
+    opacity: 0.9;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+}
+
+/* Mobile optimizations for placeholder */
+@media (max-width: 768px) {
+    .adsense-placeholder {
+        gap: 6px;
+    }
+    
+    .adsense-icon {
+        font-size: 20px;
+    }
+    
+    .adsense-text {
+        font-size: 11px;
+        letter-spacing: 0.2px;
+    }
+}
+
+@media (max-width: 480px) {
+    .adsense-placeholder {
+        gap: 4px;
+        flex-direction: row;
+    }
+    
+    .adsense-icon {
+        font-size: 16px;
+        margin-right: 6px;
+        margin-bottom: 0;
+    }
+    
+    .adsense-text {
+        font-size: 10px;
+        letter-spacing: 0.1px;
+    }
+}
+
+/* Special handling for settings page */
+.settings-body .adsense-banner {
+    margin: 25px 0;
+}
+
+.settings-body .adsense-banner.top {
+    margin-top: 0;
+    margin-bottom: 30px;
+}
+
+.settings-body .adsense-banner.bottom {
+    margin-top: 30px;
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .settings-body .adsense-banner {
+        margin: 20px 0;
+    }
+    
+    .settings-body .adsense-banner.top {
+        margin-bottom: 25px;
+    }
+    
+    .settings-body .adsense-banner.bottom {
+        margin-top: 25px;
+    }
+}
