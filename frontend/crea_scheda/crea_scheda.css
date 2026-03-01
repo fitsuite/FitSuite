@@ -30,7 +30,7 @@ body {
 }
 
 .main-content {
-    margin-left: var(--sidebar-width);
+    margin-left: 215px;
     flex-grow: 1;
     padding: 60px 0;
     display: flex;

@@ -64,6 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
         img.src = profilePicUrl;
     }
 
+    // Make functions globally available
+    window.getGoogleProfilePictureUrl = getGoogleProfilePictureUrl;
+    window.loadUserAvatar = loadUserAvatar;
+
     // Listen for username updates
     window.addEventListener('usernameUpdated', (event) => {
         const { userId, username } = event.detail;

@@ -212,37 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Function to get Google Profile Picture URL
-    function getGoogleProfilePictureUrl(email, size = 200) {
-        return `https://www.google.com/s2/u/0/photos/public/id?sz=${size}&email=${encodeURIComponent(email)}`;
-    }
-
-    // Function to load user avatar with fallback to initial
-    function loadUserAvatar(email, username, avatarElement, size = 200) {
-        if (!avatarElement) return;
-        
-        const profilePicUrl = getGoogleProfilePictureUrl(email, size);
-        const img = new Image();
-        
-        img.onload = function() {
-            // If Google profile picture loads successfully, use it
-            avatarElement.style.backgroundImage = `url(${profilePicUrl})`;
-            avatarElement.style.backgroundSize = 'cover';
-            avatarElement.style.backgroundPosition = 'center';
-            avatarElement.textContent = ''; // Remove initial if image loads
-        };
-        
-        img.onerror = function() {
-            // Fallback to initial if image fails to load
-            const initial = (username || 'U').charAt(0).toUpperCase();
-            avatarElement.style.backgroundImage = 'none';
-            avatarElement.textContent = initial;
-        };
-        
-        // Start loading the image
-        img.src = profilePicUrl;
-    }
-    function savePreferencesToCache(uid, newPrefs) {
+    
+        function savePreferencesToCache(uid, newPrefs) {
         if (window.CacheManager) {
             const currentCache = window.CacheManager.getPreferences(uid) || {};
             const updatedCache = { ...currentCache, ...newPrefs };

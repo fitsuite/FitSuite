@@ -1,6 +1,6 @@
 /* Reset e Base */
 :root {
-    --sidebar-width: 280px;
+    --sidebar-width: 215px; /* Aggiornato per riflettere la nuova larghezza */
     --primary-color: #ff6600; /* Fallback */
 }
 

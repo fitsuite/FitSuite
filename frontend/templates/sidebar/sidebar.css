@@ -1,31 +1,31 @@
 /* Sidebar Styling */
 .sidebar {
     box-sizing: border-box;
-    width: var(--sidebar-width);
+    width: 215px; /* Ridotta da 215px per avere 20px di spazio a destra dei contenuti */
     background-color: #1a1a1a;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
-    padding: 20px 15px; /* Adjusted padding for exact match */
+    padding: 20px 20px 20px 20px; /* 20px sopra, destra, sotto, sinistra */
     position: fixed;
     top: 0;
     bottom: 0;
     left: 0;
     transition: transform 0.3s ease, width 0.3s ease;
     z-index: 1000;
-    overflow: hidden; /* Prevent sidebar itself from scrolling */
+    overflow: hidden;
 }
 
 /* Mobile Sidebar Styles */
 @media (max-width: 992px) {
     .sidebar {
         transform: translateX(-100%);
-        width: 250px; /* Fixed width when open */
+        width: 215px; /* Allineato alla larghezza desktop ridotta */
         box-shadow: 2px 0 10px rgba(0,0,0,0.5);
-        top: 0; /* Ensure it starts from the top */
-        left: 0; /* Ensure it starts from the left */
-        overflow-y: auto; /* Allow scrolling if content overflows */
-        z-index: 1002; /* Ensure sidebar overlaps the toggle button */
+        top: 0;
+        left: 0;
+        overflow-y: auto;
+        z-index: 1002;
     }
 
     .sidebar.open {
@@ -104,16 +104,22 @@
 }
 
 .sidebar-header {
-    margin-bottom: 15px; /* Reduced from 25px to match other pages */
+    margin-bottom: 15px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
 .user-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     background: rgba(255, 255, 255, 0.05);
-    padding: 10px;
+    padding: 6px 10px;
     border-radius: 12px;
+    width: 175px;
+    margin: 0; /* Allineato a sinistra */
+    box-sizing: border-box;
 }
 
 .user-details {
@@ -121,11 +127,14 @@
 }
 
 .user-username-sidebar {
-    font-size: 16px;
+    font-size: 13px; /* Ridotto leggermente per stare in 190px */
     font-weight: 600;
     color: white;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.2px;
     text-transform: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .user-avatar-small {
@@ -155,17 +164,24 @@
     font-size: 18px;
 }
 
+.new-routine-btn, .view-routines-btn {
+    width: 175px; 
+    padding: 12px 10px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0; /* Rimosso auto per allineare a sinistra */
+    white-space: nowrap;
+}
+
 .new-routine-btn {
     background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 12px;
     border-radius: 12px;
     font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 14px;
@@ -196,13 +212,8 @@
     background-color: #333; /* Darker background for contrast */
     color: white;
     border: none;
-    padding: 12px;
     border-radius: 10px;
     font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
     cursor: pointer;
     margin-bottom: 15px;
     transition: transform 0.2s, background-color 0.2s;
@@ -223,19 +234,57 @@
 .nav-section-title {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     font-size: 14px;
     color: var(--text-gray);
     margin-bottom: 12px;
-    flex-shrink: 0; /* Don't shrink */
+    flex-shrink: 0;
+    width: 175px; /* Uniformata la larghezza del titolo ai riquadri */
+    margin: 0; /* Allineato a sinistra */
 }
 
 .routine-list {
     list-style: none;
-    padding-left: 25px;
+    padding-left: 0;
+    padding-right: 15px;
+    padding-top: 17px;
+    padding-bottom: 5px;
     overflow-y: auto;
     flex-grow: 1;
-    max-height: calc(100vh - 460px); /* Adjusted to make space for the footer */
+    max-height: calc(100vh - 460px);
+    width: 190px;
+    margin: 0;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.3s ease;
+}
+
+.nav-section:hover .routine-list {
+    scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
+}
+
+/* Webkit specific */
+.routine-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.routine-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.routine-list::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+    transition: background 0.3s ease;
+}
+
+.nav-section:hover .routine-list::-webkit-scrollbar-thumb,
+.routine-list::-webkit-scrollbar-thumb:active {
+    background: rgba(128, 128, 128, 0.5);
+}
+
+.routine-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.8);
 }
 
 /* For mobile */
@@ -243,25 +292,6 @@
     .routine-list {
         max-height: calc(100vh - 440px); /* Further adjusted for mobile to ensure footer is always visible */
     }
-}
-
-/* Custom scrollbar for routine list */
-.routine-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.routine-list::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
-}
-
-.routine-list::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
-}
-
-.routine-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
 }
 
 .routine-list li {
@@ -280,8 +310,11 @@
     cursor: pointer;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     transition: background-color 0.2s;
+    width: 100%; /* Occupa tutto lo spazio del contenitore da 175px */
+    box-sizing: border-box;
 }
 
+.routine-list li:last-child,
 .routine-item:last-child {
     border-bottom: none;
 }
@@ -292,7 +325,7 @@
 
 .routine-name {
     color: white;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     margin-bottom: 4px;
     transition: color 0.2s;
@@ -307,26 +340,32 @@
     margin-top: auto;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding-top: 15px;
-    padding-bottom: 0px; /* Remove bottom padding to sit at very bottom */
-    flex-shrink: 0; /* Don't shrink - keeps settings button always visible */
+    padding-bottom: 0px;
+    flex-shrink: 0;
     position: sticky;
     bottom: 0;
     background-color: #1a1a1a;
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     color: white;
     text-decoration: none;
-    padding: 12px;
+    padding: 12px 10px;
     border-radius: 10px;
     transition: background 0.2s;
     cursor: pointer;
     pointer-events: auto;
     z-index: 1;
     position: relative;
+    width: 175px;
+    margin: 0; /* Allineato a sinistra */
+    box-sizing: border-box;
 }
 
 .nav-item.active {
