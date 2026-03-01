@@ -1,0 +1,25 @@
+/**
+ * ISTRUZIONI: 
+ * 1. Copia questo file e rinominalo in "config.local.js" 
+ * 2. Sostituisci le chiavi API con le tue chiavi reali da Google Cloud Console
+ * 3. IMPORTANTE: config.local.js NON deve essere committato su GitHub (è già in .gitignore)
+ * 
+ * Dove trovare le chiavi:
+ * - FIREBASE: https://console.firebase.google.com → Impostazioni progetto → Generali
+ * - GEMINI: https://aistudio.google.com/app/apikeys (oppure console.cloud.google.com)
+ */
+
+window.CONFIG = {
+    FIREBASE: {
+        apiKey: "YOUR_FIREBASE_API_KEY_HERE",
+        authDomain: "your-project.firebaseapp.com",
+        projectId: "your-project-id",
+        storageBucket: "your-project.firebasestorage.app",
+        messagingSenderId: "your-messaging-sender-id",
+        appId: "1:your-app-id:web:your-web-id",
+        measurementId: "G-YOUR-MEASUREMENT-ID"
+    },
+    GEMINI: {
+        API_KEY: "YOUR_GEMINI_API_KEY_HERE"
+    }
+};

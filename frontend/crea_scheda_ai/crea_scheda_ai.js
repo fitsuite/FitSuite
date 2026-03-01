@@ -232,159 +232,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function generateRoutineWithGemini(userData, exercises) {
-        const apiKey = window.CONFIG.GEMINI.API_KEY; // From config.js (which reads from .env)
-        
-        // Array of available models to try in order (with correct v1beta names)
-        const availableModels = [
-            'gemini-2.5-flash',
-        ];
-        
-        let lastError = null;
-        const MAX_RETRIES = 0;
+        try {
+            // Chiama la Cloud Function Firebase (SICURA - chiave API nel backend)
+            const cloudFunction = firebase.functions().httpsCallable('generateWorkoutRoutine');
+            
+            console.log("Chiamando Cloud Function...");
+            
+            const result = await cloudFunction({
+                userData: userData,
+                exerciseNames: exercises.names
+            });
 
-        const systemPrompt = `
-Sei un esperto personal trainer. Crea una scheda di allenamento in formato JSON basata sui dati dell'utente.
-Usa SOLO gli esercizi presenti nella seguente lista: ${JSON.stringify(exercises.names)}.
-Non inventare esercizi.
-Rispondi SOLO con un JSON valido, senza markdown o testo aggiuntivo.
+            console.log("Scheda generata con successo!");
+            return result.data.routine;
 
-Dati Utente:
-- Sesso: ${userData.sesso}
-- Età: ${userData.eta}
-- Peso: ${userData.peso} kg
-- Altezza: ${userData.altezza} cm
-- Obiettivo: ${userData.obiettivo}
-- Esperienza: ${userData.esperienza}
-- Giorni a settimana: ${userData.giorni}
-- Focus: ${userData.focus.join(', ')}
-- Limitazioni fisiche: ${userData.limitazioni || 'Nessuna'}
-
-Struttura JSON richiesta:
-{
-  "nome_scheda": "Nome Scheda",
-  "descrizione": "Breve descrizione",
-  "sedute": [
-    {
-      "giorno": 1,
-      "nome_seduta": "Nome Seduta (es. Petto e Tricipiti)",
-      "esercizi": [
-        {
-          "nome": "Nome esatto dalla lista",
-          "serie": 3,
-          "ripetizioni": "10-12",
-          "recupero": "60s",
-          "note": "Note opzionali"
-        }
-      ]
-    }
-  ]
-}
-`;
-
-        const payload = {
-            contents: [{
-                role: "user",
-                parts: [{ text: systemPrompt }]
-            }]
-        };
-
-        // Try each model in order
-        for (const model of availableModels) {
-            let retries = 0;
-            while (retries <= MAX_RETRIES) {
-                try {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-                    
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        // Try to parse error response for more details
-                        let errorData = null;
-                        let errorDetails = '';
-                        try {
-                            errorData = await response.clone().json();
-                            errorDetails = JSON.stringify(errorData, null, 2);
-                        } catch (e) {
-                            errorDetails = await response.text();
-                        }
-                        
-                        // Check if quota exceeded (429)
-                        if (response.status === 429) {
-                            const delay = (Math.pow(2, retries) * 1000) + Math.random() * 1000;
-                            console.warn(`Rate limit (429) su ${model}. Tentativo ${retries + 1}/${MAX_RETRIES + 1}. Attesa ${delay.toFixed(0)}ms...`);
-                            if (retries < MAX_RETRIES) {
-                                await new Promise(r => setTimeout(r, delay));
-                                retries++;
-                                continue; // Retry with exponential backoff
-                            } else {
-                                lastError = `Modello ${model}: QUOTA ESAURITA (Free Tier). Devi attivare un piano a pagamento o attendere il reset giornaliero.`;
-                                console.warn(lastError);
-                                break; // Exit retry loop, try next model
-                            }
-                        }
-                        
-                        // Other errors (like 404)
-                        lastError = `Modello ${model}: ${response.status} ${response.statusText}`;
-                        console.warn(`Modello ${model} non disponibile:`, errorDetails);
-                        break; // Exit retry loop, try next model
-                    }
-
-                    const result = await response.json();
-                    
-                    try {
-                        let text = result.candidates[0].content.parts[0].text;
-                        // Clean markdown if present
-                        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-                        const parsedResult = JSON.parse(text);
-                        console.log(`Scheda generata con successo con modello: ${model}`);
-                        return parsedResult;
-                    } catch (e) {
-                        lastError = `Errore nel parsing con ${model}: ${e.message}`;
-                        console.warn(lastError);
-                        break; // Exit retry loop, try next model
-                    }
-
-                } catch (error) {
-                    lastError = `Errore con ${model}: ${error.message}`;
-                    console.warn(lastError);
-                    break; // Exit retry loop, try next model
-                }
+        } catch (error) {
+            console.error("Errore nella generazione della scheda:", error);
+            
+            let errorMessage = "Non è stato possibile generare la scheda.\n\n";
+            
+            if (error.code === 'resource-exhausted') {
+                errorMessage += "⚠️ HAI ESAURITO LA QUOTA FREE TIER DI GEMINI API\n";
+                errorMessage += "- Per continuare: https://console.cloud.google.com/billing\n";
+                errorMessage += "- Oppure attendi il reset giornaliero (24 ore)";
+            } else if (error.code === 'unauthenticated') {
+                errorMessage += "Errore di autenticazione. Per favore, accedi di nuovo.";
+            } else {
+                errorMessage += "Errore: " + (error.message || 'Sconosciuto');
             }
+            
+            throw new Error(errorMessage);
         }
-
-        // If all models failed, provide helpful error message
-        let errorMessage = `
-Non è stato possibile generare la scheda.
-
-Ultimo errore riscontrato:
-${lastError}
-
-Cosa puoi fare:
-`;
-
-        if (lastError && lastError.includes("QUOTA ESAURITA")) {
-            errorMessage += `
-1. ⚠️ HAI ESAURITO LA QUOTA FREE TIER DI GEMINI API
-   - La Google Gemini API free tier ha limite molto basso (poche richieste al giorno)
-   - Per continuare devi ATTIVARE UN PIANO A PAGAMENTO: https://console.cloud.google.com/billing
-   - Oppure attendi il reset giornaliero (24 ore dopo il primo utilizzo)
-
-2. Modelli disponibili in v1beta: ${availableModels.join(', ')}`;
-        } else {
-            errorMessage += `
-1. Verifica che la chiave API sia valida e attiva
-2. Controlla se la API Gemini è abilitata nella Google Cloud Console
-3. I modelli supportati sono: ${availableModels.join(', ')}
-4. Se hai superato la quota free tier, attiva un piano a pagamento`;
-        }
-
-        throw new Error(errorMessage);
     }
 
     function mapRoutineToFullObjects(routine, fullList) {

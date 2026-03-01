@@ -1,0 +1,35 @@
+# Environment & API Keys - NEVER COMMIT THESE
+config.local.js
+.env
+.env.local
+.env.*.local
+.runtimeconfig.json
+.runtimeconfig.json.enc
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build output
+dist/
+build/
+*.log
+
+# Firebase
+.firebaserc
+firebase-debug.log
+
