@@ -4,7 +4,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const routinesContainer = document.getElementById('routines-container');
     const searchInput = document.getElementById('search-bar');
     const refreshBtn = document.getElementById('refresh-btn');
-    const loadingScreen = document.getElementById('loading-screen');
+
+    // Inizializza la loading screen
+    window.LoadingManager.show([
+        'Inizializzazione pagina...',
+        'Caricamento preferenze utente...',
+        'Caricamento schede condivise...',
+        'Preparazione interfaccia...'
+    ]);
 
     let allRoutines = []; // Store shared routines for client-side filtering
 
@@ -92,15 +99,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             try {
+                window.LoadingManager.nextStep('Caricamento preferenze utente...');
                 await Promise.all([
                     loadUserPreferences(user.uid),
                     fetchSharedRoutines(user.uid),
                     waitForSidebar()
                 ]);
+                
+                window.LoadingManager.nextStep('Preparazione interfaccia completata');
             } catch (error) {
                 console.error("Error during initialization:", error);
             } finally {
-                if (loadingScreen) loadingScreen.style.display = 'none';
+                window.LoadingManager.hide();
             }
 
             // Set up periodic refresh every 2 minutes

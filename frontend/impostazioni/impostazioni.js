@@ -5,6 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Inizializza la loading screen
+    window.LoadingManager.show([
+        'Inizializzazione pagina...',
+        'Caricamento preferenze utente...',
+        'Caricamento dati profilo...',
+        'Preparazione interfaccia...'
+    ]);
+
     // Color Map for dynamic styling
     const colorMap = {
         'Arancione': '#ff6600',
@@ -140,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check Auth State
     auth.onAuthStateChanged(async (user) => {
-        const loadingScreen = document.getElementById('loading-screen');
         if (user) {
             currentUser = user;
             
@@ -165,15 +172,18 @@ document.addEventListener('DOMContentLoaded', () => {
             applyThemeFromCache(user.uid);
 
             try {
+                window.LoadingManager.nextStep('Caricamento dati profilo...');
                 // Fetch additional data from Firestore and wait for sidebar
                 await Promise.all([
                     fetchUserData(user.uid),
                     waitForSidebar()
                 ]);
+                
+                window.LoadingManager.nextStep('Preparazione interfaccia completata');
             } catch (error) {
                 console.error("Error during initialization:", error);
             } finally {
-                if (loadingScreen) loadingScreen.style.display = 'none';
+                window.LoadingManager.hide();
             }
         } else {
             console.log('No user signed in, redirecting to login...');

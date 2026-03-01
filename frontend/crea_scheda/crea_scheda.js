@@ -3,7 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = firebase.firestore();
     const storage = firebase.storage ? firebase.storage() : null; // Storage might not be initialized in the HTML
 
-    const loadingScreen = document.getElementById('loading-screen');
+    // Inizializza la loading screen
+    window.LoadingManager.show([
+        'Inizializzazione pagina...',
+        'Caricamento preferenze utente...',
+        'Preparazione interfaccia...',
+        'Verifica dati scheda...'
+    ]);
+
     const saveBtn = document.getElementById('save-button');
     const nomeSchedaInput = document.getElementById('nome-scheda');
 
@@ -82,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
-        const loadingScreen = document.getElementById('loading-screen');
         if (user) {
             try {
                 currentUser = user;
@@ -92,14 +98,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('lastUserId', user.uid);
                 }
 
+                window.LoadingManager.nextStep('Caricamento preferenze utente...');
                 await Promise.all([
                     loadUserPreferences(user.uid),
                     waitForSidebar()
                 ]);
 
+                window.LoadingManager.nextStep('Verifica dati scheda...');
                 // Check for AI generated routine in sessionStorage  
                 const aiRoutineJSON = sessionStorage.getItem('aiGeneratedRoutine');
                 if (aiRoutineJSON) {
+                    window.LoadingManager.nextStep('Caricamento scheda generata...');
                     const aiRoutine = JSON.parse(aiRoutineJSON);
                     sessionStorage.removeItem('aiGeneratedRoutine'); // Clean up
                     await loadAIGeneratedRoutine(aiRoutine);
@@ -108,13 +117,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const params = new URLSearchParams(window.location.search);
                     const routineId = params.get('id');
                     if (routineId) {
+                        window.LoadingManager.nextStep('Caricamento scheda esistente...');
                         await loadRoutineForEdit(routineId);
                     }
                 }
+                
+                window.LoadingManager.nextStep('Preparazione interfaccia completata');
             } catch (error) {
                 console.error("Error during initialization:", error);
             } finally {
-                if (loadingScreen) loadingScreen.style.display = 'none';
+                window.LoadingManager.hide();
             }
         } else {
             window.location.href = '../auth/auth.html';

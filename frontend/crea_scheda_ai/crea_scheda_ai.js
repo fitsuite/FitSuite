@@ -1,8 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('ai-workout-form');
-    const loadingScreen = document.getElementById('loading-screen');
     const auth = firebase.auth();
     const db = firebase.firestore();
+
+    // Inizializza la loading screen
+    window.LoadingManager.show([
+        'Inizializzazione pagina...',
+        'Caricamento preferenze utente...',
+        'Preparazione interfaccia...'
+    ]);
 
     const colorMap = {
         'Arancione': '#ff6600',
@@ -45,17 +51,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
-        const loadingScreen = document.getElementById('loading-screen');
         if (user) {
             try {
+                window.LoadingManager.nextStep('Caricamento preferenze utente...');
                 await Promise.all([
                     loadUserPreferences(user.uid),
                     waitForSidebar()
                 ]);
+                
+                window.LoadingManager.nextStep('Preparazione interfaccia completata');
             } catch (error) {
                 console.error("Error during initialization:", error);
             } finally {
-                if (loadingScreen) loadingScreen.style.display = 'none';
+                window.LoadingManager.hide();
             }
         } else {
             window.location.href = '../auth/auth.html';
@@ -147,10 +155,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                // Show loading state
-                if (loadingScreen) loadingScreen.style.display = 'flex';
+                // Show loading state for AI generation
+                window.LoadingManager.showAIGeneration();
                 
                 // 1. Load and Filter Database
+                window.LoadingManager.nextStep('Caricamento database esercizi...');
                 const exercises = await loadAndFilterExercises(data.attrezzatura);
                 
                 if (exercises.names.length === 0) {
@@ -158,12 +167,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // 2. Call Gemini API
+                window.LoadingManager.nextStep('Generazione scheda con AI...');
                 const generatedRoutine = await generateRoutineWithGemini(data, exercises);
                 
                 // 3. Process Response & Map to Full Objects
+                window.LoadingManager.nextStep('Elaborazione esercizi...');
                 const finalRoutine = mapRoutineToFullObjects(generatedRoutine, exercises.fullList);
 
                 // 4. Export/Save
+                window.LoadingManager.nextStep('Preparazione download...');
                 exportRoutineToPDF(finalRoutine);
 
             } catch (error) {
@@ -172,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.showErrorToast("Si è verificato un errore: " + error.message);
                 }
             } finally {
-                if (loadingScreen) loadingScreen.style.display = 'none';
+                window.LoadingManager.hide();
             }
         });
     }

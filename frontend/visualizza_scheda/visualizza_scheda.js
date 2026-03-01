@@ -3,7 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    const loadingScreen = document.getElementById('loading-screen');
+    // Inizializza la loading screen
+    window.LoadingManager.show([
+        'Inizializzazione pagina...',
+        'Caricamento preferenze utente...',
+        'Caricamento scheda...',
+        'Preparazione interfaccia...'
+    ]);
+
     const schedaNameElement = document.getElementById('scheda-name');
     const dateRangeDisplay = document.getElementById('date-range-display');
     const seduteContainer = document.getElementById('sedute-container');
@@ -78,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
-        const loadingScreen = document.getElementById('loading-screen');
         if (user) {
             try {
                 currentUser = user;
@@ -88,21 +94,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('lastUserId', user.uid);
                 }
 
+                window.LoadingManager.nextStep('Caricamento preferenze utente...');
                 const tasks = [
                     loadUserPreferences(user.uid),
                     waitForSidebar()
                 ];
                 const routineId = getRoutineIdFromUrl();
                 if (routineId) {
+                    window.LoadingManager.nextStep('Caricamento scheda...');
                     tasks.push(loadRoutineData(routineId, user.uid));
                 } else {
                     console.error("No routine ID found in URL.");
                 }
                 await Promise.all(tasks);
+                
+                window.LoadingManager.nextStep('Preparazione interfaccia completata');
             } catch (error) {
                 console.error("Error during initialization:", error);
             } finally {
-                if (loadingScreen) loadingScreen.style.display = 'none';
+                window.LoadingManager.hide();
             }
         } else {
             window.location.href = '../auth/auth.html';

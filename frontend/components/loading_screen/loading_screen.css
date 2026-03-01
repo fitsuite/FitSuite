@@ -38,17 +38,12 @@
     height: 100%;
     background-color: var(--primary-color, #fff); /* Use primary color */
     border-radius: 5px;
-    animation: progress 2s linear forwards;
+    transition: width 0.3s ease;
 }
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}
-
-@keyframes progress {
-    0% { width: 0%; }
-    100% { width: 100%; }
 }
 
 .logo {
