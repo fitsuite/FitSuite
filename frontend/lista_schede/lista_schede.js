@@ -1,9 +1,21 @@
+// Listen for username updates
 document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
     const routinesContainer = document.getElementById('routines-container');
     const searchInput = document.getElementById('search-bar');
     const refreshBtn = document.getElementById('refresh-btn');
+
+    // Listen for username updates
+    window.addEventListener('usernameUpdated', (event) => {
+        const { userId, username } = event.detail;
+        
+        if (auth.currentUser && auth.currentUser.uid === userId) {
+            console.log('Username updated in lista_schede:', username);
+            // Update any username displays if needed
+            // This page doesn't typically show username, but we keep it for consistency
+        }
+    });
 
     // Inizializza la loading screen
     window.LoadingManager.show([

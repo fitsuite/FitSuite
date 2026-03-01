@@ -115,31 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Function to check if username is unique
-    async function isUsernameUnique(username) {
-        try {
-            console.log('Checking username uniqueness for:', username);
-            const snapshot = await db.collection('users')
-                .where('username', '==', username)
-                .get();
-            
-            console.log('Query result - snapshot.empty:', snapshot.empty);
-            console.log('Query result - snapshot.size:', snapshot.size);
-            
-            if (!snapshot.empty) {
-                console.log('Username already exists, found documents:');
-                snapshot.forEach(doc => {
-                    console.log('Document ID:', doc.id, 'Username:', doc.data().username);
-                });
-            }
-            
-            return snapshot.empty;
-        } catch (error) {
-            console.error('Error checking username uniqueness:', error);
-            console.error('Error details:', error.code, error.message);
-            return false;
-        }
-    }
 
     // Email/Password Registration
     const registrationForm = document.querySelector('.registration-form');
@@ -147,26 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
         registrationForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = registrationForm.querySelector('#email').value;
-            const username = registrationForm.querySelector('#username').value.trim();
             const password = registrationForm.querySelector('#password').value;
             const confirmPassword = registrationForm.querySelector('#confirm-password').value;
 
-            // Validate username
-            if (!username || username.length < 3) {
-                displayMessage('registration-error-message', 'L\'username deve contenere almeno 3 caratteri.');
-                return;
-            }
-
-            if (username.length > 20) {
-                displayMessage('registration-error-message', 'L\'username non può superare i 20 caratteri.');
-                return;
-            }
-
-            // Validate username format (alphanumeric and underscores only)
-            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                displayMessage('registration-error-message', 'L\'username può contenere solo lettere, numeri e underscore.');
-                return;
-            }
 
             if (password !== confirmPassword) {
                 displayMessage('registration-error-message', 'Le password inserite non corrispondono.');
@@ -176,21 +134,16 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 clearMessages('registration-error-message');
                 
-                // Check if username is unique
-                const isUnique = await isUsernameUnique(username);
-                if (!isUnique) {
-                    displayMessage('registration-error-message', 'Questo username è già stato scelto da un altro utente. Scegline un altro.');
-                    return;
-                }
+                // Check if username is unique - REMOVED: username will be set later
                 
                 sessionStorage.setItem('justLoggedIn', 'true');
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
-                // Crea il profilo utente nel database con campi predefiniti
+                // Crea il profilo utente nel database senza username (verrà richiesto dopo)
                 await db.collection('users').doc(user.uid).set({
                     email: email,
-                    username: username,
+                    username: null, // Sarà richiesto dopo il login
                     phoneNumber: "",
                     preferences: {
                         color: "Arancione",
@@ -232,32 +185,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const googleSignInBtns = document.querySelectorAll('.google-signin-btn');
     if (googleSignInBtns.length > 0) {
         googleSignInBtns.forEach(googleSignInBtn => {
-            googleSignInBtn.addEventListener('click', async () => {
-                const provider = new firebase.auth.GoogleAuthProvider();
+            googleSignInBtn.addEventListener('click', async (e) => {
+                e.preventDefault(); // Prevent any default behavior
+                console.log('Google sign-in button clicked');
+                
                 try {
                     clearMessages('login-error-message'); // Clear login errors before Google sign-in
                     sessionStorage.setItem('justLoggedIn', 'true');
-                    const result = await auth.signInWithPopup(provider);
-                    const user = result.user;
-
-                    // Controlla se il documento utente esiste già, altrimenti crealo
-                    const userDoc = await db.collection('users').doc(user.uid).get();
-                    if (!userDoc.exists) {
-                        // For Google sign-in, we don't have a username, so we'll use a default or ask for it later
-                        await db.collection('users').doc(user.uid).set({
-                            email: user.email,
-                            username: null, // Will be set later when user chooses one
-                            phoneNumber: user.phoneNumber || "",
-                            preferences: {
-                                color: "Arancione",
-                                language: "Italiano",
-                                notifications: "Consenti tutti"
-                            },
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        console.log('User document created for Google user');
-                    }
+                    sessionStorage.setItem('googleSignInInProgress', 'true'); // Set flag to prevent redirect
+                    
+                    console.log('Starting Google sign-in with redirect...');
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    
+                    // Add scopes for better profile access
+                    provider.addScope('email');
+                    provider.addScope('profile');
+                    
+                    // Use redirect instead of popup to avoid popup blockers
+                    console.log('Calling signInWithRedirect...');
+                    await auth.signInWithRedirect(provider);
+                    
                 } catch (error) {
+                    console.error('Google sign-in error:', error);
+                    // Clear the flag on error
+                    sessionStorage.removeItem('googleSignInInProgress');
                     displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
                 }
             });
@@ -288,94 +239,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Function to check if user has username
-    async function checkUserHasUsername(userId) {
-        try {
-            const userDoc = await db.collection('users').doc(userId).get();
-            if (userDoc.exists) {
-                const userData = userDoc.data();
-                return userData.username && userData.username.trim() !== '';
-            }
-            return false;
-        } catch (error) {
-            console.error('Error checking user username:', error);
-            return false;
-        }
-    }
-
-    // Function to show username selection popup
-    async function showUsernameSelectionPopup() {
-        return new Promise(async (resolve) => {
-            let selectedUsername = null;
-            let isValid = false;
-
-            const showPopup = async () => {
-                const username = await window.showPrompt(
-                    'Scegli un username obbligatorio (3-20 caratteri, solo lettere, numeri e _):',
-                    '',
-                    'Username Richiesto'
-                );
-
-                if (username === null) {
-                    // User cancelled
-                    resolve(null);
-                    return;
-                }
-
-                const trimmedUsername = username.trim();
-
-                // Validate username
-                if (trimmedUsername.length < 3) {
-                    await window.alert('L\'username deve contenere almeno 3 caratteri.');
-                    showPopup();
-                    return;
-                }
-
-                if (trimmedUsername.length > 20) {
-                    await window.alert('L\'username non può superare i 20 caratteri.');
-                    showPopup();
-                    return;
-                }
-
-                if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
-                    await window.alert('L\'username può contenere solo lettere, numeri e underscore.');
-                    showPopup();
-                    return;
-                }
-
-                // Check if username is unique
-                const isUnique = await isUsernameUnique(trimmedUsername);
-                if (!isUnique) {
-                    await window.alert('Questo username è già stato scelto da un altro utente. Scegline un altro.');
-                    showPopup();
-                    return;
-                }
-
-                selectedUsername = trimmedUsername;
-                resolve(selectedUsername);
-            };
-
-            showPopup();
-        });
-    }
-
-    // Function to update user username in Firestore
-    async function updateUserUsername(userId, username) {
-        try {
-            await db.collection('users').doc(userId).update({
-                username: username
-            });
-            console.log('Username updated successfully');
-            return true;
-        } catch (error) {
-            console.error('Error updating username:', error);
-            return false;
-        }
-    }
 
     // Handle authentication state changes
     firebase.auth().onAuthStateChanged(async user => {
-        if (user) {
+        // Prevent redirect during Google sign-in process
+        const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
+        
+        if (user && !isGoogleSignInInProgress) {
             // User is signed in.
             console.log('User is signed in:', user);
             
@@ -395,9 +265,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Redirect to lista_schede.html
             window.location.href = '../lista_schede/lista_scheda.html';
+        } else if (user && isGoogleSignInInProgress) {
+            console.log('Google sign-in completed, processing user data...');
+            
+            // Clear the flag
+            sessionStorage.removeItem('googleSignInInProgress');
+            
+            // Check if user document exists, create if not
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (!userDoc.exists) {
+                    // For Google sign-in, we don't have a username, so we'll use a default or ask for it later
+                    await db.collection('users').doc(user.uid).set({
+                        email: user.email,
+                        username: null, // Will be set later when user chooses one
+                        phoneNumber: user.phoneNumber || "",
+                        preferences: {
+                            color: "Arancione",
+                            language: "Italiano",
+                            notifications: "Consenti tutti"
+                        },
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('User document created for Google user');
+                }
+                
+                // Now redirect after processing
+                window.location.href = '../lista_schede/lista_scheda.html';
+                
+            } catch (error) {
+                console.error('Error processing Google user data:', error);
+                displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
+            }
         } else {
             // User is signed out.
             console.log('User is signed out.');
+            // Clear Google sign-in flag when signed out
+            sessionStorage.removeItem('googleSignInInProgress');
             // Stay on the auth page or redirect to login if needed
         }
     });

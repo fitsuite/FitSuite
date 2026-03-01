@@ -13,6 +13,28 @@ document.addEventListener('DOMContentLoaded', () => {
         'Preparazione interfaccia...'
     ]);
 
+    // Listen for username updates from other components
+    window.addEventListener('usernameUpdated', (event) => {
+        const { userId, username } = event.detail;
+        
+        if (currentUser && currentUser.uid === userId) {
+            // Update username display
+            if (userUsernameMain) {
+                userUsernameMain.textContent = `@${username}`;
+            }
+            
+            // Update avatar
+            if (userInitialMain) {
+                loadUserAvatar(currentUser.email, username, userInitialMain, 90);
+            }
+            
+            // Update local cache
+            updateLocalUserProfile(userId, { username });
+            
+            console.log('Username updated in settings page:', username);
+        }
+    });
+
     // Color Map for dynamic styling
     const colorMap = {
         'Arancione': '#ff6600',
@@ -162,11 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
             userEmailMain.textContent = user.email;
             
             // Load user avatar with Google profile picture fallback to initial
-            loadUserAvatar(user.email, "Kevinck8", userInitialMain, 90);
+            loadUserAvatar(user.email, null, userInitialMain, 90);
             
-            // Set username - use Kevinck8 as requested, fallback to displayName
-            const username = "Kevinck8" || user.displayName || "@username";
-            userUsernameMain.textContent = username.startsWith('@') ? username : `@${username}`;
+            // Set username - will be loaded from database
+            userUsernameMain.textContent = "@username";
 
             // Apply cached theme immediately
             applyThemeFromCache(user.uid);
@@ -324,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // If doc doesn't exist for some reason, create it
                 const newData = {
                         email: auth.currentUser.email,
-                        username: "Kevinck8",
+                        username: null, // Sarà richiesto dal popup
                         phoneNumber: "",
                         preferences: {
                             color: "Arancione",
@@ -356,13 +377,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateUIWithUserData(data) {
-        // Update Username - prioritize Kevinck8 as requested
+        // Update Username - use actual username from database or placeholder
         if (userUsernameMain) {
             if (data.username) {
                 userUsernameMain.textContent = data.username.startsWith('@') ? data.username : `@${data.username}`;
             } else {
-                // Default to Kevinck8 if no username in database
-                userUsernameMain.textContent = "@Kevinck8";
+                // No username set yet
+                userUsernameMain.textContent = "@username";
             }
         } else {
             console.warn('Elemento con ID "user-username-main" non trovato nell\'HTML');
@@ -370,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update user avatar with Google profile picture fallback to initial
         if (currentUser && userInitialMain) {
-            const username = data.username || "Kevinck8";
+            const username = data.username || null;
             loadUserAvatar(currentUser.email, username, userInitialMain, 90);
         } else if (!userInitialMain) {
             console.warn('Elemento con ID "user-initial-main" non trovato nell\'HTML');

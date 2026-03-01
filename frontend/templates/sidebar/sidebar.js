@@ -33,6 +33,53 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--background-gradient', gradient);
     }
 
+    // Function to get Google Profile Picture URL
+    function getGoogleProfilePictureUrl(email, size = 200) {
+        return `https://www.google.com/s2/u/0/photos/public/id?sz=${size}&email=${encodeURIComponent(email)}`;
+    }
+
+    // Function to load user avatar with fallback to initial
+    function loadUserAvatar(email, username, avatarElement, size = 200) {
+        if (!avatarElement) return;
+        
+        const profilePicUrl = getGoogleProfilePictureUrl(email, size);
+        const img = new Image();
+        
+        img.onload = function() {
+            // If Google profile picture loads successfully, use it
+            avatarElement.style.backgroundImage = `url(${profilePicUrl})`;
+            avatarElement.style.backgroundSize = 'cover';
+            avatarElement.style.backgroundPosition = 'center';
+            avatarElement.textContent = ''; // Remove initial if image loads
+        };
+        
+        img.onerror = function() {
+            // Fallback to initial if image fails to load
+            const initial = (username || email || 'U').charAt(0).toUpperCase();
+            avatarElement.style.backgroundImage = 'none';
+            avatarElement.textContent = initial;
+        };
+        
+        // Start loading the image
+        img.src = profilePicUrl;
+    }
+
+    // Listen for username updates
+    window.addEventListener('usernameUpdated', (event) => {
+        const { userId, username } = event.detail;
+        const userUsernameSidebar = document.getElementById('user-username-sidebar');
+        
+        if (userUsernameSidebar && auth.currentUser && auth.currentUser.uid === userId) {
+            userUsernameSidebar.textContent = `@${username}`;
+            
+            // Also update avatar if needed
+            const userInitialSidebar = document.getElementById('user-initial-sidebar');
+            if (userInitialSidebar) {
+                loadUserAvatar(auth.currentUser.email, username, userInitialSidebar, 45);
+            }
+        }
+    });
+
     // Mobile Sidebar Logic
     function initMobileSidebar() {
         const sidebar = document.querySelector('.sidebar');
@@ -195,37 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Fallback if CacheManager not loaded (should not happen if setup correctly)
                 setPrimaryColor('Arancione');
-            }
-
-            // Function to get Google Profile Picture URL
-            function getGoogleProfilePictureUrl(email, size = 200) {
-                return `https://www.google.com/s2/u/0/photos/public/id?sz=${size}&email=${encodeURIComponent(email)}`;
-            }
-
-            // Function to load user avatar with fallback to initial
-            function loadUserAvatar(email, username, avatarElement, size = 200) {
-                if (!avatarElement) return;
-                
-                const profilePicUrl = getGoogleProfilePictureUrl(email, size);
-                const img = new Image();
-                
-                img.onload = function() {
-                    // If Google profile picture loads successfully, use it
-                    avatarElement.style.backgroundImage = `url(${profilePicUrl})`;
-                    avatarElement.style.backgroundSize = 'cover';
-                    avatarElement.style.backgroundPosition = 'center';
-                    avatarElement.textContent = ''; // Remove initial if image loads
-                };
-                
-                img.onerror = function() {
-                    // Fallback to initial if image fails to load
-                    const initial = (username || 'U').charAt(0).toUpperCase();
-                    avatarElement.style.backgroundImage = 'none';
-                    avatarElement.textContent = initial;
-                };
-                
-                // Start loading the image
-                img.src = profilePicUrl;
             }
 
             // Function to update sidebar elements

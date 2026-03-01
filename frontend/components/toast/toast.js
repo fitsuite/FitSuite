@@ -121,6 +121,49 @@ window.showWarningToast = (message, title = null, duration = 4000) => {
     return window.ToastManager.warning(message, title, duration);
 };
 
+// Loading toast functions
+window.showLoadingToast = (message, title = 'Caricamento...') => {
+    // Remove any existing loading toast
+    if (window.currentLoadingToastId) {
+        window.ToastManager.remove(window.currentLoadingToastId);
+        window.currentLoadingToastId = null;
+    }
+    
+    // Create a special loading toast that doesn't auto-dismiss
+    const toastId = window.ToastManager.show(message, 'warning', title, 0);
+    window.currentLoadingToastId = toastId;
+    
+    // Add spinner to the toast
+    const toast = window.ToastManager.toasts.get(toastId);
+    if (toast) {
+        const icon = toast.querySelector('.toast-icon');
+        if (icon) {
+            icon.className = 'fas fa-spinner fa-spin toast-icon';
+        }
+        
+        // Remove progress bar for loading toast
+        const progressBar = toast.querySelector('.toast-progress');
+        if (progressBar) {
+            progressBar.style.display = 'none';
+        }
+        
+        // Make it not closable
+        const closeBtn = toast.querySelector('.toast-close');
+        if (closeBtn) {
+            closeBtn.style.display = 'none';
+        }
+    }
+    
+    return toastId;
+};
+
+window.hideLoadingToast = () => {
+    if (window.currentLoadingToastId) {
+        window.ToastManager.remove(window.currentLoadingToastId);
+        window.currentLoadingToastId = null;
+    }
+};
+
 // Replace the old showAlert function
 window.showAlert = async (message, title = null) => {
     // Determine type based on message content
