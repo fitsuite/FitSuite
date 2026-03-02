@@ -58,7 +58,6 @@
                     <button class="refresh-btn" id="refresh-btn" title="Aggiorna schede condivise">
                         <i class="fas fa-sync-alt"></i>
                     </button>
-                    <button class="logout-btn" id="logout-button">Logout</button>
                 </div>
             </header>
 
@@ -100,13 +99,6 @@
             .catch(error => console.error('Error loading sidebar:', error));
 
         document.addEventListener('DOMContentLoaded', () => {
-            const logoutButton = document.getElementById('logout-button');
-            if (logoutButton) {
-                logoutButton.addEventListener('click', async () => {
-                    await logout();
-                });
-            }
-
             // Firebase Auth check
             const auth = firebase.auth();
             const loadingScreen = document.getElementById('loading-screen');
