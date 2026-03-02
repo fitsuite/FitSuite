@@ -247,13 +247,13 @@
     list-style: none;
     padding-left: 0;
     padding-right: 15px;
-    padding-top: 17px;
+    padding-top: 0;
     padding-bottom: 5px;
     overflow-y: auto;
     flex-grow: 1;
     max-height: calc(100vh - 460px);
     width: 190px;
-    margin: 0;
+    margin: 15px 0 0 0;
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
     transition: scrollbar-color 0.3s ease;
@@ -295,7 +295,7 @@
 }
 
 .routine-list li {
-    padding: 8px 0;
+    padding: 0 0 8px 0;
     color: var(--text-gray);
     font-size: 14px;
     cursor: pointer;
@@ -306,7 +306,7 @@
 }
 
 .routine-item {
-    padding: 10px 0;
+    padding: 0 0 10px 0;
     cursor: pointer;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     transition: background-color 0.2s;
@@ -338,12 +338,13 @@
 
 .sidebar-footer {
     margin-top: auto;
+    margin-top: 5px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 15px;
+    padding-top: 0px;
     padding-bottom: 0px;
     flex-shrink: 0;
     position: sticky;
-    bottom: 0;
+    bottom: -20px;
     background-color: #1a1a1a;
     width: 100%;
     display: flex;
@@ -364,7 +365,8 @@
     z-index: 1;
     position: relative;
     width: 175px;
-    margin: 0; /* Allineato a sinistra */
+    margin: 0;
+    margin-top: 10px;
     box-sizing: border-box;
 }
 
