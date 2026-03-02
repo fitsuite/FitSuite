@@ -283,28 +283,111 @@ document.addEventListener('DOMContentLoaded', () => {
                         }, 30000); // 30 seconds timeout
                         
                         try {
-                            await auth.signInWithRedirect(provider);
+                            console.log('Attempting signInWithRedirect...');
+                            console.log('Provider config:', provider.toJSON ? provider.toJSON() : 'Provider object');
+                            console.log('Current URL before redirect:', window.location.href);
+                            
+                            const redirectPromise = auth.signInWithRedirect(provider);
+                            console.log('Redirect promise created:', redirectPromise);
+                            
+                            await redirectPromise;
+                            console.log('signInWithRedirect initiated successfully');
+                            
+                            // Add a small delay to check if redirect actually happens
+                            setTimeout(() => {
+                                console.log('Checking if redirect happened after 2 seconds...');
+                                console.log('Current URL after supposed redirect:', window.location.href);
+                            }, 2000);
+                            
                         } catch (redirectError) {
                             console.error('Redirect failed, trying popup as fallback:', redirectError);
                             
                             // Fallback to popup if redirect fails (might be blocked)
                             if (redirectError.code === 'auth/unauthorized-domain' || 
-                                redirectError.message.includes('ERR_BLOCKED_BY_CLIENT')) {
+                                redirectError.message.includes('ERR_BLOCKED_BY_CLIENT') ||
+                                redirectError.message.includes('Failed to fetch')) {
+                                
+                                console.log('Redirect blocked, trying popup fallback...');
                                 
                                 // Show specific error for mobile redirect failure
                                 const message = 'Redirect Google bloccato su mobile.\n\n' +
-                                             'Soluzioni:\n' +
+                                             'Tentativo fallback con popup...\n' +
+                                             'Se anche questo fallisce:\n' +
                                              '1. Disabilita ad-blocker per questo sito\n' +
                                              '2. Prova con browser in incognito\n' +
                                              '3. Usa il login email/password temporaneamente';
+                                
                                 displayMessage('login-error-message', message);
                                 displayMessage('registration-error-message', message);
                                 
-                                if (window.hideLoadingToast) {
-                                    window.hideLoadingToast();
+                                // Try popup as fallback
+                                try {
+                                    console.log('Trying popup fallback on mobile...');
+                                    const result = await auth.signInWithPopup(provider);
+                                    console.log('Popup fallback successful on mobile!');
+                                    
+                                    // Hide loading state
+                                    if (window.hideLoadingToast) {
+                                        window.hideLoadingToast();
+                                    }
+                                    
+                                    // Clear the flag immediately after successful popup sign-in
+                                    sessionStorage.removeItem('googleSignInInProgress');
+                                    
+                                    // Create user document immediately after successful Google sign-in
+                                    const user = result.user;
+                                    console.log('Google popup fallback successful, creating user document...');
+                                    
+                                    try {
+                                        // Check if user document exists, create if missing
+                                        const userDoc = await db.collection('users').doc(user.uid).get();
+                                        if (!userDoc.exists) {
+                                            console.log('Creating user document for Google popup fallback user...');
+                                            await db.collection('users').doc(user.uid).set({
+                                                email: user.email,
+                                                username: null, // Will be set later when user chooses one
+                                                phoneNumber: user.phoneNumber || "",
+                                                preferences: {
+                                                    color: "Arancione",
+                                                    language: "Italiano",
+                                                    notifications: "Consenti tutti"
+                                                },
+                                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                            });
+                                            console.log('User document created for Google popup fallback user');
+                                        } else {
+                                            console.log('User document already exists for Google popup fallback user');
+                                        }
+                                    } catch (dbError) {
+                                        console.error('Error creating user document for Google popup fallback user:', dbError);
+                                    }
+                                    
+                                    // Show success message
+                                    if (window.showSuccessToast) {
+                                        window.showSuccessToast('Accesso Google completato con popup fallback!');
+                                    }
+                                    
+                                    return; // Success, exit the function
+                                    
+                                } catch (popupError) {
+                                    console.error('Popup fallback also failed:', popupError);
+                                    
+                                    const fallbackMessage = 'Sia redirect che popup Google sono falliti.\n\n' +
+                                                          'Soluzioni:\n' +
+                                                          '1. Disabilita ad-blocker per questo sito\n' +
+                                                          '2. Prova con browser in incognito\n' +
+                                                          '3. Usa il login email/password\n' +
+                                                          '4. Controlla connessione internet';
+                                    
+                                    displayMessage('login-error-message', fallbackMessage);
+                                    displayMessage('registration-error-message', fallbackMessage);
+                                    
+                                    if (window.hideLoadingToast) {
+                                        window.hideLoadingToast();
+                                    }
+                                    sessionStorage.removeItem('googleSignInInProgress');
+                                    return;
                                 }
-                                sessionStorage.removeItem('googleSignInInProgress');
-                                return;
                             }
                             
                             throw redirectError; // Re-throw if not a blocking error
@@ -321,6 +404,35 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // Clear the flag immediately after successful popup sign-in
                         sessionStorage.removeItem('googleSignInInProgress');
+                        
+                        // Create user document immediately after successful Google sign-in
+                        const user = result.user;
+                        console.log('Google sign-in successful, creating user document...');
+                        
+                        try {
+                            // Check if user document exists, create if missing
+                            const userDoc = await db.collection('users').doc(user.uid).get();
+                            if (!userDoc.exists) {
+                                console.log('Creating user document for Google user...');
+                                await db.collection('users').doc(user.uid).set({
+                                    email: user.email,
+                                    username: null, // Will be set later when user chooses one
+                                    phoneNumber: user.phoneNumber || "",
+                                    preferences: {
+                                        color: "Arancione",
+                                        language: "Italiano",
+                                        notifications: "Consenti tutti"
+                                    },
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                                console.log('User document created for Google user');
+                            } else {
+                                console.log('User document already exists for Google user');
+                            }
+                        } catch (dbError) {
+                            console.error('Error creating user document for Google user:', dbError);
+                            // Continue with sign-in even if document creation fails initially
+                        }
                         
                         // Show success message
                         if (window.showSuccessToast) {
@@ -342,16 +454,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Special handling for unauthorized domain error
                     if (error.code === 'auth/unauthorized-domain') {
                         const currentDomain = window.location.hostname;
-                        const message = `Dominio non autorizzato: ${currentDomain}. Per favore:\n` +
-                                     `1. Aggiungi ${currentDomain} ai domini autorizzati nella Firebase Console\n` +
-                                     `2. Vai su Authentication → Settings → Authorized domains\n` +
-                                     `3. Oppure usa un server locale (es. localhost)`;
+                        const currentPort = window.location.port;
+                        const fullDomain = currentPort ? `${currentDomain}:${currentPort}` : currentDomain;
+                        
+                        const message = `Dominio non autorizzato: ${fullDomain}\n\n` +
+                                     `Per risolvere:\n` +
+                                     `1. Vai su Firebase Console → Authentication → Settings\n` +
+                                     `2. In "Authorized domains" aggiungi: ${fullDomain}\n` +
+                                     `3. Aggiungi anche: localhost, 127.0.0.1\n` +
+                                     `4. Salva e riprova\n\n` +
+                                     `Link diretto: https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings`;
+                        
                         displayMessage('login-error-message', message);
-                        displayMessage('registration-error-message', message); // Also show in registration form
+                        displayMessage('registration-error-message', message);
                         
                         // Also show in a popup for better visibility
                         if (window.alert) {
-                            await window.alert(message, 'Errore Dominio OAuth');
+                            await window.alert(message, 'Errore Dominio OAuth - Risoluzione');
+                        }
+                        
+                        // Try to open Firebase console in new tab
+                        const firebaseConsoleUrl = 'https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings';
+                        if (confirm('Vuoi aprire la Firebase Console per risolvere il problema?')) {
+                            window.open(firebaseConsoleUrl, '_blank');
                         }
                     } else if (error.code === 'auth/popup-closed-by-user') {
                         // Don't show error for user cancellation
@@ -435,6 +560,35 @@ document.addEventListener('DOMContentLoaded', () => {
                             console.log('No redirect result available, might be page refresh');
                             sessionStorage.removeItem('googleSignInInProgress');
                         } else {
+                            // Create user document immediately after successful Google redirect
+                            const user = result.user;
+                            console.log('Google redirect sign-in successful, creating user document...');
+                            
+                            try {
+                                // Check if user document exists, create if missing
+                                const userDoc = await db.collection('users').doc(user.uid).get();
+                                if (!userDoc.exists) {
+                                    console.log('Creating user document for Google redirect user...');
+                                    await db.collection('users').doc(user.uid).set({
+                                        email: user.email,
+                                        username: null, // Will be set later when user chooses one
+                                        phoneNumber: user.phoneNumber || "",
+                                        preferences: {
+                                            color: "Arancione",
+                                            language: "Italiano",
+                                            notifications: "Consenti tutti"
+                                        },
+                                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                    });
+                                    console.log('User document created for Google redirect user');
+                                } else {
+                                    console.log('User document already exists for Google redirect user');
+                                }
+                            } catch (dbError) {
+                                console.error('Error creating user document for Google redirect user:', dbError);
+                                // Continue with sign-in even if document creation fails initially
+                            }
+                            
                             // Hide loading state
                             if (window.hideLoadingToast) {
                                 window.hideLoadingToast();
