@@ -226,6 +226,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     sessionStorage.setItem('googleSignInInProgress', 'true'); // Set flag to prevent redirect
                     
                     console.log('Starting Google sign-in...');
+                    
+                    // Pre-check: Test if Google domains are accessible
+                    try {
+                        const testResponse = await fetch('https://accounts.google.com/generate_204', {
+                            method: 'HEAD',
+                            mode: 'no-cors',
+                            cache: 'no-cache'
+                        });
+                        console.log('Google accessibility check passed');
+                    } catch (fetchError) {
+                        console.warn('Google accessibility check failed:', fetchError);
+                        // Don't block sign-in, just log the warning
+                    }
+                    
                     const provider = new firebase.auth.GoogleAuthProvider();
                     
                     // Add scopes for better profile access
@@ -268,7 +282,33 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }, 30000); // 30 seconds timeout
                         
-                        await auth.signInWithRedirect(provider);
+                        try {
+                            await auth.signInWithRedirect(provider);
+                        } catch (redirectError) {
+                            console.error('Redirect failed, trying popup as fallback:', redirectError);
+                            
+                            // Fallback to popup if redirect fails (might be blocked)
+                            if (redirectError.code === 'auth/unauthorized-domain' || 
+                                redirectError.message.includes('ERR_BLOCKED_BY_CLIENT')) {
+                                
+                                // Show specific error for mobile redirect failure
+                                const message = 'Redirect Google bloccato su mobile.\n\n' +
+                                             'Soluzioni:\n' +
+                                             '1. Disabilita ad-blocker per questo sito\n' +
+                                             '2. Prova con browser in incognito\n' +
+                                             '3. Usa il login email/password temporaneamente';
+                                displayMessage('login-error-message', message);
+                                displayMessage('registration-error-message', message);
+                                
+                                if (window.hideLoadingToast) {
+                                    window.hideLoadingToast();
+                                }
+                                sessionStorage.removeItem('googleSignInInProgress');
+                                return;
+                            }
+                            
+                            throw redirectError; // Re-throw if not a blocking error
+                        }
                     } else {
                         // Use popup for desktop
                         console.log('Desktop detected, using signInWithPopup...');
@@ -316,6 +356,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (error.code === 'auth/popup-closed-by-user') {
                         // Don't show error for user cancellation
                         console.log('User cancelled Google sign-in');
+                    } else if (error.code === 'auth/network-request-failed' || error.message.includes('ERR_BLOCKED_BY_CLIENT')) {
+                        // Handle ad-blocker or network issues
+                        const message = 'Accesso Google bloccato. Possibili cause:\n' +
+                                     '1. Ad-blocker o estensioni del browser attive\n' +
+                                     '2. Problemi di connessione\n' +
+                                     '3. Firewall o proxy che bloccano Google\n\n' +
+                                     'Soluzioni:\n' +
+                                     '- Disabilita ad-blocker per questo sito\n' +
+                                     '- Prova con un browser diverso\n' +
+                                     '- Controlla la connessione internet';
+                        displayMessage('login-error-message', message);
+                        displayMessage('registration-error-message', message);
+                        
+                        if (window.showErrorToast) {
+                            window.showErrorToast('Accesso Google bloccato da estensioni');
+                        }
                     } else {
                         const errorMessage = getFirebaseErrorMessage(error.code);
                         displayMessage('login-error-message', errorMessage);
