@@ -30,6 +30,11 @@
 
       // Initialize Firebase
       firebase.initializeApp(firebaseConfig);
+      
+      // Configure auth settings for local development
+      firebase.auth().settings = {
+        appVerificationDisabledForTesting: false
+      };
     </script>
     <script src="../cache_manager.js"></script>
 </head>
@@ -133,12 +138,11 @@
                 </form>
                 <p class="login-link">Ricordi la password? <a href="#" id="show-login-from-forgot"> Accedi qui</a></p>
                 <div class="terms-privacy">
-                    <p class="copyright">© 2025 - FitSuite</p>
+                    <p class="copyright"> 2025 - FitSuite</p>
                 </div>
             </div>
         </div>
     </main>
-    <script src="../cache_manager.js"></script>
     <script src="./auth.js"></script>
     <script src="../components/popup/popup.js"></script>
 </body>

@@ -194,22 +194,55 @@ document.addEventListener('DOMContentLoaded', () => {
                     sessionStorage.setItem('justLoggedIn', 'true');
                     sessionStorage.setItem('googleSignInInProgress', 'true'); // Set flag to prevent redirect
                     
-                    console.log('Starting Google sign-in with redirect...');
+                    console.log('Starting Google sign-in...');
                     const provider = new firebase.auth.GoogleAuthProvider();
                     
                     // Add scopes for better profile access
                     provider.addScope('email');
                     provider.addScope('profile');
                     
-                    // Use redirect instead of popup to avoid popup blockers
-                    console.log('Calling signInWithRedirect...');
-                    await auth.signInWithRedirect(provider);
+                    // Detect if mobile device - more comprehensive detection
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile/i.test(navigator.userAgent) || 
+                                    (window.innerWidth <= 768 && 'ontouchstart' in window);
+                    
+                    console.log('Device detection - UserAgent:', navigator.userAgent);
+                    console.log('Device detection - Screen width:', window.innerWidth);
+                    console.log('Device detection - Touch support:', 'ontouchstart' in window);
+                    console.log('Device detection - Is mobile:', isMobile);
+                    
+                    if (isMobile) {
+                        // Use redirect for mobile devices
+                        console.log('Mobile detected, using signInWithRedirect...');
+                        await auth.signInWithRedirect(provider);
+                    } else {
+                        // Use popup for desktop
+                        console.log('Desktop detected, using signInWithPopup...');
+                        await auth.signInWithPopup(provider);
+                        // Clear the flag immediately after successful popup sign-in
+                        sessionStorage.removeItem('googleSignInInProgress');
+                    }
                     
                 } catch (error) {
                     console.error('Google sign-in error:', error);
                     // Clear the flag on error
                     sessionStorage.removeItem('googleSignInInProgress');
-                    displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
+                    
+                    // Special handling for unauthorized domain error
+                    if (error.code === 'auth/unauthorized-domain') {
+                        const currentDomain = window.location.hostname;
+                        const message = `Dominio non autorizzato: ${currentDomain}. Per favore:\n` +
+                                     `1. Aggiungi ${currentDomain} ai domini autorizzati nella Firebase Console\n` +
+                                     `2. Vai su Authentication → Settings → Authorized domains\n` +
+                                     `3. Oppure usa un server locale (es. localhost)`;
+                        displayMessage('login-error-message', message);
+                        
+                        // Also show in a popup for better visibility
+                        if (window.alert) {
+                            await window.alert(message, 'Errore Dominio OAuth');
+                        }
+                    } else {
+                        displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
+                    }
                 }
             });
         });
@@ -242,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle authentication state changes
     firebase.auth().onAuthStateChanged(async user => {
-        // Prevent redirect during Google sign-in process
+        // Prevent redirect during Google sign-in process (only for redirect method)
         const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
         
         if (user && !isGoogleSignInInProgress) {
@@ -263,10 +296,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            // Check if user document exists, create if not (for both popup and redirect)
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (!userDoc.exists) {
+                    // For Google sign-in, we don't have a username, so we'll use a default or ask for it later
+                    await db.collection('users').doc(user.uid).set({
+                        email: user.email,
+                        username: null, // Will be set later when user chooses one
+                        phoneNumber: user.phoneNumber || "",
+                        preferences: {
+                            color: "Arancione",
+                            language: "Italiano",
+                            notifications: "Consenti tutti"
+                        },
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('User document created for Google user');
+                }
+            } catch (error) {
+                console.error('Error checking/creating user document:', error);
+            }
+
             // Redirect to lista_schede.html
             window.location.href = '../lista_schede/lista_scheda.html';
         } else if (user && isGoogleSignInInProgress) {
-            console.log('Google sign-in completed, processing user data...');
+            console.log('Google redirect sign-in completed, processing user data...');
             
             // Clear the flag
             sessionStorage.removeItem('googleSignInInProgress');
@@ -370,11 +425,15 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'auth/wrong-password':
                 return 'Password errata. Riprova.';
             case 'auth/popup-closed-by-user':
-                return 'Accesso annullato dall\'utente.';
+                return 'Accesso annullato: popup chiuso dall\'utente.';
+            case 'auth/popup-blocked':
+                return 'Accesso bloccato: il popup è stato bloccato dal browser. Per favore consenti i popup e riprova.';
             case 'auth/cancelled-popup-request':
                 return 'Richiesta di accesso annullata.';
             case 'auth/too-many-requests':
                 return 'Troppi tentativi di accesso falliti. Riprova più tardi.';
+            case 'auth/unauthorized-domain':
+                return 'Dominio non autorizzato per l\'accesso Google.';
             default:
                 return 'Si è verificato un errore sconosciuto. Riprova.';
         }
