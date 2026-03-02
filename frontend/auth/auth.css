@@ -39,7 +39,7 @@ body {
 
 @media (max-width: 768px) {
     .auth-main-content {
-        padding: 80px 5% 40px; /* Aumentato padding-top per evitare sovrapposizioni con la navbar */
+        padding: 100px 5% 40px; /* Padding-top aumentato per evitare sovrapposizione con navbar mobile */
         gap: 0; /* Rimosso il gap */
         min-height: calc(100vh - 70px); /* Altezza stimata della navbar per mobile */
     }
@@ -56,7 +56,7 @@ body {
 
 @media (max-width: 480px) {
     .auth-main-content {
-        padding: 70px 5% 30px; /* Aumentato padding-top per evitare sovrapposizioni con la navbar */
+        padding: 90px 5% 30px; /* Padding-top aumentato per small mobile */
         gap: 0; /* Rimosso il gap */
         min-height: calc(100vh - 70px); /* Altezza stimata della navbar per mobile */
     }

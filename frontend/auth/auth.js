@@ -457,26 +457,62 @@ document.addEventListener('DOMContentLoaded', () => {
                         const currentPort = window.location.port;
                         const fullDomain = currentPort ? `${currentDomain}:${currentPort}` : currentDomain;
                         
-                        const message = `Dominio non autorizzato: ${fullDomain}\n\n` +
-                                     `Per risolvere:\n` +
+                        // Detect if we're on GitHub Pages
+                        const isGitHubPages = currentDomain.includes('github.io') || currentDomain.includes('fitsuite.github.io');
+                        
+                        let message = `Dominio non autorizzato: ${fullDomain}\n\n`;
+                        
+                        if (isGitHubPages) {
+                            message += `ERRORE CRITICO PER GITHUB PAGES:\n` +
+                                     `Il dominio ${fullDomain} non è configurato in Firebase.\n\n` +
+                                     `SOLUZIONE IMMEDIATA:\n` +
+                                     `1. Apri: https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings\n` +
+                                     `2. In "Authorized domains" aggiungi:\n` +
+                                     `   - fitsuite.github.io\n` +
+                                     `   - www.fitsuite.github.io\n` +
+                                     `3. Salva e riprova\n\n` +
+                                     `NOTA: Senza questa configurazione, l'accesso Google non funzionerà su GitHub Pages.`;
+                        } else {
+                            message += `Per risolvere:\n` +
                                      `1. Vai su Firebase Console → Authentication → Settings\n` +
                                      `2. In "Authorized domains" aggiungi: ${fullDomain}\n` +
                                      `3. Aggiungi anche: localhost, 127.0.0.1\n` +
                                      `4. Salva e riprova\n\n` +
                                      `Link diretto: https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings`;
+                        }
+                        
+                        console.error('CRITICAL: Unauthorized domain error detected:', {
+                            domain: fullDomain,
+                            isGitHubPages: isGitHubPages,
+                            userAgent: navigator.userAgent,
+                            timestamp: new Date().toISOString()
+                        });
                         
                         displayMessage('login-error-message', message);
                         displayMessage('registration-error-message', message);
                         
-                        // Also show in a popup for better visibility
-                        if (window.alert) {
-                            await window.alert(message, 'Errore Dominio OAuth - Risoluzione');
-                        }
-                        
-                        // Try to open Firebase console in new tab
-                        const firebaseConsoleUrl = 'https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings';
-                        if (confirm('Vuoi aprire la Firebase Console per risolvere il problema?')) {
-                            window.open(firebaseConsoleUrl, '_blank');
+                        // Show enhanced popup for GitHub Pages
+                        if (isGitHubPages) {
+                            const confirmMsg = 'DETEZIONE GITHUB PAGES\n\n' +
+                                             'Il tuo dominio GitHub Pages non è autorizzato.\n' +
+                                             'Vuoi aprire la Firebase Console per risolvere?\n\n' +
+                                             'SÌ = Apro la console automaticamente\n' +
+                                             'NO = Copio il link negli appunti';
+                            
+                            if (confirm(confirmMsg)) {
+                                const firebaseConsoleUrl = 'https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings';
+                                window.open(firebaseConsoleUrl, '_blank');
+                            } else {
+                                // Copy to clipboard as fallback
+                                navigator.clipboard.writeText('https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings')
+                                    .then(() => alert('Link copiato negli appunti! Incollalo nel browser.'))
+                                    .catch(() => alert('Link: https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings'));
+                            }
+                        } else {
+                            if (confirm('Vuoi aprire la Firebase Console per risolvere il problema?')) {
+                                const firebaseConsoleUrl = 'https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings';
+                                window.open(firebaseConsoleUrl, '_blank');
+                            }
                         }
                     } else if (error.code === 'auth/popup-closed-by-user') {
                         // Don't show error for user cancellation
@@ -536,18 +572,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // Handle Google Redirect Result (for mobile and redirect flows) - Separate from onAuthStateChanged
+    // Helper function to create Google user document
+    async function createGoogleUserDocument(user) {
+        if (!user || !user.uid) {
+            throw new Error('UID utente non valido per la creazione del documento');
+        }
+        
+        try {
+            // Check if user document exists, create if missing
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (!userDoc.exists) {
+                console.log('Creating user document for Google user...');
+                await db.collection('users').doc(user.uid).set({
+                    email: user.email,
+                    username: null, // Will be set later when user chooses one
+                    phoneNumber: user.phoneNumber || "",
+                    preferences: {
+                        color: "Arancione",
+                        language: "Italiano",
+                        notifications: "Consenti tutti"
+                    },
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('User document created for Google user');
+            } else {
+                console.log('User document already exists for Google user');
+            }
+        } catch (error) {
+            console.error('Error in createGoogleUserDocument:', error);
+            throw error;
+        }
+    }
+
+    // Handle Google Redirect Result (for mobile and redirect flows) - UNIFIED HANDLER
     auth.getRedirectResult().then(function(result) {
         console.log('getRedirectResult executed. Result:', result);
+        
         if (result.credential) {
             // This gives you a Google Access Token. You can use it to access the Google API.
             var token = result.credential.accessToken;
             console.log('Google Access Token:', token);
         }
+        
         if (result.user) {
             // The signed-in user info.
             var user = result.user;
             console.log('Google Redirect User:', user);
+            
+            // Validate user object before proceeding
+            if (!user || !user.uid) {
+                console.error('Invalid user object from redirect result:', user);
+                throw new Error('UID null o non valido dal redirect Google');
+            }
             
             // Clear the flag immediately after successful redirect sign-in
             sessionStorage.removeItem('googleSignInInProgress');
@@ -560,45 +636,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // Create user document immediately after successful Google sign-in
             console.log('Google redirect successful, creating user document...');
             
-            try {
-                // Check if user document exists, create if missing
-                db.collection('users').doc(user.uid).get().then(doc => {
-                    if (!doc.exists) {
-                        console.log('Creating user document for Google redirect user...');
-                        db.collection('users').doc(user.uid).set({
-                            email: user.email,
-                            username: null, // Will be set later when user chooses one
-                            phoneNumber: user.phoneNumber || "",
-                            preferences: {
-                                color: "Arancione",
-                                language: "Italiano",
-                                notifications: "Consenti tutti"
-                            },
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        }).then(() => {
-                            console.log('User document created for Google redirect user');
-                            if (window.showSuccessToast) {
-                                window.showSuccessToast('Accesso Google completato!');
-                            }
-                        }).catch(dbError => {
-                            console.error('Error creating user document for Google redirect user:', dbError);
-                            displayMessage('login-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
-                            displayMessage('registration-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
-                        });
-                    } else {
-                        console.log('User document already exists for Google redirect user');
-                        if (window.showSuccessToast) {
-                            window.showSuccessToast('Accesso Google completato!');
-                        }
-                    }
-                }).catch(dbError => {
-                    console.error('Error checking user document for Google redirect user:', dbError);
-                    displayMessage('login-error-message', 'Errore durante la verifica del profilo utente. Riprova.');
-                    displayMessage('registration-error-message', 'Errore durante la verifica del profilo utente. Riprova.');
-                });
-            } catch (dbError) {
-                console.error('Error in redirect result processing:', dbError);
-            }
+            // Use async/await for better error handling
+            createGoogleUserDocument(user).then(() => {
+                console.log('Google redirect user document creation completed');
+                if (window.showSuccessToast) {
+                    window.showSuccessToast('Accesso Google completato!');
+                }
+            }).catch(dbError => {
+                console.error('Error creating user document for Google redirect user:', dbError);
+                displayMessage('login-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
+                displayMessage('registration-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
+            });
+            
         } else {
             console.log('No user in redirect result - might be page refresh or direct access');
             // Clear the flag if no user found
@@ -625,6 +674,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
         
         if (user) {
+            // Validate user object before proceeding
+            if (!user || !user.uid) {
+                console.error('Invalid user object in onAuthStateChanged:', user);
+                displayMessage('login-error-message', 'Errore critico: UID utente non valido. Riprova l\'accesso.');
+                displayMessage('registration-error-message', 'Errore critico: UID utente non valido. Riprova l\'accesso.');
+                sessionStorage.removeItem('googleSignInInProgress');
+                return;
+            }
+            
             console.log('User is signed in:', user);
             
             // Save lastUserId for optimistic loading
@@ -645,6 +703,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             const result = await auth.getRedirectResult();
                             console.log('Google redirect result in onAuthStateChanged:', result);
+                            
+                            // Validate result user
+                            if (result.user && result.user.uid) {
+                                await createGoogleUserDocument(result.user);
+                                console.log('Google redirect user document creation completed in onAuthStateChanged');
+                            } else {
+                                console.warn('No valid user in redirect result within onAuthStateChanged');
+                            }
                             
                             // Hide loading state
                             if (window.hideLoadingToast) {
@@ -684,17 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 if (!userDoc.exists) {
                     console.log('Creating user document for Google user...');
-                    await db.collection('users').doc(user.uid).set({
-                        email: user.email,
-                        username: null, // Will be set later when user chooses one
-                        phoneNumber: user.phoneNumber || "",
-                        preferences: {
-                            color: "Arancione",
-                            language: "Italiano",
-                            notifications: "Consenti tutti"
-                        },
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    await createGoogleUserDocument(user);
                     console.log('User document created for Google user');
                 }
                 
