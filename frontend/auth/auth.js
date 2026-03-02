@@ -254,6 +254,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (isMobile) {
                         // Use redirect for mobile devices
                         console.log('Mobile detected, using signInWithRedirect...');
+                        
+                        // Set a timeout to clear the flag if redirect takes too long
+                        setTimeout(() => {
+                            if (sessionStorage.getItem('googleSignInInProgress') === 'true') {
+                                console.log('Google sign-in timeout, clearing flag');
+                                sessionStorage.removeItem('googleSignInInProgress');
+                                if (window.hideLoadingToast) {
+                                    window.hideLoadingToast();
+                                }
+                                displayMessage('login-error-message', 'Timeout durante l\'accesso Google. Riprova.');
+                                displayMessage('registration-error-message', 'Timeout durante l\'accesso Google. Riprova.');
+                            }
+                        }, 30000); // 30 seconds timeout
+                        
                         await auth.signInWithRedirect(provider);
                     } else {
                         // Use popup for desktop
@@ -343,64 +357,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle authentication state changes
     firebase.auth().onAuthStateChanged(async user => {
-        // Prevent redirect during Google sign-in process (only for redirect method)
         const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
         
-        // Handle Google redirect completion
-        if (isGoogleSignInInProgress && user) {
-            console.log('Google redirect sign-in completed, processing user data...');
-            
-            try {
-                // Hide loading state if it was shown
-                if (window.hideLoadingToast) {
-                    window.hideLoadingToast();
-                }
-                
-                // Get redirect result
-                const result = await auth.getRedirectResult();
-                console.log('Google redirect result:', result);
-                
-                // Show success message
-                if (window.showSuccessToast) {
-                    window.showSuccessToast('Accesso Google completato!');
-                }
-                
-            } catch (error) {
-                console.error('Error getting redirect result:', error);
-                
-                // Hide loading state
-                if (window.hideLoadingToast) {
-                    window.hideLoadingToast();
-                }
-                
-                // Show error message
-                const errorMessage = getFirebaseErrorMessage(error.code);
-                displayMessage('login-error-message', errorMessage);
-                displayMessage('registration-error-message', errorMessage);
-                
-                if (window.showErrorToast) {
-                    window.showErrorToast(errorMessage);
-                }
-                
-                // Clear the flag and sign out on error
-                sessionStorage.removeItem('googleSignInInProgress');
-                await auth.signOut();
-                return;
-            }
-        }
-        
-        if (user && !isGoogleSignInInProgress) {
-            // User is signed in.
+        if (user) {
             console.log('User is signed in:', user);
             
             // Save lastUserId for optimistic loading
             localStorage.setItem('lastUserId', user.uid);
             
-            // Check if user document exists, create if not (for both popup and redirect)
             try {
+                // Handle Google redirect completion
+                if (isGoogleSignInInProgress) {
+                    console.log('Google redirect sign-in completed, processing...');
+                    
+                    try {
+                        const result = await auth.getRedirectResult();
+                        console.log('Google redirect result:', result);
+                        
+                        // Verify this is actually a Google sign-in result
+                        if (!result || !result.user) {
+                            console.log('No redirect result available, might be page refresh');
+                            sessionStorage.removeItem('googleSignInInProgress');
+                        } else {
+                            // Hide loading state
+                            if (window.hideLoadingToast) {
+                                window.hideLoadingToast();
+                            }
+                            
+                            // Show success message
+                            if (window.showSuccessToast) {
+                                window.showSuccessToast('Accesso Google completato!');
+                            }
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error getting redirect result:', error);
+                        
+                        // Hide loading state
+                        if (window.hideLoadingToast) {
+                            window.hideLoadingToast();
+                        }
+                        
+                        // Show error message
+                        const errorMessage = getFirebaseErrorMessage(error.code);
+                        displayMessage('login-error-message', errorMessage);
+                        displayMessage('registration-error-message', errorMessage);
+                        
+                        if (window.showErrorToast) {
+                            window.showErrorToast(errorMessage);
+                        }
+                        
+                        // Clear the flag and sign out on error
+                        sessionStorage.removeItem('googleSignInInProgress');
+                        await auth.signOut();
+                        return;
+                    }
+                }
+                
+                // Check if user document exists, create if not
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 if (!userDoc.exists) {
-                    // For Google sign-in, we don't have a username, so we'll use a default or ask for it later
+                    console.log('Creating user document for Google user...');
                     await db.collection('users').doc(user.uid).set({
                         email: user.email,
                         username: null, // Will be set later when user chooses one
@@ -419,59 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userData = userDoc.exists ? userDoc.data() : null;
                 if (!userData || !userData.username || userData.username.trim() === '') {
                     console.log('Google user needs username, redirecting to username selection');
-                    // Redirect to a page where user can set username
-                    window.location.href = '../lista_schede/lista_scheda.html'; // This will trigger username checker
-                    return;
-                }
-                
-            } catch (error) {
-                console.error('Error checking/creating user document:', error);
-            }
-
-            // Initialize Cache
-            if (window.CacheManager) {
-                try {
-                    const force = sessionStorage.getItem('justLoggedIn') === 'true';
-                    sessionStorage.removeItem('justLoggedIn');
-                    await window.CacheManager.initCache(user.uid, force);
-                } catch (e) {
-                    console.error("Cache init failed", e);
-                }
-            }
-
-            // Redirect to lista_schede.html
-            window.location.href = '../lista_schede/lista_scheda.html';
-        } else if (user && isGoogleSignInInProgress) {
-            console.log('Google redirect sign-in completed, processing user data...');
-            
-            // Clear the flag
-            sessionStorage.removeItem('googleSignInInProgress');
-            
-            // Check if user document exists, create if not
-            try {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (!userDoc.exists) {
-                    // For Google sign-in, we don't have a username, so we'll use a default or ask for it later
-                    await db.collection('users').doc(user.uid).set({
-                        email: user.email,
-                        username: null, // Will be set later when user chooses one
-                        phoneNumber: user.phoneNumber || "",
-                        preferences: {
-                            color: "Arancione",
-                            language: "Italiano",
-                            notifications: "Consenti tutti"
-                        },
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    console.log('User document created for Google user');
-                }
-                
-                // Check if user has username, if not redirect to username selection page
-                const userData = userDoc.exists ? userDoc.data() : null;
-                if (!userData || !userData.username || userData.username.trim() === '') {
-                    console.log('Google user needs username, redirecting to username selection');
-                    // Redirect to a page where user can set username
-                    window.location.href = '../lista_schede/lista_scheda.html'; // This will trigger username checker
+                    window.location.href = '../lista_schede/lista_scheda.html';
                     return;
                 }
                 
@@ -486,19 +451,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
                 
-                // Now redirect after processing
+                // Clear Google sign-in flag
+                sessionStorage.removeItem('googleSignInInProgress');
+                
+                // Redirect to lista_schede.html
+                console.log('Redirecting to lista_schede.html...');
                 window.location.href = '../lista_schede/lista_scheda.html';
                 
             } catch (error) {
-                console.error('Error processing Google user data:', error);
+                console.error('Error processing user data:', error);
                 displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
+                sessionStorage.removeItem('googleSignInInProgress');
             }
         } else {
             // User is signed out.
             console.log('User is signed out.');
             // Clear Google sign-in flag when signed out
             sessionStorage.removeItem('googleSignInInProgress');
-            // Stay on the auth page or redirect to login if needed
         }
     });
 
