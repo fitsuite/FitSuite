@@ -59,7 +59,7 @@
                     <button class="refresh-btn" id="refresh-btn" title="Aggiorna schede">
                         <i class="fas fa-sync-alt"></i>
                     </button>
-                    <button class="logout-btn" id="logout-button">Logout</button>
+                    <button class="create-scheda-btn desktop-only" id="create-scheda-button">Crea Scheda</button>
                 </div>
             </header>
 
@@ -102,10 +102,10 @@
             .catch(error => console.error('Error loading sidebar:', error));
 
         document.addEventListener('DOMContentLoaded', () => {
-            const logoutButton = document.getElementById('logout-button');
-            if (logoutButton) {
-                logoutButton.addEventListener('click', async () => {
-                    await logout();
+            const createSchedaButton = document.getElementById('create-scheda-button');
+            if (createSchedaButton) {
+                createSchedaButton.addEventListener('click', () => {
+                    window.location.href = '../crea_scheda/crea_scheda.html';
                 });
             }
 

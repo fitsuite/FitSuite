@@ -155,6 +155,30 @@ body.list-body {
     color: white;
 }
 
+.create-scheda-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    position: static;
+    transform: none;
+    min-width: auto;
+}
+
+.create-scheda-btn:hover {
+    transform: scale(1.02);
+}
+
+.desktop-only {
+    display: block;
+}
+
 .routines-list-container {
     width: 100%;
     max-width: 1200px;
@@ -354,7 +378,7 @@ body.list-body {
         left: auto;
     }
     
-    .logout-btn {
+    .logout-btn, .create-scheda-btn {
         padding: 8px 15px;
         font-size: 13px;
         /* Ensure static positioning */
@@ -377,10 +401,39 @@ body.list-body {
         text-align: center;
     }
     
-    .content-header h1, .logout-btn {
+    .content-header h1, .logout-btn, .create-scheda-btn {
         position: static;
         transform: none;
         width: 100%;
+    }
+    
+    .desktop-only {
+        display: none;
+    }
+    
+    /* Posizionamento refresh button in alto a destra su mobile */
+    .refresh-btn {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        z-index: 1001;
+        background-color: transparent;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        width: 45px;
+        height: 45px;
+        border-radius: 25px;
+        box-shadow: none;
+        transition: transform 0.2s ease, background-color 0.2s;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .refresh-btn:hover {
+        transform: scale(1.1);
+        background-color: var(--primary-color);
+        color: white;
     }
 
     .col-sessions {
