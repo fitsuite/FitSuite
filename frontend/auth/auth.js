@@ -18,10 +18,25 @@ class FitSuiteAuth {
         console.log('FitSuiteAuth - Initializing authentication system');
         console.log('FitSuiteAuth - Device:', this.isMobile ? 'Mobile' : 'Desktop');
         console.log('FitSuiteAuth - Domain:', window.location.hostname);
+        console.log('FitSuiteAuth - User Agent:', navigator.userAgent);
+        console.log('FitSuiteAuth - Current URL:', window.location.href);
+        
+        // Controlla se ci sono parametri URL che indicano un redirect da Google
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasGoogleParams = urlParams.has('code') || urlParams.has('state') || urlParams.has('access_token');
+        
+        if (hasGoogleParams) {
+            console.log('FitSuiteAuth - Detected Google redirect parameters');
+            this.showMessage('login-error-message', 'Completamento login Google...', 'loading');
+        }
         
         this.setupEventListeners();
         this.setupAuthStateListener();
-        this.handleRedirectResult();
+        
+        // Gestisci il redirect result con un piccolo delay per assicurarsi che tutto sia caricato
+        setTimeout(() => {
+            this.handleRedirectResult();
+        }, 100);
     }
 
     // Setup dei listener per gli eventi della UI
@@ -145,31 +160,37 @@ class FitSuiteAuth {
 
     // Gestisce il risultato del redirect Google
     async handleRedirectResult() {
-        if (this.googleSignInInProgress) {
-            console.log('FitSuiteAuth - Checking redirect result...');
+        console.log('FitSuiteAuth - Checking redirect result...');
+        
+        try {
+            const result = await this.auth.getRedirectResult();
             
-            try {
-                const result = await this.auth.getRedirectResult();
+            if (result.user) {
+                console.log('FitSuiteAuth - Redirect result successful:', result.user.email);
                 
-                if (result.user) {
-                    console.log('FitSuiteAuth - Redirect result successful:', result.user.email);
-                    
-                    // Crea il documento utente se non esiste
+                // Mostra messaggio di successo
+                this.showMessage('login-error-message', 'Login con Google completato!', 'success');
+                
+                // Crea il documento utente se non esiste
+                try {
                     await this.createGoogleUserDocument(result.user);
-                    
-                    this.showMessage('login-error-message', 'Login con Google completato!', 'success');
-                    
-                    // Redirect dopo un breve delay
-                    setTimeout(() => {
-                        window.location.href = '../lista_schede/lista_schede.html';
-                    }, 1000);
+                } catch (docError) {
+                    console.error('FitSuiteAuth - Error creating user document:', docError);
+                    // Continua anche se c'è un errore nella creazione del documento
                 }
-            } catch (error) {
-                console.error('FitSuiteAuth - Redirect result error:', error);
-                this.handleGoogleAuthError(error);
-            } finally {
-                this.googleSignInInProgress = false;
+                
+                // Redirect dopo un breve delay
+                setTimeout(() => {
+                    window.location.href = '../lista_schede/lista_schede.html';
+                }, 1500);
+            } else {
+                console.log('FitSuiteAuth - No user in redirect result');
             }
+        } catch (error) {
+            console.error('FitSuiteAuth - Redirect result error:', error);
+            this.handleGoogleAuthError(error);
+        } finally {
+            this.googleSignInInProgress = false;
         }
     }
 
@@ -267,6 +288,12 @@ class FitSuiteAuth {
     async handleGoogleSignIn() {
         console.log('FitSuiteAuth - Google Sign-In requested');
         
+        // Previene click multipli
+        if (this.googleSignInInProgress) {
+            console.log('FitSuiteAuth - Google sign-in already in progress');
+            return;
+        }
+        
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.addScope('email');
         
@@ -274,39 +301,72 @@ class FitSuiteAuth {
         const shouldUseRedirect = this.isMobile || this.isGitHubPages;
         
         console.log('FitSuiteAuth - Using method:', shouldUseRedirect ? 'Redirect' : 'Popup');
+        console.log('FitSuiteAuth - Device:', this.isMobile ? 'Mobile' : 'Desktop');
+        console.log('FitSuiteAuth - Domain:', window.location.hostname);
 
         try {
             if (shouldUseRedirect) {
                 // Metodo redirect per mobile e GitHub Pages
                 this.googleSignInInProgress = true;
-                await this.auth.signInWithRedirect(provider);
+                this.showMessage('login-error-message', 'Reindirizzamento a Google...', 'loading');
+                
+                // Breve delay prima del redirect per permettere al messaggio di apparire
+                setTimeout(async () => {
+                    try {
+                        await this.auth.signInWithRedirect(provider);
+                    } catch (error) {
+                        console.error('FitSuiteAuth - Redirect error:', error);
+                        this.googleSignInInProgress = false;
+                        this.handleGoogleAuthError(error);
+                    }
+                }, 500);
+                
             } else {
                 // Metodo popup per desktop
+                this.showMessage('login-error-message', 'Apertura finestra di login...', 'loading');
+                
                 const result = await this.auth.signInWithPopup(provider);
                 
                 if (result.user) {
                     console.log('FitSuiteAuth - Popup sign-in successful:', result.user.email);
-                    await this.createGoogleUserDocument(result.user);
                     
+                    // Mostra messaggio di successo
                     this.showMessage('login-error-message', 'Login con Google completato!', 'success');
                     
+                    // Crea il documento utente se non esiste
+                    try {
+                        await this.createGoogleUserDocument(result.user);
+                    } catch (docError) {
+                        console.error('FitSuiteAuth - Error creating user document:', docError);
+                        // Continua anche se c'è un errore nella creazione del documento
+                    }
+                    
+                    // Redirect dopo un breve delay
                     setTimeout(() => {
                         window.location.href = '../lista_schede/lista_schede.html';
-                    }, 1000);
+                    }, 1500);
                 }
             }
         } catch (error) {
             console.error('FitSuiteAuth - Google Sign-In error:', error);
             
-            // Fallback: se popup fallisce, prova redirect
-            if (!shouldUseRedirect && error.code === 'auth/popup-blocked') {
-                console.log('FitSuiteAuth - Popup blocked, trying redirect');
-                this.googleSignInInProgress = true;
-                try {
-                    await this.auth.signInWithRedirect(provider);
-                } catch (fallbackError) {
-                    console.error('FitSuiteAuth - Redirect fallback failed:', fallbackError);
-                    this.handleGoogleAuthError(fallbackError);
+            // Fallback system
+            if (!shouldUseRedirect && (error.code === 'auth/popup-blocked' || error.message.includes('ERR_BLOCKED_BY_CLIENT'))) {
+                console.log('FitSuiteAuth - Popup blocked, trying redirect fallback');
+                
+                if (confirm('Il popup è stato bloccato. Vuoi provare con il metodo redirect?')) {
+                    this.googleSignInInProgress = true;
+                    this.showMessage('login-error-message', 'Tentativo con redirect...', 'loading');
+                    
+                    try {
+                        await this.auth.signInWithRedirect(provider);
+                    } catch (fallbackError) {
+                        console.error('FitSuiteAuth - Redirect fallback failed:', fallbackError);
+                        this.googleSignInInProgress = false;
+                        this.handleGoogleAuthError(fallbackError);
+                    }
+                } else {
+                    this.handleGoogleAuthError(error);
                 }
             } else {
                 this.handleGoogleAuthError(error);
@@ -427,6 +487,13 @@ class FitSuiteAuth {
     handleGoogleAuthError(error) {
         let message = 'Errore durante il login con Google';
 
+        console.log('FitSuiteAuth - Google auth error details:', {
+            code: error.code,
+            message: error.message,
+            email: error.email,
+            credential: error.credential
+        });
+
         if (error.code === 'auth/unauthorized-domain') {
             const domain = window.location.hostname;
             message = `Dominio non autorizzato: ${domain}. Aggiungi questo dominio alla Firebase Console.`;
@@ -436,14 +503,27 @@ class FitSuiteAuth {
                 window.open('https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings', '_blank');
             }
         } else if (error.code === 'auth/popup-blocked') {
-            message = 'Popup bloccato dal browser. Per favore, consenti i popup o usa il metodo redirect.';
+            message = 'Popup bloccato dal browser. Riprova o consenti i popup per questo sito.';
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            message = 'Finestra di login chiusa. Riprova.';
         } else if (error.code === 'auth/cancelled-popup-request') {
-            message = 'Login annullato';
+            message = 'Login annullato.';
+        } else if (error.code === 'auth/network-request-failed') {
+            message = 'Errore di rete. Controlla la connessione e riprova.';
+        } else if (error.code === 'auth/too-many-redirects') {
+            message = 'Troppi redirect. Prova a svuotare la cache del browser.';
+        } else if (error.message && error.message.includes('ERR_BLOCKED_BY_CLIENT')) {
+            message = 'Login bloccato da un estensione del browser (es. AdBlocker). Disabilita le estensioni e riprova.';
+        } else if (error.message && error.message.includes('ERR_FILE_NOT_FOUND')) {
+            message = 'Errore di redirect. Prova a ricaricare la pagina e ripetere il login.';
         } else {
-            message = error.message || 'Errore sconosciuto';
+            message = error.message || 'Errore sconosciuto durante il login con Google';
         }
 
         this.showMessage('login-error-message', message);
+        
+        // Resetta lo stato del sign-in
+        this.googleSignInInProgress = false;
     }
 
     // Mostra messaggi nella UI
@@ -514,4 +594,41 @@ window.testAuth = () => {
     console.log('Auth instance:', window.fitSuiteAuth);
     console.log('Firebase auth:', firebase.auth());
     console.log('Current user:', firebase.auth().currentUser);
+    console.log('Is mobile:', window.fitSuiteAuth?.isMobile);
+    console.log('Is GitHub Pages:', window.fitSuiteAuth?.isGitHubPages);
+    console.log('Google sign in progress:', window.fitSuiteAuth?.googleSignInInProgress);
+};
+
+window.forceGoogleRedirect = async () => {
+    console.log('FitSuiteAuth - Forcing Google redirect...');
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.addScope('email');
+    try {
+        await firebase.auth().signInWithRedirect(provider);
+    } catch (error) {
+        console.error('FitSuiteAuth - Forced redirect error:', error);
+    }
+};
+
+window.checkRedirectResult = async () => {
+    console.log('FitSuiteAuth - Manually checking redirect result...');
+    try {
+        const result = await firebase.auth().getRedirectResult();
+        console.log('FitSuiteAuth - Redirect result:', result);
+        if (result.user) {
+            console.log('FitSuiteAuth - User found:', result.user.email);
+        } else {
+            console.log('FitSuiteAuth - No user in result');
+        }
+    } catch (error) {
+        console.error('FitSuiteAuth - Redirect result error:', error);
+    }
+};
+
+window.clearAuthState = () => {
+    console.log('FitSuiteAuth - Clearing auth state...');
+    firebase.auth().signOut().then(() => {
+        console.log('FitSuiteAuth - Signed out');
+        window.location.reload();
+    });
 };
