@@ -536,6 +536,90 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    // Handle Google Redirect Result (for mobile and redirect flows) - Separate from onAuthStateChanged
+    auth.getRedirectResult().then(function(result) {
+        console.log('getRedirectResult executed. Result:', result);
+        if (result.credential) {
+            // This gives you a Google Access Token. You can use it to access the Google API.
+            var token = result.credential.accessToken;
+            console.log('Google Access Token:', token);
+        }
+        if (result.user) {
+            // The signed-in user info.
+            var user = result.user;
+            console.log('Google Redirect User:', user);
+            
+            // Clear the flag immediately after successful redirect sign-in
+            sessionStorage.removeItem('googleSignInInProgress');
+
+            // Hide loading state
+            if (window.hideLoadingToast) {
+                window.hideLoadingToast();
+            }
+
+            // Create user document immediately after successful Google sign-in
+            console.log('Google redirect successful, creating user document...');
+            
+            try {
+                // Check if user document exists, create if missing
+                db.collection('users').doc(user.uid).get().then(doc => {
+                    if (!doc.exists) {
+                        console.log('Creating user document for Google redirect user...');
+                        db.collection('users').doc(user.uid).set({
+                            email: user.email,
+                            username: null, // Will be set later when user chooses one
+                            phoneNumber: user.phoneNumber || "",
+                            preferences: {
+                                color: "Arancione",
+                                language: "Italiano",
+                                notifications: "Consenti tutti"
+                            },
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }).then(() => {
+                            console.log('User document created for Google redirect user');
+                            if (window.showSuccessToast) {
+                                window.showSuccessToast('Accesso Google completato!');
+                            }
+                        }).catch(dbError => {
+                            console.error('Error creating user document for Google redirect user:', dbError);
+                            displayMessage('login-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
+                            displayMessage('registration-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
+                        });
+                    } else {
+                        console.log('User document already exists for Google redirect user');
+                        if (window.showSuccessToast) {
+                            window.showSuccessToast('Accesso Google completato!');
+                        }
+                    }
+                }).catch(dbError => {
+                    console.error('Error checking user document for Google redirect user:', dbError);
+                    displayMessage('login-error-message', 'Errore durante la verifica del profilo utente. Riprova.');
+                    displayMessage('registration-error-message', 'Errore durante la verifica del profilo utente. Riprova.');
+                });
+            } catch (dbError) {
+                console.error('Error in redirect result processing:', dbError);
+            }
+        } else {
+            console.log('No user in redirect result - might be page refresh or direct access');
+            // Clear the flag if no user found
+            sessionStorage.removeItem('googleSignInInProgress');
+        }
+    }).catch(function(error) {
+        console.error('Error in getRedirectResult:', error);
+        // Clear the flag on error
+        sessionStorage.removeItem('googleSignInInProgress');
+        
+        // Hide loading state
+        if (window.hideLoadingToast) {
+            window.hideLoadingToast();
+        }
+        
+        // Show error message
+        const errorMessage = getFirebaseErrorMessage(error.code);
+        displayMessage('login-error-message', errorMessage);
+        displayMessage('registration-error-message', errorMessage);
+    });
+
     // Handle authentication state changes
     firebase.auth().onAuthStateChanged(async user => {
         const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
@@ -547,47 +631,20 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('lastUserId', user.uid);
             
             try {
-                // Handle Google redirect completion
+                // Handle Google redirect completion - Skip if already handled by getRedirectResult
                 if (isGoogleSignInInProgress) {
-                    console.log('Google redirect sign-in completed, processing...');
+                    console.log('Google sign-in in progress, checking if already handled...');
                     
-                    try {
-                        const result = await auth.getRedirectResult();
-                        console.log('Google redirect result:', result);
+                    // Wait a bit to see if getRedirectResult handles it
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Check if user is still in progress (getRedirectResult should have cleared it)
+                    if (sessionStorage.getItem('googleSignInInProgress') === 'true') {
+                        console.log('Google redirect not handled by getRedirectResult, processing here...');
                         
-                        // Verify this is actually a Google sign-in result
-                        if (!result || !result.user) {
-                            console.log('No redirect result available, might be page refresh');
-                            sessionStorage.removeItem('googleSignInInProgress');
-                        } else {
-                            // Create user document immediately after successful Google redirect
-                            const user = result.user;
-                            console.log('Google redirect sign-in successful, creating user document...');
-                            
-                            try {
-                                // Check if user document exists, create if missing
-                                const userDoc = await db.collection('users').doc(user.uid).get();
-                                if (!userDoc.exists) {
-                                    console.log('Creating user document for Google redirect user...');
-                                    await db.collection('users').doc(user.uid).set({
-                                        email: user.email,
-                                        username: null, // Will be set later when user chooses one
-                                        phoneNumber: user.phoneNumber || "",
-                                        preferences: {
-                                            color: "Arancione",
-                                            language: "Italiano",
-                                            notifications: "Consenti tutti"
-                                        },
-                                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                                    });
-                                    console.log('User document created for Google redirect user');
-                                } else {
-                                    console.log('User document already exists for Google redirect user');
-                                }
-                            } catch (dbError) {
-                                console.error('Error creating user document for Google redirect user:', dbError);
-                                // Continue with sign-in even if document creation fails initially
-                            }
+                        try {
+                            const result = await auth.getRedirectResult();
+                            console.log('Google redirect result in onAuthStateChanged:', result);
                             
                             // Hide loading state
                             if (window.hideLoadingToast) {
@@ -598,28 +655,27 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (window.showSuccessToast) {
                                 window.showSuccessToast('Accesso Google completato!');
                             }
+                        } catch (error) {
+                            console.error('Error getting redirect result in onAuthStateChanged:', error);
+                            
+                            // Hide loading state
+                            if (window.hideLoadingToast) {
+                                window.hideLoadingToast();
+                            }
+                            
+                            // Show error message
+                            const errorMessage = getFirebaseErrorMessage(error.code);
+                            displayMessage('login-error-message', errorMessage);
+                            displayMessage('registration-error-message', errorMessage);
+                            
+                            // Clear the flag and sign out on error
+                            sessionStorage.removeItem('googleSignInInProgress');
+                            await auth.signOut();
+                            return;
                         }
-                        
-                    } catch (error) {
-                        console.error('Error getting redirect result:', error);
-                        
-                        // Hide loading state
-                        if (window.hideLoadingToast) {
-                            window.hideLoadingToast();
-                        }
-                        
-                        // Show error message
-                        const errorMessage = getFirebaseErrorMessage(error.code);
-                        displayMessage('login-error-message', errorMessage);
-                        displayMessage('registration-error-message', errorMessage);
-                        
-                        if (window.showErrorToast) {
-                            window.showErrorToast(errorMessage);
-                        }
-                        
-                        // Clear the flag and sign out on error
-                        sessionStorage.removeItem('googleSignInInProgress');
-                        await auth.signOut();
+                    } else {
+                        console.log('Google redirect already handled by getRedirectResult');
+                        // Don't process further, let the redirect handler take care
                         return;
                     }
                 }
