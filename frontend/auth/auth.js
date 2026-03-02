@@ -134,16 +134,16 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 clearMessages('registration-error-message');
                 
-                // Check if username is unique - REMOVED: username will be set later
-                
-                sessionStorage.setItem('justLoggedIn', 'true');
+                // Create user with email and password first
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
+                
+                console.log('User created successfully:', user.uid);
 
-                // Crea il profilo utente nel database senza username (verrà richiesto dopo)
+                // Create the user profile in the database
                 await db.collection('users').doc(user.uid).set({
                     email: email,
-                    username: null, // Sarà richiesto dopo il login
+                    username: null, // Will be set later after login
                     phoneNumber: "",
                     preferences: {
                         color: "Arancione",
@@ -154,7 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 console.log('User document created in Firestore');
+                sessionStorage.setItem('justLoggedIn', 'true');
+                
             } catch (error) {
+                console.error('Registration error:', error);
                 displayMessage('registration-error-message', getFirebaseErrorMessage(error.code));
             }
         });
@@ -173,9 +176,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 clearMessages('login-error-message');
+                console.log('Attempting login with:', { email });
+                
+                // Sign in with email and password
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                console.log('Login successful:', user.uid);
+                
+                // Check if user document exists, create if missing
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (!userDoc.exists) {
+                    console.log('User document not found, creating...');
+                    await db.collection('users').doc(user.uid).set({
+                        email: user.email,
+                        username: null, // Will be set by username checker
+                        phoneNumber: user.phoneNumber || "",
+                        preferences: {
+                            color: "Arancione",
+                            language: "Italiano",
+                            notifications: "Consenti tutti"
+                        },
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('User document created during login');
+                }
+                
                 sessionStorage.setItem('justLoggedIn', 'true');
-                await auth.signInWithEmailAndPassword(email, password);
+                
             } catch (error) {
+                console.error('Login error:', error);
                 displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
             }
         });
@@ -191,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 try {
                     clearMessages('login-error-message'); // Clear login errors before Google sign-in
+                    clearMessages('registration-error-message'); // Also clear registration errors
                     sessionStorage.setItem('justLoggedIn', 'true');
                     sessionStorage.setItem('googleSignInInProgress', 'true'); // Set flag to prevent redirect
                     
@@ -201,6 +232,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     provider.addScope('email');
                     provider.addScope('profile');
                     
+                    // Set custom parameters for better UX
+                    provider.setCustomParameters({
+                        prompt: 'select_account' // Force account selection
+                    });
+                    
                     // Detect if mobile device - more comprehensive detection
                     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile/i.test(navigator.userAgent) || 
                                     (window.innerWidth <= 768 && 'ontouchstart' in window);
@@ -210,6 +246,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Device detection - Touch support:', 'ontouchstart' in window);
                     console.log('Device detection - Is mobile:', isMobile);
                     
+                    // Show loading state
+                    if (window.showLoadingToast) {
+                        window.showLoadingToast('Accesso con Google in corso...');
+                    }
+                    
                     if (isMobile) {
                         // Use redirect for mobile devices
                         console.log('Mobile detected, using signInWithRedirect...');
@@ -217,13 +258,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         // Use popup for desktop
                         console.log('Desktop detected, using signInWithPopup...');
-                        await auth.signInWithPopup(provider);
+                        const result = await auth.signInWithPopup(provider);
+                        
+                        // Hide loading state
+                        if (window.hideLoadingToast) {
+                            window.hideLoadingToast();
+                        }
+                        
                         // Clear the flag immediately after successful popup sign-in
                         sessionStorage.removeItem('googleSignInInProgress');
+                        
+                        // Show success message
+                        if (window.showSuccessToast) {
+                            window.showSuccessToast('Accesso Google completato!');
+                        }
                     }
                     
                 } catch (error) {
                     console.error('Google sign-in error:', error);
+                    
+                    // Hide loading state
+                    if (window.hideLoadingToast) {
+                        window.hideLoadingToast();
+                    }
+                    
                     // Clear the flag on error
                     sessionStorage.removeItem('googleSignInInProgress');
                     
@@ -235,13 +293,23 @@ document.addEventListener('DOMContentLoaded', () => {
                                      `2. Vai su Authentication → Settings → Authorized domains\n` +
                                      `3. Oppure usa un server locale (es. localhost)`;
                         displayMessage('login-error-message', message);
+                        displayMessage('registration-error-message', message); // Also show in registration form
                         
                         // Also show in a popup for better visibility
                         if (window.alert) {
                             await window.alert(message, 'Errore Dominio OAuth');
                         }
+                    } else if (error.code === 'auth/popup-closed-by-user') {
+                        // Don't show error for user cancellation
+                        console.log('User cancelled Google sign-in');
                     } else {
-                        displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
+                        const errorMessage = getFirebaseErrorMessage(error.code);
+                        displayMessage('login-error-message', errorMessage);
+                        displayMessage('registration-error-message', errorMessage); // Also show in registration form
+                        
+                        if (window.showErrorToast) {
+                            window.showErrorToast(errorMessage);
+                        }
                     }
                 }
             });
@@ -278,6 +346,49 @@ document.addEventListener('DOMContentLoaded', () => {
         // Prevent redirect during Google sign-in process (only for redirect method)
         const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
         
+        // Handle Google redirect completion
+        if (isGoogleSignInInProgress && user) {
+            console.log('Google redirect sign-in completed, processing user data...');
+            
+            try {
+                // Hide loading state if it was shown
+                if (window.hideLoadingToast) {
+                    window.hideLoadingToast();
+                }
+                
+                // Get redirect result
+                const result = await auth.getRedirectResult();
+                console.log('Google redirect result:', result);
+                
+                // Show success message
+                if (window.showSuccessToast) {
+                    window.showSuccessToast('Accesso Google completato!');
+                }
+                
+            } catch (error) {
+                console.error('Error getting redirect result:', error);
+                
+                // Hide loading state
+                if (window.hideLoadingToast) {
+                    window.hideLoadingToast();
+                }
+                
+                // Show error message
+                const errorMessage = getFirebaseErrorMessage(error.code);
+                displayMessage('login-error-message', errorMessage);
+                displayMessage('registration-error-message', errorMessage);
+                
+                if (window.showErrorToast) {
+                    window.showErrorToast(errorMessage);
+                }
+                
+                // Clear the flag and sign out on error
+                sessionStorage.removeItem('googleSignInInProgress');
+                await auth.signOut();
+                return;
+            }
+        }
+        
         if (user && !isGoogleSignInInProgress) {
             // User is signed in.
             console.log('User is signed in:', user);
@@ -285,17 +396,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save lastUserId for optimistic loading
             localStorage.setItem('lastUserId', user.uid);
             
-            // Initialize Cache
-            if (window.CacheManager) {
-                try {
-                    const force = sessionStorage.getItem('justLoggedIn') === 'true';
-                    sessionStorage.removeItem('justLoggedIn');
-                    await window.CacheManager.initCache(user.uid, force);
-                } catch (e) {
-                    console.error("Cache init failed", e);
-                }
-            }
-
             // Check if user document exists, create if not (for both popup and redirect)
             try {
                 const userDoc = await db.collection('users').doc(user.uid).get();
@@ -314,8 +414,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     console.log('User document created for Google user');
                 }
+                
+                // Check if user has username, if not redirect to username selection page
+                const userData = userDoc.exists ? userDoc.data() : null;
+                if (!userData || !userData.username || userData.username.trim() === '') {
+                    console.log('Google user needs username, redirecting to username selection');
+                    // Redirect to a page where user can set username
+                    window.location.href = '../lista_schede/lista_scheda.html'; // This will trigger username checker
+                    return;
+                }
+                
             } catch (error) {
                 console.error('Error checking/creating user document:', error);
+            }
+
+            // Initialize Cache
+            if (window.CacheManager) {
+                try {
+                    const force = sessionStorage.getItem('justLoggedIn') === 'true';
+                    sessionStorage.removeItem('justLoggedIn');
+                    await window.CacheManager.initCache(user.uid, force);
+                } catch (e) {
+                    console.error("Cache init failed", e);
+                }
             }
 
             // Redirect to lista_schede.html
@@ -343,6 +464,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     console.log('User document created for Google user');
+                }
+                
+                // Check if user has username, if not redirect to username selection page
+                const userData = userDoc.exists ? userDoc.data() : null;
+                if (!userData || !userData.username || userData.username.trim() === '') {
+                    console.log('Google user needs username, redirecting to username selection');
+                    // Redirect to a page where user can set username
+                    window.location.href = '../lista_schede/lista_scheda.html'; // This will trigger username checker
+                    return;
+                }
+                
+                // Initialize Cache
+                if (window.CacheManager) {
+                    try {
+                        const force = sessionStorage.getItem('justLoggedIn') === 'true';
+                        sessionStorage.removeItem('justLoggedIn');
+                        await window.CacheManager.initCache(user.uid, force);
+                    } catch (e) {
+                        console.error("Cache init failed", e);
+                    }
                 }
                 
                 // Now redirect after processing

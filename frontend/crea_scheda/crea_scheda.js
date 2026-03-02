@@ -1,4 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Funzione per verificare la connessione
+    function checkConnection() {
+        if (!navigator.onLine) {
+            showErrorToast('Non sei collegato alla rete. Controlla la tua connessione internet.', 'Nessuna Connessione', 8000);
+        }
+    }
+    
+    // Controlla la connessione al caricamento della pagina
+    checkConnection();
+    
+    // Ascolta i cambiamenti di stato della connessione
+    window.addEventListener('online', () => {
+        showSuccessToast('Connessione ripristinata', 'Online');
+    });
+    
+    window.addEventListener('offline', () => {
+        showErrorToast('Connessione persa. Non sei collegato alla rete.', 'Offline', 8000);
+    });
+    
     const auth = firebase.auth();
     const db = firebase.firestore();
     const storage = firebase.storage ? firebase.storage() : null; // Storage might not be initialized in the HTML

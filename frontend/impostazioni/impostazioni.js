@@ -2,6 +2,26 @@ console.log('impostazioni.js caricato e in esecuzione');
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Content Loaded - impostazioni.js');
+    
+    // Funzione per verificare la connessione
+    function checkConnection() {
+        if (!navigator.onLine) {
+            showErrorToast('Non sei collegato alla rete. Controlla la tua connessione internet.', 'Nessuna Connessione', 8000);
+        }
+    }
+    
+    // Controlla la connessione al caricamento della pagina
+    checkConnection();
+    
+    // Ascolta i cambiamenti di stato della connessione
+    window.addEventListener('online', () => {
+        showSuccessToast('Connessione ripristinata', 'Online');
+    });
+    
+    window.addEventListener('offline', () => {
+        showErrorToast('Connessione persa. Non sei collegato alla rete.', 'Offline', 8000);
+    });
+    
     const auth = firebase.auth();
     const db = firebase.firestore();
 
