@@ -284,6 +284,35 @@ body.list-body {
     text-decoration: none;
     transition: all 0.2s;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.view-btn i {
+    margin-right: 6px;
+    font-size: 12px;
+}
+
+/* Specific styles for view-btn inside menu dropdown */
+.menu-item.view-btn {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-white);
+    padding: 12px 16px;
+    text-align: left;
+    justify-content: flex-start;
+    border-radius: 0;
+    font-size: 14px;
+    font-weight: normal;
+}
+
+.menu-item.view-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    filter: none;
+    transform: none;
 }
 
 .view-btn:hover {
@@ -582,6 +611,12 @@ body.list-body {
         touch-action: manipulation;
     }
     
+    .menu-item.view-btn {
+        padding: 10px 12px;
+        font-size: 13px;
+        min-height: 44px;
+    }
+    
     /* Fix dropdown menu on mobile */
     .menu-dropdown {
         right: auto !important;
@@ -652,6 +687,12 @@ body.list-body {
         font-size: 12px;
         min-height: 32px;
         touch-action: manipulation;
+    }
+    
+    .menu-item.view-btn {
+        padding: 8px 10px;
+        font-size: 12px;
+        min-height: 40px;
     }
     
     /* Fix dropdown menu on small mobile */

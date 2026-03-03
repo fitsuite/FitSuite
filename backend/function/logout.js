@@ -13,6 +13,11 @@ async function logout() {
         window.location.href = '../../frontend/auth/auth.html';
     } catch (error) {
         console.error("Errore durante il logout:", error);
-        alert("Errore durante il logout: " + error.message);
+        if (window.showErrorToast) {
+            window.showErrorToast("Errore durante il logout: " + error.message);
+        } else {
+            // Fallback a console se toast non disponibile
+            console.error("Logout error:", error.message);
+        }
     }
 }

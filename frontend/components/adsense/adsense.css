@@ -161,6 +161,15 @@
     line-height: 1.2;
 }
 
+/* AdSense disclosure label */
+.adsense-disclosure {
+    font-size: 10px;
+    color: #666;
+    margin-top: 4px;
+    opacity: 0.7;
+    font-style: italic;
+}
+
 /* Mobile optimizations for placeholder */
 @media (max-width: 768px) {
     .adsense-placeholder {

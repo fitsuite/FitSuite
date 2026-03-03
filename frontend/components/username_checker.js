@@ -103,21 +103,21 @@
                 // Validate username
                 if (trimmedUsername.length < 3) {
                     console.log('UsernameChecker - Username too short');
-                    await window.alert('L\'username deve contenere almeno 3 caratteri.', 'Errore Validazione');
+                    await window.showErrorToast('L\'username deve contenere almeno 3 caratteri.');
                     showPopup();
                     return;
                 }
 
                 if (trimmedUsername.length > 20) {
                     console.log('UsernameChecker - Username too long');
-                    await window.alert('L\'username non può superare i 20 caratteri.', 'Errore Validazione');
+                    await window.showErrorToast('L\'username non può superare i 20 caratteri.');
                     showPopup();
                     return;
                 }
 
                 if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
                     console.log('UsernameChecker - Username has invalid characters');
-                    await window.alert('L\'username può contenere solo lettere, numeri e underscore.', 'Errore Validazione');
+                    await window.showErrorToast('L\'username può contenere solo lettere, numeri e underscore.');
                     showPopup();
                     return;
                 }
@@ -139,7 +139,7 @@
 
                 if (!isUnique) {
                     console.log('UsernameChecker - Username not unique');
-                    await window.alert('Questo username è già stato scelto da un altro utente. Scegline un altro.', 'Username Non Disponibile');
+                    await window.showErrorToast('Questo username è già stato scelto da un altro utente. Scegline un altro.');
                     showPopup();
                     return;
                 }
@@ -273,7 +273,7 @@
                     const updated = await updateUserUsername(currentUser.uid, username);
                     console.log('UsernameChecker - Update result:', updated);
                     if (!updated) {
-                        await window.alert('Errore nell\'aggiornamento dell\'username. Riprova più tardi.');
+                        await window.showErrorToast('Errore nell\'aggiornamento dell\'username. Riprova più tardi.');
                         return false;
                     }
                     console.log('UsernameChecker - Username set successfully:', username);
@@ -282,7 +282,7 @@
                     console.log('UsernameChecker - User cancelled username selection');
                     // User cancelled, sign them out
                     await auth.signOut();
-                    await window.alert('L\'username è obbligatorio per utilizzare FitSuite.');
+                    await window.showErrorToast('L\'username è obbligatorio per utilizzare FitSuite.');
                     // Redirect to auth page
                     window.location.href = '../auth/auth.html';
                     return false;
