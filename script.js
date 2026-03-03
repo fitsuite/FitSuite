@@ -241,7 +241,7 @@ async function init() {
         }
         
         // Carica i dati direttamente da exercises.json
-        const response = await fetch('./backend/data_it/esercizi_DATABASE_TOTALE.json');
+        const response = await fetch('./funzionali/backend/data_it/esercizi_DATABASE_TOTALE.json');
         const exercises = await response.json();
         
         originalExercises = exercises;
