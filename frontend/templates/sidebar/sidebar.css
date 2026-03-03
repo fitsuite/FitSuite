@@ -6,7 +6,7 @@
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
-    padding: 15px 10px 15px 10px; /* 15px sopra, 10px destra, 15px sotto, 10px sinistra */
+    padding: 10px 10px 10px 10px; /* 10px sopra, 10px destra, 10px sotto, 10px sinistra */
     position: fixed;
     top: 0;
     bottom: 0;
@@ -191,6 +191,7 @@
 .new-routine-btn.ai-btn {
     background: linear-gradient(135deg, #ff6600, #ff8533);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 0;
 }
 
 .new-routine-btn.ai-btn:hover {
@@ -205,7 +206,7 @@
 .sidebar-divider {
     border: none;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin: 18px 0;
+    margin: 15px 0;
 }
 
 .view-routines-btn {
@@ -245,18 +246,20 @@
 
 .routine-list {
     list-style: none;
-    padding-left: 0;
-    padding-right: 15px;
+    padding-left: 15px;
+    padding-right: 5px;
     padding-top: 0;
-    padding-bottom: 5px;
+    padding-bottom: 0;
     overflow-y: auto;
     flex-grow: 1;
-    max-height: calc(100vh - 460px);
-    width: 210px;
-    margin: 15px 0 0 0;
+    max-height: calc(100vh - 420px);
+    width: 200px;
+    margin: 15px 0 15px 0;
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
     transition: scrollbar-color 0.3s ease;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
 }
 
 .nav-section:hover .routine-list {
@@ -290,7 +293,7 @@
 /* For mobile */
 @media (max-width: 992px) {
     .routine-list {
-        max-height: calc(100vh - 440px); /* Further adjusted for mobile to ensure footer is always visible */
+        max-height: calc(100vh - 400px); /* Further adjusted for mobile to ensure footer is always visible */
     }
 }
 
@@ -337,9 +340,9 @@
 }
 
 .sidebar-footer {
-    margin-top: auto;
+    margin-top: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 0px;
+    padding-top: 12px;
     padding-bottom: 0px;
     flex-shrink: 0;
     position: sticky;
@@ -365,7 +368,7 @@
     position: relative;
     width: 195px;
     margin: 0;
-    margin-top: 10px;
+    margin-top: 0px;
     box-sizing: border-box;
 }
 
