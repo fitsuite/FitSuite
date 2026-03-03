@@ -211,6 +211,7 @@ body.list-body {
     justify-content: center;
     align-items: center;
     position: relative;
+    margin-right: 12px;
 }
 
 .col-name {
@@ -262,9 +263,15 @@ body.list-body {
     border: none;
     color: var(--text-gray);
     cursor: pointer;
-    padding: 8px;
+    padding: 0;
     border-radius: 50%;
     transition: all 0.2s;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
 }
 
 .menu-trigger:hover {
@@ -622,6 +629,16 @@ body.list-body {
         right: auto !important;
         left: 10px !important;
         min-width: 160px !important;
+    }
+
+    .menu-trigger {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 50% !important;
+    }
+
+    .menu-trigger i {
+        font-size: 12px !important;
     }
 }
 

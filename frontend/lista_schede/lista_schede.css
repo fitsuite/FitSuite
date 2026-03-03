@@ -190,7 +190,7 @@ body.list-body {
 
 .list-header {
     display: grid;
-    grid-template-columns: 40px 2fr 1fr 1.5fr 150px;
+    grid-template-columns: auto 2fr 1fr 1.5fr 150px;
     padding: 0 20px;
     color: var(--text-gray);
     font-size: 14px;
@@ -209,7 +209,7 @@ body.list-body {
 
 .routine-list-row {
     display: grid;
-    grid-template-columns: 40px 2fr 1fr 1.5fr 150px;
+    grid-template-columns: auto 2fr 1fr 1.5fr 150px;
     align-items: center;
     background: var(--bg-card);
     padding: 15px 20px;
@@ -225,8 +225,7 @@ body.list-body {
     justify-content: center;
     align-items: center;
     position: relative;
-    width: 40px;
-    min-width: 40px;
+    margin-right: 12px;
 }
 
 .col-name {
@@ -259,22 +258,32 @@ body.list-body {
 
 /* Ensure the active row (with open menu) stays on top even if not hovered */
 .routine-list-row:has(.menu-dropdown.active) {
-    z-index: 100;
+z-index: 100;
 }
 
 .menu-trigger {
-    background: transparent;
-    border: none;
-    color: var(--text-gray);
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
-    transition: all 0.2s;
+background: transparent;
+border: none;
+color: var(--text-gray);
+cursor: pointer;
+padding: 0;
+border-radius: 50%;
+transition: all 0.2s;
+width: 28px;
+height: 28px;
+display: flex;
+align-items: center;
+justify-content: center;
+box-sizing: border-box;
+}
+
+.menu-trigger i {
+font-size: 12px;
 }
 
 .menu-trigger:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+background: rgba(255, 255, 255, 0.1);
+color: white;
 }
 
 .view-btn {
@@ -355,7 +364,7 @@ body.list-body {
     }
 
     .list-header, .routine-list-row {
-        grid-template-columns: 40px 2fr 1fr 1.5fr 120px; /* Reduce fixed columns */
+        grid-template-columns: auto 2fr 1fr 1.5fr 120px; /* Reduce fixed columns */
         padding: 10px 15px;
         font-size: 13px;
         gap: 10px;
@@ -462,5 +471,15 @@ body.list-body {
 
     .view-btn {
         padding: 6px 12px;
+    }
+
+    .menu-trigger {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 50% !important;
+    }
+
+    .menu-trigger i {
+        font-size: 12px !important;
     }
 }
