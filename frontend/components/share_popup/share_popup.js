@@ -246,29 +246,38 @@ class SharePopup {
             console.log("Current user UID:", this.auth.currentUser.uid);
             console.log("Already shared users:", this.sharedUsers.map(u => u.uid));
             
-            // Search users by username
+            // Search users by username (case-insensitive approach)
+            const queryLower = query.toLowerCase();
+            
+            // Get a larger set of users and filter client-side for case-insensitive search
             const snapshot = await this.db.collection('users')
-                .where('username', '>=', query)
-                .where('username', '<=', query + '\uf8ff')
-                .limit(10)
+                .limit(50) // Get more users to filter through
                 .get();
 
             this.searchResults = [];
             snapshot.forEach(doc => {
                 const userData = doc.data();
-                console.log("Found user:", doc.id, userData.username);
+                const usernameLower = (userData.username || '').toLowerCase();
                 
-                // Don't show current user or already shared users
-                if (doc.id !== this.auth.currentUser.uid && 
-                    !this.sharedUsers.some(u => u.uid === doc.id)) {
-                    this.searchResults.push({
-                        uid: doc.id,
-                        username: userData.username || 'Utente',
-                        email: userData.email || ''
-                    });
-                    console.log("Added to search results:", userData.username);
+                // Case-insensitive search
+                if (usernameLower.includes(queryLower)) {
+                    console.log("Found user:", doc.id, userData.username);
+                    
+                    // Don't show current user or already shared users
+                    if (doc.id !== this.auth.currentUser.uid && 
+                        !this.sharedUsers.some(u => u.uid === doc.id)) {
+                        this.searchResults.push({
+                            uid: doc.id,
+                            username: userData.username || 'Utente',
+                            email: userData.email || ''
+                        });
+                        console.log("Added to search results:", userData.username);
+                    }
                 }
             });
+
+            // Limit results to 10 after filtering
+            this.searchResults = this.searchResults.slice(0, 10);
 
             console.log("Final search results:", this.searchResults.length);
             this.renderSearchResults();
