@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearMessages('login-error-message'); // Clear login errors before Google sign-in
                     clearMessages('registration-error-message'); // Also clear registration errors
                     sessionStorage.setItem('justLoggedIn', 'true');
-                    sessionStorage.setItem('googleSignInInProgress', 'true'); // Set flag to prevent redirect
+                    localStorage.setItem('googleSignInInProgress', 'true'); // Set flag to prevent redirect
                     
                     console.log('Starting Google sign-in...');
                     
@@ -270,7 +270,7 @@ if (isMobile) {
     console.log('Mobile detected, using signInWithRedirect...');
     
     // Salviamo uno stato per sapere che stiamo provando ad accedere
-    sessionStorage.setItem('googleSignInInProgress', 'true');
+    localStorage.setItem('googleSignInInProgress', 'true');
     
     try {
         // Su mobile, questa riga interrompe l'esecuzione e carica la pagina di Google
@@ -290,7 +290,7 @@ if (isMobile) {
         if (window.hideLoadingToast) window.hideLoadingToast();
         
         // Sincronizziamo l'utente sul database
-        await handleUserSync(result.user);
+        await createGoogleUserDocument(result.user);
         
         // Vai alla pagina finale
         window.location.href = '../lista_schede/lista_scheda.html';
@@ -318,7 +318,7 @@ if (isMobile) {
                     }
                     
                     // Clear the flag on error
-                    sessionStorage.removeItem('googleSignInInProgress');
+                    localStorage.removeItem('googleSignInInProgress');
                     
                     // Special handling for unauthorized domain error
                     if (error.code === 'auth/unauthorized-domain') {
@@ -484,7 +484,7 @@ if (isMobile) {
     // Handle Google Redirect Result (for mobile and redirect flows) - IMPROVED HANDLER
     // Check if we're returning from Google redirect
     const urlParams = new URLSearchParams(window.location.search);
-    const isReturningFromGoogle = urlParams.has('signIn') || sessionStorage.getItem('googleSignInInProgress') === 'true';
+    const isReturningFromGoogle = urlParams.has('signIn') || localStorage.getItem('googleSignInInProgress') === 'true';
     
     if (isReturningFromGoogle) {
         console.log('Detected return from Google redirect, processing getRedirectResult...');
@@ -520,7 +520,7 @@ if (isMobile) {
                 }
                 
                 // Clear the flag immediately after successful redirect sign-in
-                sessionStorage.removeItem('googleSignInInProgress');
+                localStorage.removeItem('googleSignInInProgress');
 
                 // Create user document immediately after successful Google sign-in
                 console.log('Google redirect successful, creating user document...');
@@ -544,12 +544,12 @@ if (isMobile) {
             } else {
                 console.log('No user in redirect result - might be page refresh or direct access');
                 // Clear the flag if no user found
-                sessionStorage.removeItem('googleSignInInProgress');
+                localStorage.removeItem('googleSignInInProgress');
             }
         }).catch(function(error) {
             console.error('Error in getRedirectResult:', error);
             // Clear the flag on error
-            sessionStorage.removeItem('googleSignInInProgress');
+            localStorage.removeItem('googleSignInInProgress');
             
             // Clear loading state
             if (window.hideLoadingToast) {
@@ -565,7 +565,7 @@ if (isMobile) {
 
     // Handle authentication state changes
     firebase.auth().onAuthStateChanged(async user => {
-        const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
+        const isGoogleSignInInProgress = localStorage.getItem('googleSignInInProgress') === 'true';
         
         // Skip processing if we're in the middle of a Google redirect
         if (isGoogleSignInInProgress && isReturningFromGoogle) {
@@ -579,7 +579,7 @@ if (isMobile) {
                 console.error('Invalid user object in onAuthStateChanged:', user);
                 displayMessage('login-error-message', 'Errore critico: UID utente non valido. Riprova l\'accesso.');
                 displayMessage('registration-error-message', 'Errore critico: UID utente non valido. Riprova l\'accesso.');
-                sessionStorage.removeItem('googleSignInInProgress');
+                localStorage.removeItem('googleSignInInProgress');
                 return;
             }
             
@@ -617,7 +617,7 @@ if (isMobile) {
                 }
                 
                 // Clear Google sign-in flag
-                sessionStorage.removeItem('googleSignInInProgress');
+                localStorage.removeItem('googleSignInInProgress');
                 
                 // Redirect to lista_schede.html only if not already redirected by getRedirectResult
                 if (!isReturningFromGoogle) {
@@ -628,13 +628,13 @@ if (isMobile) {
             } catch (error) {
                 console.error('Error processing user data:', error);
                 displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
-                sessionStorage.removeItem('googleSignInInProgress');
+                localStorage.removeItem('googleSignInInProgress');
             }
         } else {
             // User is signed out.
             console.log('User is signed out.');
             // Clear Google sign-in flag when signed out
-            sessionStorage.removeItem('googleSignInInProgress');
+            localStorage.removeItem('googleSignInInProgress');
         }
     });
 
