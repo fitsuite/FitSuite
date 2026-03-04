@@ -641,9 +641,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Use async/await for better error handling
             createGoogleUserDocument(user).then(() => {
                 console.log('Google redirect user document creation completed');
-                if (window.showSuccessToast) {
-                    window.showSuccessToast('Accesso Google completato!');
-                }
+                // Redirect immediately to lista_scheda.html after successful mobile login
+                window.location.href = '../lista_schede/lista_scheda.html';
             }).catch(dbError => {
                 console.error('Error creating user document for Google redirect user:', dbError);
                 displayMessage('login-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
