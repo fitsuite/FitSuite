@@ -366,8 +366,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                     if (window.showSuccessToast) {
                                         window.showSuccessToast('Accesso Google completato con popup fallback!');
                                     }
-                                    
-                                    return; // Success, exit the function
+
+                                    // Redirect to lista_scheda.html after successful fallback login
+                                    setTimeout(() => {
+                                        window.location.href = '../lista_schede/lista_scheda.html';
+                                    }, 1500); // Small delay to show the success message
                                     
                                 } catch (popupError) {
                                     console.error('Popup fallback also failed:', popupError);
@@ -438,6 +441,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (window.showSuccessToast) {
                             window.showSuccessToast('Accesso Google completato!');
                         }
+
+                        // Redirect to lista_scheda.html after successful login
+                        setTimeout(() => {
+                            window.location.href = '../lista_schede/lista_scheda.html';
+                        }, 1500); // Small delay to show the success message
                     }
                     
                 } catch (error) {
