@@ -4,10 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Flag per impedire che onAuthStateChanged interferisca con la logica del redirect
+    let isAuthProcessing = false;
+
     // GESTIONE RITORNO DA GOOGLE (MOBILE)
-    // Metti questo codice all'inizio dello script, fuori da ogni funzione o evento click
     auth.getRedirectResult().then(async (result) => {
         if (result.user) {
+            isAuthProcessing = true; // Blocca onAuthStateChanged
             console.log('Redirect result trovato! User:', result.user.email);
             
             try {
@@ -22,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = '../lista_schede/lista_scheda.html';
             } catch (error) {
                 console.error('Errore post-redirect:', error);
+                isAuthProcessing = false; // Rilascia in caso di errore
             }
         } else {
             console.log('Nessun utente nel redirect (caricamento normale della pagina)');
@@ -328,6 +332,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle authentication state changes
     firebase.auth().onAuthStateChanged(async user => {
+        // Se il redirect sta processando i dati, non facciamo nulla qui
+        if (isAuthProcessing) {
+            console.log('Skipping onAuthStateChanged during Google redirect processing');
+            return;
+        }
+
         if (user) {
             // Validate user object before proceeding
             if (!user || !user.uid) {
@@ -346,28 +356,24 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // Check if user document exists, create if not
                 const userDoc = await db.collection('users').doc(user.uid).get();
+                let userData;
+
                 if (!userDoc.exists) {
                     console.log('Creating user document for authenticated user...');
                     await createGoogleUserDocument(user);
                     console.log('User document created for authenticated user');
                     // Refetch the document after creation
                     const updatedUserDoc = await db.collection('users').doc(user.uid).get();
-                    
-                    // Check if user has username, if not redirect to username selection page
-                    const userData = updatedUserDoc.data();
-                    if (!userData || !userData.username || userData.username.trim() === '') {
-                        console.log('User needs username, redirecting to lista_scheda.html for username selection');
-                        window.location.href = '../lista_schede/lista_scheda.html';
-                        return;
-                    }
+                    userData = updatedUserDoc.data();
                 } else {
-                    // Check if user has username, if not redirect to username selection page
-                    const userData = userDoc.data();
-                    if (!userData || !userData.username || userData.username.trim() === '') {
-                        console.log('User needs username, redirecting to lista_scheda.html for username selection');
-                        window.location.href = '../lista_schede/lista_scheda.html';
-                        return;
-                    }
+                    userData = userDoc.data();
+                }
+                
+                // Check if user has username, if not redirect to username selection page
+                if (!userData || !userData.username || userData.username.trim() === '') {
+                    console.log('User needs username, redirecting to lista_scheda.html for username selection');
+                    window.location.href = '../lista_schede/lista_scheda.html';
+                    return;
                 }
                 
                 // Initialize Cache
@@ -384,8 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Clear Google sign-in flag
                 sessionStorage.removeItem('googleSignInInProgress');
                 
-                // Redirect to lista_schede.html only if not already handled by getRedirectResult
-                // and not already on lista_scheda.html
+                // Redirect to lista_schede.html solo se non siamo già lì
                 if (!window.location.href.includes('lista_scheda.html')) {
                     console.log('Redirecting to lista_schede.html from onAuthStateChanged...');
                     window.location.href = '../lista_schede/lista_scheda.html';
