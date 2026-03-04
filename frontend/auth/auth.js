@@ -1,648 +1,838 @@
-// Firebase services
-const auth = firebase.auth();
-const db = firebase.firestore();
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Content Loaded');
+    // Firebase Auth and Firestore
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-// DOM Elements
-const registrationForm = document.querySelector('.registration-form');
-const loginForm = document.querySelector('.login-form');
-const forgotPasswordForm = document.querySelector('.forgot-password-form');
+    // Navbar functionality
+    const hamburger = document.getElementById('hamburger');
+    const navLinks = document.getElementById('navLinks');
 
-const registrationContainer = document.getElementById('registration-form-container');
-const loginContainer = document.getElementById('login-form-container');
-const forgotPasswordContainer = document.getElementById('forgot-password-container');
-
-const showLoginLinks = document.querySelectorAll('#show-login');
-const showRegisterLink = document.getElementById('show-register');
-const showLoginFromForgotLink = document.getElementById('show-login-from-forgot');
-const forgotPasswordLink = document.getElementById('forgot-password-link');
-
-const googleSignInButtons = document.querySelectorAll('.google-signin-btn');
-
-// Error message elements
-const registrationError = document.getElementById('registration-error-message');
-const loginError = document.getElementById('login-error-message');
-const forgotPasswordError = document.getElementById('forgot-password-error-message');
-const forgotPasswordSuccess = document.getElementById('forgot-password-success-message');
-
-// Form inputs
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const confirmPasswordInput = document.getElementById('confirm-password');
-const loginEmailInput = document.getElementById('login-email');
-const loginPasswordInput = document.getElementById('login-password');
-const resetEmailInput = document.getElementById('reset-email');
-
-// Device detection
-function isMobileDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
-
-// GitHub Pages detection
-function isGitHubPages() {
-    return window.location.hostname.includes('github.io');
-}
-
-// Form switching functions
-function showRegistration() {
-    registrationContainer.style.display = 'block';
-    loginContainer.style.display = 'none';
-    forgotPasswordContainer.style.display = 'none';
-    clearAllErrorMessages();
-}
-
-function showLogin() {
-    registrationContainer.style.display = 'none';
-    loginContainer.style.display = 'block';
-    forgotPasswordContainer.style.display = 'none';
-    clearAllErrorMessages();
-}
-
-function showForgotPassword() {
-    registrationContainer.style.display = 'none';
-    loginContainer.style.display = 'none';
-    forgotPasswordContainer.style.display = 'block';
-    clearAllErrorMessages();
-}
-
-function clearAllErrorMessages() {
-    registrationError.textContent = '';
-    loginError.textContent = '';
-    forgotPasswordError.textContent = '';
-    forgotPasswordSuccess.textContent = '';
-}
-
-// Form validation functions
-function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-function validatePassword(password) {
-    return password.length >= 8 && password.length <= 16;
-}
-
-function validateRegistrationForm(email, password, confirmPassword) {
-    const errors = [];
-    
-    if (!email) {
-        errors.push('Email è obbligatoria');
-    } else if (!validateEmail(email)) {
-        errors.push('Inserisci un\'email valida');
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        });
     }
-    
-    if (!password) {
-        errors.push('Password è obbligatoria');
-    } else if (!validatePassword(password)) {
-        errors.push('La password deve essere tra 8 e 16 caratteri');
-    }
-    
-    if (!confirmPassword) {
-        errors.push('Conferma password è obbligatoria');
-    } else if (password !== confirmPassword) {
-        errors.push('Le password non coincidono');
-    }
-    
-    return errors;
-}
 
-function validateLoginForm(email, password) {
-    const errors = [];
-    
-    if (!email) {
-        errors.push('Email è obbligatoria');
-    } else if (!validateEmail(email)) {
-        errors.push('Inserisci un\'email valida');
-    }
-    
-    if (!password) {
-        errors.push('Password è obbligatoria');
-    }
-    
-    return errors;
-}
+    // Form toggle functionality
+    const registrationFormContainer = document.getElementById('registration-form-container');
+    const loginFormContainer = document.getElementById('login-form-container');
+    const showLoginLink = document.getElementById('show-login');
+    const showRegisterLink = document.getElementById('show-register');
+    const forgotPasswordLink = document.getElementById('forgot-password-link');
+    const forgotPasswordContainer = document.getElementById('forgot-password-container');
+    const showLoginFromForgotLink = document.getElementById('show-login-from-forgot');
+    const navbarLoginBtn = document.getElementById('navbar-login-btn');
+    const navbarLoginButton = navbarLoginBtn ? navbarLoginBtn.querySelector('.login-btn') : null;
 
-// Error message display
-function showError(element, message) {
-    element.textContent = message;
-    element.style.display = 'block';
-}
+    console.log('Elements found:');
+    console.log('registrationFormContainer:', registrationFormContainer);
+    console.log('loginFormContainer:', loginFormContainer);
+    console.log('showLoginLink:', showLoginLink);
+    console.log('showRegisterLink:', showRegisterLink);
+    console.log('forgotPasswordLink:', forgotPasswordLink);
+    console.log('forgotPasswordContainer:', forgotPasswordContainer);
+    console.log('showLoginFromForgotLink:', showLoginFromForgotLink);
+    console.log('navbarLoginBtn:', navbarLoginBtn);
+    console.log('navbarLoginButton:', navbarLoginButton);
 
-function showSuccess(element, message) {
-    element.textContent = message;
-    element.style.display = 'block';
-}
-
-// Firebase user document creation
-async function createGoogleUserDocument(user) {
-    try {
-        const userRef = db.collection('users').doc(user.uid);
-        const userDoc = await userRef.get();
-        
-        if (!userDoc.exists) {
-            const userData = {
-                email: user.email,
-                username: null,
-                phoneNumber: user.phoneNumber || "",
-                preferences: {
-                    color: "Arancione",
-                    language: "Italiano",
-                    notifications: "Consenti tutti"
-                },
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            await userRef.set(userData);
-            console.log('User document created for Google user:', user.uid);
+    // Initialize form display states
+    if (registrationFormContainer && loginFormContainer && forgotPasswordContainer) {
+        registrationFormContainer.style.display = 'block';
+        loginFormContainer.style.display = 'none';
+        forgotPasswordContainer.style.display = 'none';
+        if (navbarLoginButton) {
+            navbarLoginButton.innerText = 'Accedi'; // Initial state for navbar button
         }
-    } catch (error) {
-        console.error('Error creating Google user document:', error);
     }
-}
 
-// Get Firebase error message
-function getFirebaseErrorMessage(error) {
-    switch (error.code) {
-        case 'auth/email-already-in-use':
-            return 'Questa email è già registrata. Usa un\'altra email o accedi.';
-        case 'auth/invalid-email':
-            return 'Email non valida. Controlla e riprova.';
-        case 'auth/weak-password':
-            return 'La password è troppo debole. Usa almeno 8 caratteri.';
-        case 'auth/user-not-found':
-            return 'Utente non trovato. Controlla email o registrati.';
-        case 'auth/wrong-password':
-            return 'Password errata. Riprova o recupera la password.';
-        case 'auth/too-many-requests':
-            return 'Troppi tentativi. Riprova più tardi.';
-        case 'auth/network-request-failed':
-            return 'Errore di rete. Controlla la connessione.';
-        case 'auth/unauthorized-domain':
-            return 'Dominio non autorizzato. Contatta l\'amministratore.';
-        case 'auth/popup-blocked':
-            return 'Popup bloccato. Consenti i popup o usa il login tradizionale.';
-        case 'auth/popup-closed-by-user':
-            return 'Login annullato. Riprova.';
-        default:
-            return `Errore: ${error.message}`;
+
+    if (registrationFormContainer && loginFormContainer && showLoginLink && showRegisterLink && navbarLoginButton && forgotPasswordLink && forgotPasswordContainer && showLoginFromForgotLink) {
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('showLoginLink clicked');
+            registrationFormContainer.style.display = 'none';
+            loginFormContainer.style.display = 'block';
+            forgotPasswordContainer.style.display = 'none';
+            navbarLoginButton.innerText = 'Registrati'; // Cambia il testo del pulsante della navbar
+        });
+
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('showRegisterLink clicked');
+            loginFormContainer.style.display = 'none';
+            registrationFormContainer.style.display = 'block';
+            forgotPasswordContainer.style.display = 'none';
+            navbarLoginButton.innerText = 'Accedi'; // Cambia il testo del pulsante della navbar
+        });
+
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('forgotPasswordLink clicked');
+            loginFormContainer.style.display = 'none';
+            registrationFormContainer.style.display = 'none';
+            forgotPasswordContainer.style.display = 'block';
+            navbarLoginButton.innerText = 'Accedi'; // Il pulsante della navbar dovrebbe mostrare "Accedi" per tornare al login
+        });
+
+        showLoginFromForgotLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('showLoginFromForgotLink clicked');
+            forgotPasswordContainer.style.display = 'none';
+            loginFormContainer.style.display = 'block';
+            navbarLoginButton.innerText = 'Registrati'; // Il pulsante della navbar dovrebbe mostrare "Registrati" per tornare alla registrazione
+        });
     }
-}
 
-// Google Sign-In
-async function signInWithGoogle() {
-    console.log('=== GOOGLE SIGN-IN START ===');
-    const provider = new firebase.auth.GoogleAuthProvider();
-    console.log('Google provider created');
-    
-    try {
-        const isMobile = isMobileDevice();
-        const isGitHub = isGitHubPages();
-        const shouldUseRedirect = isMobile || isGitHub;
-        
-        console.log('Device detection - Mobile:', isMobile, 'GitHub Pages:', isGitHub);
-        console.log('Using method:', shouldUseRedirect ? 'REDIRECT' : 'POPUP');
-        
-        if (shouldUseRedirect) {
-            console.log('Starting Google Sign-In with REDIRECT method...');
-            await auth.signInWithRedirect(provider);
-            console.log('Redirect initiated successfully');
-        } else {
-            console.log('Starting Google Sign-In with POPUP method...');
-            const result = await auth.signInWithPopup(provider);
-            console.log('Popup successful, user:', result.user.uid);
-            console.log('Creating Google user document...');
-            await createGoogleUserDocument(result.user);
-            console.log('Google user document created successfully');
-        }
-    } catch (error) {
-        console.error('=== GOOGLE SIGN-IN ERROR ===');
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        console.error('Full error:', error);
-        
-        if (error.code === 'auth/popup-blocked' || error.message.includes('Cross-Origin-Opener-Policy')) {
-            console.log('Popup blocked, trying redirect method as fallback...');
+    if (navbarLoginBtn && registrationFormContainer && loginFormContainer && navbarLoginButton && forgotPasswordContainer) {
+        navbarLoginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('navbarLoginBtn clicked');
+
+            // Determine current active form
+            const isLoginFormActive = loginFormContainer.style.display === 'block';
+            const isRegistrationFormActive = registrationFormContainer.style.display === 'block';
+            const isForgotPasswordFormActive = forgotPasswordContainer.style.display === 'block';
+
+            if (isLoginFormActive || isForgotPasswordFormActive) {
+                // If login or forgot password is active, switch to registration
+                loginFormContainer.style.display = 'none';
+                forgotPasswordContainer.style.display = 'none';
+                registrationFormContainer.style.display = 'block';
+                navbarLoginButton.innerText = 'Accedi';
+            } else if (isRegistrationFormActive) {
+                // If registration is active, switch to login
+                registrationFormContainer.style.display = 'none';
+                loginFormContainer.style.display = 'block';
+                navbarLoginButton.innerText = 'Registrati';
+            }
+            // Clear any messages when switching forms
+            clearMessages('registration-error-message');
+            clearMessages('login-error-message');
+            clearMessages('forgot-password-error-message');
+            clearMessages('forgot-password-success-message');
+        });
+    }
+
+
+    // Email/Password Registration
+    const registrationForm = document.querySelector('.registration-form');
+    if (registrationForm) {
+        registrationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = registrationForm.querySelector('#email').value;
+            const password = registrationForm.querySelector('#password').value;
+            const confirmPassword = registrationForm.querySelector('#confirm-password').value;
+
+
+            if (password !== confirmPassword) {
+                displayMessage('registration-error-message', 'Le password inserite non corrispondono.');
+                return;
+            }
+
             try {
-                await auth.signInWithRedirect(provider);
-                console.log('Fallback redirect initiated');
-            } catch (redirectError) {
-                console.error('=== FALLBACK REDIRECT ERROR ===');
-                console.error('Redirect error code:', redirectError.code);
-                console.error('Redirect error message:', redirectError.message);
-                showError(loginError, getFirebaseErrorMessage(redirectError));
+                clearMessages('registration-error-message');
+                
+                // Create user with email and password first
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                console.log('User created successfully:', user.uid);
+
+                // Create the user profile in the database
+                await db.collection('users').doc(user.uid).set({
+                    email: email,
+                    username: null, // Will be set later after login
+                    phoneNumber: "",
+                    preferences: {
+                        color: "Arancione",
+                        language: "Italiano",
+                        notifications: "Consenti tutti"
+                    },
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                console.log('User document created in Firestore');
+                sessionStorage.setItem('justLoggedIn', 'true');
+                
+            } catch (error) {
+                console.error('Registration error:', error);
+                displayMessage('registration-error-message', getFirebaseErrorMessage(error.code));
             }
-        } else {
-            console.log('Showing error to user:', getFirebaseErrorMessage(error));
-            showError(loginError, getFirebaseErrorMessage(error));
-        }
+        });
     }
-}
 
-// Handle redirect result
-async function handleRedirectResult() {
-    console.log('=== REDIRECT RESULT HANDLER START ===');
-    console.log('Current domain:', window.location.hostname);
-    console.log('Current URL:', window.location.href);
-    
-    try {
-        console.log('Calling getRedirectResult()...');
-        const result = await auth.getRedirectResult();
-        console.log('getRedirectResult() completed');
-        console.log('Result user:', result.user ? result.user.uid : 'null');
-        console.log('Result credential:', result.credential ? 'present' : 'null');
-        console.log('Operation type:', result.operationType || 'null');
-        
-        if (result.user) {
-            console.log('=== REDIRECT SUCCESS ===');
-            console.log('Redirect result user found:', result.user.uid);
-            console.log('User email:', result.user.email);
-            console.log('Creating Google user document...');
-            await createGoogleUserDocument(result.user);
-            console.log('Google user document created, auth state change will handle redirect');
-            
-            // Force a small delay to ensure document is created before auth state change
-            console.log('Waiting 500ms for document creation to settle...');
-            await new Promise(resolve => setTimeout(resolve, 500));
-            console.log('Delay completed, redirect result handler finished');
-        } else {
-            console.log('=== NO REDIRECT RESULT ===');
-            console.log('No redirect result user found - this is normal for initial page load');
-            
-            // Check if this might be a domain issue
-            const hostname = window.location.hostname;
-            console.log('Checking domain authorization...');
-            console.log('Hostname:', hostname);
-            
-            if (hostname === 'localhost' || hostname === '127.0.0.1') {
-                console.log('✅ Running on localhost - domain should be authorized');
-            } else if (hostname.includes('github.io')) {
-                console.log('⚠️ Running on GitHub Pages - check if fitsuite.github.io is authorized');
-                showError(loginError, 'Dominio GitHub Pages non autorizzato. Aggiungi fitsuite.github.io alla Firebase Console.');
-            } else {
-                console.log('⚠️ Running on custom domain - check if it\'s authorized in Firebase Console');
-                showError(loginError, `Dominio ${hostname} non autorizzato. Aggiungilo alla Firebase Console.`);
+    // Email/Password Login
+    const loginForm = document.querySelector('.login-form');
+    if (loginForm) {
+        console.log('Login form found.');
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = loginForm.querySelector('#login-email').value;
+            const password = loginForm.querySelector('#login-password').value;
+
+            console.log('Attempting login with:', { email, password });
+
+            try {
+                clearMessages('login-error-message');
+                console.log('Attempting login with:', { email });
+                
+                // Sign in with email and password
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                console.log('Login successful:', user.uid);
+                
+                // Check if user document exists, create if missing
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (!userDoc.exists) {
+                    console.log('User document not found, creating...');
+                    await db.collection('users').doc(user.uid).set({
+                        email: user.email,
+                        username: null, // Will be set by username checker
+                        phoneNumber: user.phoneNumber || "",
+                        preferences: {
+                            color: "Arancione",
+                            language: "Italiano",
+                            notifications: "Consenti tutti"
+                        },
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('User document created during login');
+                }
+                
+                sessionStorage.setItem('justLoggedIn', 'true');
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
             }
+        });
+    }
+
+    // Google Sign-In
+    const googleSignInBtns = document.querySelectorAll('.google-signin-btn');
+    if (googleSignInBtns.length > 0) {
+        googleSignInBtns.forEach(googleSignInBtn => {
+            googleSignInBtn.addEventListener('click', async (e) => {
+                e.preventDefault(); // Prevent any default behavior
+                console.log('Google sign-in button clicked');
+                
+                try {
+                    clearMessages('login-error-message'); // Clear login errors before Google sign-in
+                    clearMessages('registration-error-message'); // Also clear registration errors
+                    sessionStorage.setItem('justLoggedIn', 'true');
+                    sessionStorage.setItem('googleSignInInProgress', 'true'); // Set flag to prevent redirect
+                    
+                    console.log('Starting Google sign-in...');
+                    
+                    // Pre-check: Test if Google domains are accessible
+                    try {
+                        const testResponse = await fetch('https://accounts.google.com/generate_204', {
+                            method: 'HEAD',
+                            mode: 'no-cors',
+                            cache: 'no-cache'
+                        });
+                        console.log('Google accessibility check passed');
+                    } catch (fetchError) {
+                        console.warn('Google accessibility check failed:', fetchError);
+                        // Don't block sign-in, just log the warning
+                    }
+                    
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    
+                    // Add scopes for better profile access
+                    provider.addScope('email');
+                    provider.addScope('profile');
+                    
+                    // Set custom parameters for better UX
+                    provider.setCustomParameters({
+                        prompt: 'select_account' // Force account selection
+                    });
+                    
+                    // Detect if mobile device - more comprehensive detection
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile/i.test(navigator.userAgent) || 
+                                    (window.innerWidth <= 768 && 'ontouchstart' in window);
+                    
+                    console.log('Device detection - UserAgent:', navigator.userAgent);
+                    console.log('Device detection - Screen width:', window.innerWidth);
+                    console.log('Device detection - Touch support:', 'ontouchstart' in window);
+                    console.log('Device detection - Is mobile:', isMobile);
+                    
+                    // Show loading state
+                    if (window.showLoadingToast) {
+                        window.showLoadingToast('Accesso con Google in corso...');
+                    }
+                    
+                    if (isMobile) {
+                        // Use redirect for mobile devices
+                        console.log('Mobile detected, using signInWithRedirect...');
+                        
+                        // Set a timeout to clear the flag if redirect takes too long
+                        setTimeout(() => {
+                            if (sessionStorage.getItem('googleSignInInProgress') === 'true') {
+                                console.log('Google sign-in timeout, clearing flag');
+                                sessionStorage.removeItem('googleSignInInProgress');
+                                if (window.hideLoadingToast) {
+                                    window.hideLoadingToast();
+                                }
+                                displayMessage('login-error-message', 'Timeout durante l\'accesso Google. Riprova.');
+                                displayMessage('registration-error-message', 'Timeout durante l\'accesso Google. Riprova.');
+                            }
+                        }, 60000); // Increased to 60 seconds timeout for mobile
+                        
+                        try {
+                            console.log('Attempting signInWithRedirect...');
+                            console.log('Provider config:', provider.toJSON ? provider.toJSON() : 'Provider object');
+                            console.log('Current URL before redirect:', window.location.href);
+                            
+                            const redirectPromise = auth.signInWithRedirect(provider);
+                            console.log('Redirect promise created:', redirectPromise);
+                            
+                            await redirectPromise;
+                            console.log('signInWithRedirect initiated successfully');
+                            
+                            // Add a small delay to check if redirect actually happens
+                            setTimeout(() => {
+                                console.log('Checking if redirect happened after 2 seconds...');
+                                console.log('Current URL after supposed redirect:', window.location.href);
+                            }, 2000);
+                            
+                        } catch (redirectError) {
+                            console.error('Redirect failed, trying popup as fallback:', redirectError);
+                            
+                            // Fallback to popup if redirect fails (might be blocked)
+                            if (redirectError.code === 'auth/unauthorized-domain' || 
+                                redirectError.message.includes('ERR_BLOCKED_BY_CLIENT') ||
+                                redirectError.message.includes('Failed to fetch')) {
+                                
+                                console.log('Redirect blocked, trying popup fallback...');
+                                
+                                // Show specific error for mobile redirect failure
+                                const message = 'Redirect Google bloccato su mobile.\n\n' +
+                                             'Tentativo fallback con popup...\n' +
+                                             'Se anche questo fallisce:\n' +
+                                             '1. Disabilita ad-blocker per questo sito\n' +
+                                             '2. Prova con browser in incognito\n' +
+                                             '3. Usa il login email/password temporaneamente';
+                                
+                                displayMessage('login-error-message', message);
+                                displayMessage('registration-error-message', message);
+                                
+                                // Try popup as fallback
+                                try {
+                                    console.log('Trying popup fallback on mobile...');
+                                    const result = await auth.signInWithPopup(provider);
+                                    console.log('Popup fallback successful on mobile!');
+                                    
+                                    // Hide loading state
+                                    if (window.hideLoadingToast) {
+                                        window.hideLoadingToast();
+                                    }
+                                    
+                                    // Clear the flag immediately after successful popup sign-in
+                                    sessionStorage.removeItem('googleSignInInProgress');
+                                    
+                                    // Create user document immediately after successful Google sign-in
+                                    const user = result.user;
+                                    console.log('Google popup fallback successful, creating user document...');
+                                    
+                                    try {
+                                        // Check if user document exists, create if missing
+                                        const userDoc = await db.collection('users').doc(user.uid).get();
+                                        if (!userDoc.exists) {
+                                            console.log('Creating user document for Google popup fallback user...');
+                                            await db.collection('users').doc(user.uid).set({
+                                                email: user.email,
+                                                username: null, // Will be set later when user chooses one
+                                                phoneNumber: user.phoneNumber || "",
+                                                preferences: {
+                                                    color: "Arancione",
+                                                    language: "Italiano",
+                                                    notifications: "Consenti tutti"
+                                                },
+                                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                            });
+                                            console.log('User document created for Google popup fallback user');
+                                        } else {
+                                            console.log('User document already exists for Google popup fallback user');
+                                        }
+                                    } catch (dbError) {
+                                        console.error('Error creating user document for Google popup fallback user:', dbError);
+                                    }
+                                    
+                                    // Redirect immediately to lista_scheda.html after successful fallback login
+                                    window.location.href = '../lista_schede/lista_scheda.html';
+                                    
+                                } catch (popupError) {
+                                    console.error('Popup fallback also failed:', popupError);
+                                    
+                                    const fallbackMessage = 'Sia redirect che popup Google sono falliti.\n\n' +
+                                                          'Soluzioni:\n' +
+                                                          '1. Disabilita ad-blocker per questo sito\n' +
+                                                          '2. Prova con browser in incognito\n' +
+                                                          '3. Usa il login email/password\n' +
+                                                          '4. Controlla connessione internet';
+                                    
+                                    displayMessage('login-error-message', fallbackMessage);
+                                    displayMessage('registration-error-message', fallbackMessage);
+                                    
+                                    if (window.hideLoadingToast) {
+                                        window.hideLoadingToast();
+                                    }
+                                    sessionStorage.removeItem('googleSignInInProgress');
+                                    return;
+                                }
+                            }
+                            
+                            throw redirectError; // Re-throw if not a blocking error
+                        }
+                    } else {
+                        // Use popup for desktop
+                        console.log('Desktop detected, using signInWithPopup...');
+                        const result = await auth.signInWithPopup(provider);
+                        
+                        // Hide loading state
+                        if (window.hideLoadingToast) {
+                            window.hideLoadingToast();
+                        }
+                        
+                        // Clear the flag immediately after successful popup sign-in
+                        sessionStorage.removeItem('googleSignInInProgress');
+                        
+                        // Create user document immediately after successful Google sign-in
+                        const user = result.user;
+                        console.log('Google sign-in successful, creating user document...');
+                        
+                        try {
+                            // Check if user document exists, create if missing
+                            const userDoc = await db.collection('users').doc(user.uid).get();
+                            if (!userDoc.exists) {
+                                console.log('Creating user document for Google user...');
+                                await db.collection('users').doc(user.uid).set({
+                                    email: user.email,
+                                    username: null, // Will be set later when user chooses one
+                                    phoneNumber: user.phoneNumber || "",
+                                    preferences: {
+                                        color: "Arancione",
+                                        language: "Italiano",
+                                        notifications: "Consenti tutti"
+                                    },
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                                console.log('User document created for Google user');
+                            } else {
+                                console.log('User document already exists for Google user');
+                            }
+                        } catch (dbError) {
+                            console.error('Error creating user document for Google user:', dbError);
+                            // Continue with sign-in even if document creation fails initially
+                        }
+                        
+                        // Redirect immediately to lista_scheda.html after successful login
+                        window.location.href = '../lista_schede/lista_scheda.html';
+                    }
+                    
+                } catch (error) {
+                    console.error('Google sign-in error:', error);
+                    
+                    // Hide loading state
+                    if (window.hideLoadingToast) {
+                        window.hideLoadingToast();
+                    }
+                    
+                    // Clear the flag on error
+                    sessionStorage.removeItem('googleSignInInProgress');
+                    
+                    // Special handling for unauthorized domain error
+                    if (error.code === 'auth/unauthorized-domain') {
+                        const currentDomain = window.location.hostname;
+                        const currentPort = window.location.port;
+                        const fullDomain = currentPort ? `${currentDomain}:${currentPort}` : currentDomain;
+                        
+                        // Detect if we're on GitHub Pages
+                        const isGitHubPages = currentDomain.includes('github.io') || currentDomain.includes('fitsuite.github.io');
+                        
+                        let message = `Dominio non autorizzato: ${fullDomain}\n\n`;
+                        
+                        if (isGitHubPages) {
+                            message += `ERRORE CRITICO PER GITHUB PAGES:\n` +
+                                     `Il dominio ${fullDomain} non è configurato in Firebase.\n\n` +
+                                     `SOLUZIONE IMMEDIATA:\n` +
+                                     `1. Apri: https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings\n` +
+                                     `2. In "Authorized domains" aggiungi:\n` +
+                                     `   - fitsuite.github.io\n` +
+                                     `   - www.fitsuite.github.io\n` +
+                                     `3. Salva e riprova\n\n` +
+                                     `NOTA: Senza questa configurazione, l'accesso Google non funzionerà su GitHub Pages.`;
+                        } else {
+                            message += `Per risolvere:\n` +
+                                     `1. Vai su Firebase Console → Authentication → Settings\n` +
+                                     `2. In "Authorized domains" aggiungi: ${fullDomain}\n` +
+                                     `3. Aggiungi anche: localhost, 127.0.0.1\n` +
+                                     `4. Salva e riprova\n\n` +
+                                     `Link diretto: https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings`;
+                        }
+                        
+                        console.error('CRITICAL: Unauthorized domain error detected:', {
+                            domain: fullDomain,
+                            isGitHubPages: isGitHubPages,
+                            userAgent: navigator.userAgent,
+                            timestamp: new Date().toISOString()
+                        });
+                        
+                        displayMessage('login-error-message', message);
+                        displayMessage('registration-error-message', message);
+                        
+                        // Show enhanced popup for GitHub Pages
+                        if (isGitHubPages) {
+                            const confirmMsg = 'DETEZIONE GITHUB PAGES\n\n' +
+                                             'Il tuo dominio GitHub Pages non è autorizzato.\n' +
+                                             'Vuoi aprire la Firebase Console per risolvere?\n\n' +
+                                             'SÌ = Apro la console automaticamente\n' +
+                                             'NO = Copio il link negli appunti';
+                            
+                            if (await window.showConfirm(confirmMsg)) {
+                                const firebaseConsoleUrl = 'https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings';
+                                window.open(firebaseConsoleUrl, '_blank');
+                            } else {
+                                // Copy to clipboard as fallback
+                                navigator.clipboard.writeText('https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings')
+                                    .then(() => {
+                                        if (window.showSuccessToast) {
+                                            window.showSuccessToast('Link copiato negli appunti! Incollalo nel browser.');
+                                        }
+                                    })
+                                    .catch(() => {
+                                        if (window.showErrorToast) {
+                                            window.showErrorToast('Link: https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings');
+                                        }
+                                    });
+                            }
+                        } else {
+                            if (await window.showConfirm('Vuoi aprire la Firebase Console per risolvere il problema?')) {
+                                const firebaseConsoleUrl = 'https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings';
+                                window.open(firebaseConsoleUrl, '_blank');
+                            }
+                        }
+                    } else if (error.code === 'auth/popup-closed-by-user') {
+                        // Don't show error for user cancellation
+                        console.log('User cancelled Google sign-in');
+                    } else if (error.code === 'auth/network-request-failed' || error.message.includes('ERR_BLOCKED_BY_CLIENT')) {
+                        // Handle ad-blocker or network issues
+                        const message = 'Accesso Google bloccato. Possibili cause:\n' +
+                                     '1. Ad-blocker o estensioni del browser attive\n' +
+                                     '2. Problemi di connessione\n' +
+                                     '3. Firewall o proxy che bloccano Google\n\n' +
+                                     'Soluzioni:\n' +
+                                     '- Disabilita ad-blocker per questo sito\n' +
+                                     '- Prova con un browser diverso\n' +
+                                     '- Controlla la connessione internet';
+                        displayMessage('login-error-message', message);
+                        displayMessage('registration-error-message', message);
+                        
+                        if (window.showErrorToast) {
+                            window.showErrorToast('Accesso Google bloccato da estensioni');
+                        }
+                    } else {
+                        const errorMessage = getFirebaseErrorMessage(error.code);
+                        displayMessage('login-error-message', errorMessage);
+                        displayMessage('registration-error-message', errorMessage); // Also show in registration form
+                        
+                        if (window.showErrorToast) {
+                            window.showErrorToast(errorMessage);
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    // Password Reset
+    const forgotPasswordForm = document.querySelector('.forgot-password-form');
+    if (forgotPasswordForm) {
+        forgotPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = forgotPasswordForm.querySelector('#reset-email').value;
+
+            try {
+                clearMessages('forgot-password-error-message');
+                clearMessages('forgot-password-success-message');
+                await auth.sendPasswordResetEmail(email);
+                displayMessage('forgot-password-success-message', 'Link per il reset della password inviato alla tua email!', false);
+                // Store success message in session storage and redirect to login
+                sessionStorage.setItem('passwordResetSuccess', 'true');
+                sessionStorage.setItem('passwordResetEmail', email);
+                setTimeout(() => {
+                    window.location.href = 'auth.html'; // Redirect to auth.html
+                }, 3000); // 3 seconds delay
+            } catch (error) {
+                displayMessage('forgot-password-error-message', getFirebaseErrorMessage(error.code));
+            }
+        });
+    }
+
+
+    // Helper function to create Google user document
+    async function createGoogleUserDocument(user) {
+        if (!user || !user.uid) {
+            throw new Error('UID utente non valido per la creazione del documento');
         }
-    } catch (error) {
-        console.error('=== REDIRECT RESULT ERROR ===');
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        console.error('Full error:', error);
-        
-        if (error.code === 'auth/unauthorized-domain') {
-            console.log('❌ CONFIRMED: Unauthorized domain error');
-            const hostname = window.location.hostname;
-            showError(loginError, `ERRORE: Dominio ${hostname} non autorizzato. Vai su Firebase Console → Authentication → Settings → Authorized domains e aggiungi questo dominio.`);
-        } else if (error.code !== 'auth/no-auth-event') {
-            console.log('Error is not "no-auth-event", showing to user');
-            showError(loginError, getFirebaseErrorMessage(error));
-        } else {
-            console.log('Error is "no-auth-event" - this is normal, no action needed');
-        }
-    }
-    console.log('=== REDIRECT RESULT HANDLER END ===');
-}
-
-// Registration form handler
-async function handleRegistration(e) {
-    e.preventDefault();
-    
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    const confirmPassword = confirmPasswordInput.value;
-    
-    const errors = validateRegistrationForm(email, password, confirmPassword);
-    if (errors.length > 0) {
-        showError(registrationError, errors[0]);
-        return;
-    }
-    
-    try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        
-        // Create user document in Firestore
-        const userData = {
-            email: user.email,
-            username: null,
-            phoneNumber: user.phoneNumber || "",
-            preferences: {
-                color: "Arancione",
-                language: "Italiano",
-                notifications: "Consenti tutti"
-            },
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await db.collection('users').doc(user.uid).set(userData);
-        
-        console.log('Registration successful:', user.uid);
-        
-        // Send email verification
-        await user.sendEmailVerification();
-        
-        showSuccess(registrationError, 'Registrazione completata! Controlla l\'email per la verifica.');
-        
-        // Redirect after delay
-        setTimeout(() => {
-            window.location.href = '../lista_schede/lista_schede.html';
-        }, 2000);
-        
-    } catch (error) {
-        console.error('Registration error:', error);
-        showError(registrationError, getFirebaseErrorMessage(error));
-    }
-}
-
-// Login form handler
-async function handleLogin(e) {
-    e.preventDefault();
-    
-    const email = loginEmailInput.value.trim();
-    const password = loginPasswordInput.value;
-    
-    const errors = validateLoginForm(email, password);
-    if (errors.length > 0) {
-        showError(loginError, errors[0]);
-        return;
-    }
-    
-    try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        
-        console.log('Login successful:', user.uid);
-        
-        // Check if user has username
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        const userData = userDoc.data();
-        
-        if (userData && userData.username) {
-            window.location.href = '../crea_scheda/crea_scheda.html';
-        } else {
-            window.location.href = '../lista_schede/lista_schede.html';
-        }
-        
-    } catch (error) {
-        console.error('Login error:', error);
-        showError(loginError, getFirebaseErrorMessage(error));
-    }
-}
-
-// Forgot password handler
-async function handleForgotPassword(e) {
-    e.preventDefault();
-    
-    const email = resetEmailInput.value.trim();
-    
-    if (!email) {
-        showError(forgotPasswordError, 'Email è obbligatoria');
-        return;
-    }
-    
-    if (!validateEmail(email)) {
-        showError(forgotPasswordError, 'Inserisci un\'email valida');
-        return;
-    }
-    
-    try {
-        await auth.sendPasswordResetEmail(email);
-        showSuccess(forgotPasswordSuccess, 'Email di reset inviata! Controlla la tua casella di posta.');
-        forgotPasswordError.textContent = '';
-        
-        // Clear the form
-        resetEmailInput.value = '';
-        
-        // Redirect to login after delay
-        setTimeout(() => {
-            showLogin();
-        }, 3000);
-        
-    } catch (error) {
-        console.error('Password reset error:', error);
-        showError(forgotPasswordError, getFirebaseErrorMessage(error));
-    }
-}
-
-// Initialize Firebase and handle redirect result FIRST
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('=== DOM CONTENT LOADED ===');
-    
-    // Handle redirect result BEFORE setting up auth state listener
-    console.log('Processing redirect result first...');
-    await handleRedirectResult();
-    
-    // Now set up auth state listener
-    console.log('Setting up auth state listener...');
-    auth.onAuthStateChanged(async (user) => {
-    console.log('Auth state changed - User:', user ? user.uid : 'null');
-    
-    if (user) {
-        console.log('User is signed in:', user.uid);
-        console.log('User email:', user.email);
-        console.log('Current page:', window.location.pathname);
         
         try {
-            console.log('Fetching user document...');
+            // Check if user document exists, create if missing
             const userDoc = await db.collection('users').doc(user.uid).get();
-            console.log('User document exists:', userDoc.exists);
-            
             if (!userDoc.exists) {
-                console.log('User document not found, creating one...');
-                await createGoogleUserDocument(user);
-                // Reload the document after creation
-                console.log('Reloading user document after creation...');
-                await userDoc.ref.get();
-                console.log('User document reloaded');
-            }
-            
-            // Check if user has completed registration
-            const userData = userDoc.data();
-            console.log('User data:', userData);
-            console.log('User has username:', userData ? userData.username : 'no data');
-            
-            if (userData && userData.username) {
-                // User is complete, redirect to main app
-                if (!window.location.pathname.includes('crea_scheda.html') && 
-                    !window.location.pathname.includes('lista_schede.html') &&
-                    !window.location.pathname.includes('schede_condivise.html') &&
-                    !window.location.pathname.includes('impostazioni.html')) {
-                    console.log('User has username, redirecting to crea_scheda');
-                    window.location.href = '../crea_scheda/crea_scheda.html';
-                } else {
-                    console.log('User has username but already on valid page, staying put');
-                }
+                console.log('Creating user document for Google user...');
+                await db.collection('users').doc(user.uid).set({
+                    email: user.email,
+                    username: null, // Will be set later when user chooses one
+                    phoneNumber: user.phoneNumber || "",
+                    preferences: {
+                        color: "Arancione",
+                        language: "Italiano",
+                        notifications: "Consenti tutti"
+                    },
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('User document created for Google user');
             } else {
-                // User needs to complete registration (username)
-                if (!window.location.pathname.includes('lista_schede.html')) {
-                    console.log('User needs username, redirecting to lista_schede');
-                    window.location.href = '../lista_schede/lista_schede.html';
-                } else {
-                    console.log('User needs username and is on lista_schede, username checker will handle it');
-                }
+                console.log('User document already exists for Google user');
             }
         } catch (error) {
-            console.error('Error checking user document:', error);
-            // If there's an error, still try to redirect to lista_schede
-            if (!window.location.pathname.includes('lista_schede.html')) {
-                console.log('Error occurred, redirecting to lista_schede as fallback');
-                window.location.href = '../lista_schede/lista_schede.html';
+            console.error('Error in createGoogleUserDocument:', error);
+            throw error;
+        }
+    }
+
+    // Handle Google Redirect Result (for mobile and redirect flows) - IMPROVED HANDLER
+    // Check if we're returning from Google redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const isReturningFromGoogle = urlParams.has('signIn') || sessionStorage.getItem('googleSignInInProgress') === 'true';
+    
+    if (isReturningFromGoogle) {
+        console.log('Detected return from Google redirect, processing getRedirectResult...');
+        
+        // Show loading state for redirect processing
+        if (window.showLoadingToast) {
+            window.showLoadingToast('Completamento accesso Google...');
+        }
+        
+        auth.getRedirectResult().then(function(result) {
+            console.log('getRedirectResult executed. Result:', result);
+            
+            // Clear loading state
+            if (window.hideLoadingToast) {
+                window.hideLoadingToast();
+            }
+            
+            if (result.credential) {
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                var token = result.credential.accessToken;
+                console.log('Google Access Token:', token);
+            }
+            
+            if (result.user) {
+                // The signed-in user info.
+                var user = result.user;
+                console.log('Google Redirect User:', user);
+                
+                // Validate user object before proceeding
+                if (!user || !user.uid) {
+                    console.error('Invalid user object from redirect result:', user);
+                    throw new Error('UID null o non valido dal redirect Google');
+                }
+                
+                // Clear the flag immediately after successful redirect sign-in
+                sessionStorage.removeItem('googleSignInInProgress');
+
+                // Create user document immediately after successful Google sign-in
+                console.log('Google redirect successful, creating user document...');
+                
+                // Redirect immediately like PC version, then handle document creation
+                window.location.href = '../lista_schede/lista_scheda.html';
+                
+                // Handle document creation asynchronously (non-blocking)
+                createGoogleUserDocument(user).then(() => {
+                    console.log('Google redirect user document creation completed');
+                }).catch(dbError => {
+                    console.error('Error creating user document for Google redirect user:', dbError);
+                    // Don't show error message to user since they're already redirected
+                });
+                
+            } else {
+                console.log('No user in redirect result - might be page refresh or direct access');
+                // Clear the flag if no user found
+                sessionStorage.removeItem('googleSignInInProgress');
+            }
+        }).catch(function(error) {
+            console.error('Error in getRedirectResult:', error);
+            // Clear the flag on error
+            sessionStorage.removeItem('googleSignInInProgress');
+            
+            // Clear loading state
+            if (window.hideLoadingToast) {
+                window.hideLoadingToast();
+            }
+            
+            // Show error message
+            const errorMessage = getFirebaseErrorMessage(error.code);
+            displayMessage('login-error-message', errorMessage);
+            displayMessage('registration-error-message', errorMessage);
+        });
+    }
+
+    // Handle authentication state changes
+    firebase.auth().onAuthStateChanged(async user => {
+        const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
+        
+        // Skip processing if we're in the middle of a Google redirect
+        if (isGoogleSignInInProgress && isReturningFromGoogle) {
+            console.log('Skipping onAuthStateChanged during Google redirect processing');
+            return;
+        }
+        
+        if (user) {
+            // Validate user object before proceeding
+            if (!user || !user.uid) {
+                console.error('Invalid user object in onAuthStateChanged:', user);
+                displayMessage('login-error-message', 'Errore critico: UID utente non valido. Riprova l\'accesso.');
+                displayMessage('registration-error-message', 'Errore critico: UID utente non valido. Riprova l\'accesso.');
+                sessionStorage.removeItem('googleSignInInProgress');
+                return;
+            }
+            
+            console.log('User is signed in:', user);
+            
+            // Save lastUserId for optimistic loading
+            localStorage.setItem('lastUserId', user.uid);
+            
+            try {
+                // Check if user document exists, create if not
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (!userDoc.exists) {
+                    console.log('Creating user document for Google user...');
+                    await createGoogleUserDocument(user);
+                    console.log('User document created for Google user');
+                }
+                
+                // Check if user has username, if not redirect to username selection page
+                const userData = userDoc.exists ? userDoc.data() : null;
+                if (!userData || !userData.username || userData.username.trim() === '') {
+                    console.log('Google user needs username, redirecting to username selection');
+                    window.location.href = '../lista_schede/lista_scheda.html';
+                    return;
+                }
+                
+                // Initialize Cache
+                if (window.CacheManager) {
+                    try {
+                        const force = sessionStorage.getItem('justLoggedIn') === 'true';
+                        sessionStorage.removeItem('justLoggedIn');
+                        await window.CacheManager.initCache(user.uid, force);
+                    } catch (e) {
+                        console.error("Cache init failed", e);
+                    }
+                }
+                
+                // Clear Google sign-in flag
+                sessionStorage.removeItem('googleSignInInProgress');
+                
+                // Redirect to lista_schede.html only if not already redirected by getRedirectResult
+                if (!isReturningFromGoogle) {
+                    console.log('Redirecting to lista_schede.html...');
+                    window.location.href = '../lista_schede/lista_scheda.html';
+                }
+                
+            } catch (error) {
+                console.error('Error processing user data:', error);
+                displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
+                sessionStorage.removeItem('googleSignInInProgress');
+            }
+        } else {
+            // User is signed out.
+            console.log('User is signed out.');
+            // Clear Google sign-in flag when signed out
+            sessionStorage.removeItem('googleSignInInProgress');
+        }
+    });
+
+    // Check for password reset success message in session storage
+    const passwordResetSuccess = sessionStorage.getItem('passwordResetSuccess');
+    const passwordResetEmail = sessionStorage.getItem('passwordResetEmail');
+
+    if (passwordResetSuccess === 'true' && passwordResetEmail) {
+        // Display success message in the login form
+        displayMessage('login-error-message', `Link per il reset della password inviato a ${passwordResetEmail}! Controlla la tua casella di posta.`, false);
+        // Clear the session storage items
+        sessionStorage.removeItem('passwordResetSuccess');
+        sessionStorage.removeItem('passwordResetEmail');
+        // Switch to login form if not already there
+        if (loginFormContainer.style.display === 'none') {
+            registrationFormContainer.style.display = 'none';
+            loginFormContainer.style.display = 'block';
+            forgotPasswordContainer.style.display = 'none';
+            if (navbarLoginButton) {
+                navbarLoginButton.innerText = 'Registrati';
             }
         }
-    } else {
-        console.log('User is signed out');
-        // Only redirect to auth if not already on auth page
-        if (!window.location.pathname.includes('auth.html')) {
-            console.log('Redirecting to auth page');
-            window.location.href = '../auth/auth.html';
-        } else {
-            console.log('Already on auth page, staying put');
+    }
+
+    // Helper function to display messages
+    function displayMessage(elementId, message, isError = true) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = message;
+            element.style.display = 'block';
+            if (isError) {
+                element.classList.add('error-message');
+                element.classList.remove('success-message');
+            } else {
+                element.classList.add('success-message');
+                element.classList.remove('error-message');
+            }
+        }
+    }
+
+    // Helper function to clear messages
+    function clearMessages(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = '';
+            element.style.display = 'none';
+        }
+    }
+
+    // Helper function to translate Firebase error codes
+    function getFirebaseErrorMessage(errorCode) {
+        switch (errorCode) {
+            case 'auth/email-already-in-use':
+                return 'Questa email è già registrata. Prova ad accedere o usa un\'altra email.';
+            case 'auth/invalid-email':
+                return 'L\'indirizzo email non è valido.';
+            case 'auth/operation-not-allowed':
+                return 'Operazione non consentita. Contatta il supporto.';
+            case 'auth/weak-password':
+                return 'La password deve essere di almeno 6 caratteri.';
+            case 'auth/user-disabled':
+                return 'Questo account è stato disabilitato.';
+            case 'auth/user-not-found':
+                return 'Nessun utente trovato con questa email.';
+            case 'auth/wrong-password':
+                return 'Password errata. Riprova.';
+            case 'auth/popup-closed-by-user':
+                return 'Accesso annullato: popup chiuso dall\'utente.';
+            case 'auth/popup-blocked':
+                return 'Accesso bloccato: il popup è stato bloccato dal browser. Per favore consenti i popup e riprova.';
+            case 'auth/cancelled-popup-request':
+                return 'Richiesta di accesso annullata.';
+            case 'auth/too-many-requests':
+                return 'Troppi tentativi di accesso falliti. Riprova più tardi.';
+            case 'auth/unauthorized-domain':
+                return 'Dominio non autorizzato per l\'accesso Google.';
+            default:
+                return 'Si è verificato un errore sconosciuto. Riprova.';
         }
     }
 });
-    
-    // Load username checker if not on auth page
-    if (!window.location.pathname.includes('auth.html')) {
-        // Load username checker script
-        const script = document.createElement('script');
-        script.src = '../components/username_checker.js';
-        script.onload = () => {
-            console.log('Username checker loaded');
-        };
-        document.head.appendChild(script);
-    }
-    
-    // Form submissions
-    if (registrationForm) registrationForm.addEventListener('submit', handleRegistration);
-    if (loginForm) loginForm.addEventListener('submit', handleLogin);
-    if (forgotPasswordForm) forgotPasswordForm.addEventListener('submit', handleForgotPassword);
-    
-    // Form switching
-    showLoginLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            showLogin();
-        });
-    });
-    
-    showRegisterLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showRegistration();
-    });
-    
-    showLoginFromForgotLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showLogin();
-    });
-    
-    forgotPasswordLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showForgotPassword();
-    });
-    
-    // Google Sign-In buttons
-    googleSignInButtons.forEach(button => {
-        button.addEventListener('click', signInWithGoogle);
-    });
-    
-    // Clear error messages on input
-    [emailInput, passwordInput, confirmPasswordInput].forEach(input => {
-        if (input) {
-            input.addEventListener('input', () => {
-                registrationError.textContent = '';
-            });
-        }
-    });
-    
-    [loginEmailInput, loginPasswordInput].forEach(input => {
-        if (input) {
-            input.addEventListener('input', () => {
-                loginError.textContent = '';
-            });
-        }
-    });
-    
-    if (resetEmailInput) {
-        resetEmailInput.addEventListener('input', () => {
-            forgotPasswordError.textContent = '';
-            forgotPasswordSuccess.textContent = '';
-        });
-    }
-    
-    // Test Firebase configuration button
-    const testFirebaseBtn = document.getElementById('test-firebase-btn');
-    if (testFirebaseBtn) {
-        testFirebaseBtn.addEventListener('click', testFirebaseConfiguration);
-    }
-});
-
-// Test Firebase configuration
-async function testFirebaseConfiguration() {
-    console.log('=== TESTING FIREBASE CONFIGURATION ===');
-    
-    try {
-        // Test 1: Check Firebase initialization
-        console.log('✅ Firebase initialized:', !!firebase.apps.length);
-        
-        // Test 2: Check current domain
-        const hostname = window.location.hostname;
-        console.log('📍 Current hostname:', hostname);
-        
-        // Test 3: Try to get current user
-        const currentUser = auth.currentUser;
-        console.log('👤 Current user:', currentUser ? currentUser.uid : 'null');
-        
-        // Test 4: Try Google Sign-In with popup to test domain
-        console.log('🔍 Testing Google provider...');
-        const provider = new firebase.auth.GoogleAuthProvider();
-        console.log('✅ Google provider created successfully');
-        
-        // Test 5: Check if we can access Firestore
-        console.log('🗄️ Testing Firestore access...');
-        const testDoc = await db.collection('test').doc('test').get();
-        console.log('✅ Firestore accessible');
-        
-        console.log('=== TEST RESULTS ===');
-        console.log('✅ Firebase properly initialized');
-        console.log('✅ Auth provider working');
-        console.log('✅ Firestore accessible');
-        
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            console.log('✅ Running on localhost - should work');
-            alert('✅ Configurazione Firebase OK! Stai eseguendo su localhost, il login dovrebbe funzionare.');
-        } else if (hostname.includes('github.io')) {
-            console.log('⚠️ Running on GitHub Pages');
-            alert('⚠️ GitHub Pages rilevato. Assicurati che fitsuite.github.io sia aggiunto ai domini autorizzati nella Firebase Console.');
-        } else {
-            console.log('✅ Running on custom domain');
-            alert(`✅ Configurazione Firebase OK! Dominio: ${hostname}. Assicurati che sia autorizzato nella Firebase Console.`);
-        }
-        
-    } catch (error) {
-        console.error('=== FIREBASE TEST ERROR ===');
-        console.error('Error:', error);
-        
-        if (error.code === 'auth/unauthorized-domain') {
-            alert(`❌ ERRORE DOMINIO: ${window.location.hostname} non è autorizzato! Vai su Firebase Console → Authentication → Settings → Authorized domains e aggiungi questo dominio.`);
-        } else if (error.code === 'permission-denied') {
-            alert('❌ ERRORE PERMESSI: Non hai accesso al database. Controlla le regole di sicurezza di Firestore.');
-        } else {
-            alert(`❌ ERRORE: ${error.message}`);
-        }
-    }
-}
-
-// Export functions for external use if needed
-window.authFunctions = {
-    showRegistration,
-    showLogin,
-    showForgotPassword,
-    signInWithGoogle,
-    validateEmail,
-    validatePassword,
-    createGoogleUserDocument,
-    handleRedirectResult
-};
-
-// Make auth and db available globally for other components
-window.auth = auth;
-window.db = db;
