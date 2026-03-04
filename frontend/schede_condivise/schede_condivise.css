@@ -560,6 +560,31 @@ body.list-body {
         transform: none;
         width: 100%;
     }
+    
+    /* Posizionamento refresh button in alto a destra su mobile */
+    .refresh-btn {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        z-index: 1001;
+        background-color: transparent;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        width: 45px;
+        height: 45px;
+        border-radius: 25px;
+        box-shadow: none;
+        transition: transform 0.2s ease, background-color 0.2s;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .refresh-btn:hover {
+        transform: scale(1.1);
+        background-color: var(--primary-color);
+        color: white;
+    }
 
     .list-header {
         grid-template-columns: 30px 1fr 0.4fr 110px;
