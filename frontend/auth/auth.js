@@ -4,6 +4,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // GESTIONE RITORNO DA GOOGLE (MOBILE)
+    // Metti questo codice all'inizio dello script, fuori da ogni funzione o evento click
+    auth.getRedirectResult().then(async (result) => {
+        if (result.user) {
+            console.log('Redirect result trovato! User:', result.user.email);
+            
+            try {
+                // Mostra caricamento
+                if (window.showLoadingToast) window.showLoadingToast('Finalizzazione accesso...');
+
+                // Crea il documento se non esiste (riutilizziamo la tua funzione)
+                await createGoogleUserDocument(result.user);
+                
+                // Pulizia e Redirect
+                sessionStorage.removeItem('googleSignInInProgress');
+                window.location.href = '../lista_schede/lista_scheda.html';
+            } catch (error) {
+                console.error('Errore post-redirect:', error);
+            }
+        } else {
+            console.log('Nessun utente nel redirect (caricamento normale della pagina)');
+        }
+    }).catch((error) => {
+        console.error('Errore getRedirectResult:', error);
+        displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
+    });
+
     // Navbar functionality
     const hamburger = document.getElementById('hamburger');
     const navLinks = document.getElementById('navLinks');
@@ -208,150 +235,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Google Sign-In
+    // Google Sign-In Buttons
     const googleSignInBtns = document.querySelectorAll('.google-signin-btn');
-    if (googleSignInBtns.length > 0) {
-        googleSignInBtns.forEach(googleSignInBtn => {
-            googleSignInBtn.addEventListener('click', async (e) => {
-                e.preventDefault(); // Prevent any default behavior
-                console.log('Google sign-in button clicked');
-                
-                try {
-                    clearMessages('login-error-message'); // Clear login errors before Google sign-in
-                    clearMessages('registration-error-message'); // Also clear registration errors
-                    sessionStorage.setItem('justLoggedIn', 'true');
-                    sessionStorage.setItem('googleSignInInProgress', 'true'); // Set flag to prevent redirect
+    googleSignInBtns.forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('email');
+            provider.addScope('profile');
+            provider.setCustomParameters({ prompt: 'select_account' });
+
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (window.innerWidth <= 768);
+
+            try {
+                if (isMobile) {
+                    console.log('Avvio Redirect su Mobile...');
+                    sessionStorage.setItem('googleSignInInProgress', 'true');
+                    await auth.signInWithRedirect(provider);
+                    // Il codice si ferma qui perché la pagina cambia
+                } else {
+                    console.log('Avvio Popup su Desktop...');
+                    if (window.showLoadingToast) window.showLoadingToast('Accesso in corso...');
+                    const result = await auth.signInWithPopup(provider);
                     
-                    console.log('Starting Google sign-in...');
+                    await createGoogleUserDocument(result.user);
                     
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    
-                    // Add scopes for better profile access
-                    provider.addScope('email');
-                    provider.addScope('profile');
-                    
-                    // Set custom parameters for better UX
-                    provider.setCustomParameters({
-                        prompt: 'select_account' // Force account selection
-                    });
-                    
-                    // Detect if mobile device - more comprehensive detection
-                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile/i.test(navigator.userAgent) || 
-                                    (window.innerWidth <= 768 && 'ontouchstart' in window);
-                    
-                    console.log('Device detection - UserAgent:', navigator.userAgent);
-                    console.log('Device detection - Screen width:', window.innerWidth);
-                    console.log('Device detection - Touch support:', 'ontouchstart' in window);
-                    console.log('Device detection - Is mobile:', isMobile);
-                    
-                    // Show loading state
-                    if (window.showLoadingToast) {
-                        window.showLoadingToast('Accesso con Google in corso...');
-                    }
-                    
-                    if (isMobile) {
-                        // Use redirect for mobile devices
-                        console.log('Mobile detected, using signInWithRedirect...');
-                        
-                        // Set a timeout to handle redirect completion
-                        setTimeout(() => {
-                            if (sessionStorage.getItem('googleSignInInProgress') === 'true') {
-                                console.log('Redirect timeout, checking auth state...');
-                                sessionStorage.removeItem('googleSignInInProgress');
-                                if (window.hideLoadingToast) {
-                                    window.hideLoadingToast();
-                                }
-                            }
-                        }, 10000); // 10 second timeout
-                        
-                        await auth.signInWithRedirect(provider);
-                        console.log('signInWithRedirect initiated successfully');
-                        
-                    } else {
-                        // Use popup for desktop
-                        console.log('Desktop detected, using signInWithPopup...');
-                        const result = await auth.signInWithPopup(provider);
-                        
-                        // Hide loading state
-                        if (window.hideLoadingToast) {
-                            window.hideLoadingToast();
-                        }
-                        
-                        // Clear the flag immediately after successful popup sign-in
-                        sessionStorage.removeItem('googleSignInInProgress');
-                        
-                        // Create user document immediately after successful Google sign-in
-                        const user = result.user;
-                        console.log('Google sign-in successful, creating user document...');
-                        
-                        try {
-                            await createGoogleUserDocument(user);
-                            console.log('Google user document created successfully');
-                        } catch (dbError) {
-                            console.error('Error creating user document for Google user:', dbError);
-                            // Continue with sign-in even if document creation fails initially
-                        }
-                        
-                        // Redirect immediately to lista_scheda.html after successful login
-                        window.location.href = '../lista_schede/lista_scheda.html';
-                    }
-                    
-                } catch (error) {
-                    console.error('Google sign-in error:', error);
-                    
-                    // Hide loading state
-                    if (window.hideLoadingToast) {
-                        window.hideLoadingToast();
-                    }
-                    
-                    // Clear the flag on error
-                    sessionStorage.removeItem('googleSignInInProgress');
-                    
-                    // Special handling for unauthorized domain error
-                    if (error.code === 'auth/unauthorized-domain') {
-                        const currentDomain = window.location.hostname;
-                        const currentPort = window.location.port;
-                        const fullDomain = currentPort ? `${currentDomain}:${currentPort}` : currentDomain;
-                        
-                        // Detect if we're on GitHub Pages
-                        const isGitHubPages = currentDomain.includes('github.io') || currentDomain.includes('fitsuite.github.io');
-                        
-                        let message = `Dominio non autorizzato: ${fullDomain}\n\n`;
-                        
-                        if (isGitHubPages) {
-                            message += `ERRORE CRITICO PER GITHUB PAGES:\n` +
-                                     `Il dominio ${fullDomain} non è configurato in Firebase.\n\n` +
-                                     `SOLUZIONE IMMEDIATA:\n` +
-                                     `1. Apri: https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings\n` +
-                                     `2. In "Authorized domains" aggiungi:\n` +
-                                     `   - fitsuite.github.io\n` +
-                                     `   - www.fitsuite.github.io\n` +
-                                     `3. Salva e riprova\n\n` +
-                                     `NOTA: Senza questa configurazione, l'accesso Google non funzionerà su GitHub Pages.`;
-                        } else {
-                            message += `Per risolvere:\n` +
-                                     `1. Vai su Firebase Console → Authentication → Settings\n` +
-                                     `2. In "Authorized domains" aggiungi: ${fullDomain}\n` +
-                                     `3. Aggiungi anche: localhost, 127.0.0.1\n` +
-                                     `4. Salva e riprova\n\n` +
-                                     `Link diretto: https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings`;
-                        }
-                        
-                        displayMessage('login-error-message', message);
-                        displayMessage('registration-error-message', message);
-                    } else {
-                        const errorMessage = getFirebaseErrorMessage(error.code);
-                        displayMessage('login-error-message', errorMessage);
-                        displayMessage('registration-error-message', errorMessage); // Also show in registration form
-                        
-                        if (window.showErrorToast) {
-                            window.showErrorToast(errorMessage);
-                        }
-                    }
+                    window.location.href = '../lista_schede/lista_scheda.html';
                 }
-            });
+            } catch (error) {
+                console.error('Errore click Google:', error);
+                displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
+            }
         });
-    }
+    });
 
     // Password Reset
     const forgotPasswordForm = document.querySelector('.forgot-password-form');
@@ -409,178 +326,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Handle Google Redirect Result (for mobile and redirect flows) - COMPLETE HANDLER
-    // This function handles the result when user returns from Google redirect on mobile
-    async function handleGoogleRedirectResult() {
-        console.log('Processing Google redirect result...');
-        
-        try {
-            // Show loading state for redirect processing
-            if (window.showLoadingToast) {
-                window.showLoadingToast('Completamento accesso Google...');
-            }
-            
-            const result = await auth.getRedirectResult();
-            console.log('getRedirectResult executed successfully. Result:', result);
-            
-            // Check if user is currently authenticated (even if getRedirectResult returns null)
-            const currentUser = auth.currentUser;
-            console.log('Current auth user:', currentUser);
-            
-            // Clear loading state
-            if (window.hideLoadingToast) {
-                window.hideLoadingToast();
-            }
-            
-            // Handle successful redirect result
-            if (result.user) {
-                console.log('Google Redirect User authenticated via result:', result.user);
-                await processGoogleUser(result.user);
-                return;
-            }
-            
-            // Handle case where getRedirectResult returns null but user is authenticated
-            if (currentUser && currentUser.email) {
-                console.log('User authenticated via currentUser (getRedirectResult was null):', currentUser);
-                await processGoogleUser(currentUser);
-                return;
-            }
-            
-            // No user found - might be page refresh or direct access
-            console.log('No user in redirect result or currentUser - might be page refresh or direct access');
-            
-            // Clear the flag if no user found
-            sessionStorage.removeItem('googleSignInInProgress');
-            
-            // Try to wait a bit for auth state to settle
-            setTimeout(async () => {
-                const userAfterWait = auth.currentUser;
-                if (userAfterWait && userAfterWait.email) {
-                    console.log('User found after wait:', userAfterWait);
-                    await processGoogleUser(userAfterWait);
-                } else {
-                    console.log('Still no user after wait, clearing flags');
-                    sessionStorage.removeItem('googleSignInInProgress');
-                    sessionStorage.removeItem('justLoggedIn');
-                }
-            }, 2000);
-            
-        } catch (error) {
-            console.error('Error in getRedirectResult:', error);
-            
-            // Clear the flag on error
-            sessionStorage.removeItem('googleSignInInProgress');
-            
-            // Clear loading state
-            if (window.hideLoadingToast) {
-                window.hideLoadingToast();
-            }
-            
-            // Show appropriate error message
-            if (error.code === 'auth/unauthorized-domain') {
-                const currentDomain = window.location.hostname;
-                const currentPort = window.location.port;
-                const fullDomain = currentPort ? `${currentDomain}:${currentPort}` : currentDomain;
-                
-                // Detect if we're on GitHub Pages
-                const isGitHubPages = currentDomain.includes('github.io') || currentDomain.includes('fitsuite.github.io');
-                
-                let message = `Dominio non autorizzato: ${fullDomain}\n\n`;
-                
-                if (isGitHubPages) {
-                    message += `ERRORE CRITICO PER GITHUB PAGES:\n` +
-                             `Il dominio ${fullDomain} non è configurato in Firebase.\n\n` +
-                             `SOLUZIONE IMMEDIATA:\n` +
-                             `1. Apri: https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings\n` +
-                             `2. In "Authorized domains" aggiungi:\n` +
-                             `   - fitsuite.github.io\n` +
-                             `   - www.fitsuite.github.io\n` +
-                             `3. Salva e riprova\n\n` +
-                             `NOTA: Senza questa configurazione, l'accesso Google non funzionerà su GitHub Pages.`;
-                } else {
-                    message += `Per risolvere:\n` +
-                             `1. Vai su Firebase Console → Authentication → Settings\n` +
-                             `2. In "Authorized domains" aggiungi: ${fullDomain}\n` +
-                             `3. Aggiungi anche: localhost, 127.0.0.1\n` +
-                             `4. Salva e riprova\n\n` +
-                             `Link diretto: https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings`;
-                }
-                
-                displayMessage('login-error-message', message);
-                displayMessage('registration-error-message', message);
-            } else {
-                const errorMessage = getFirebaseErrorMessage(error.code);
-                displayMessage('login-error-message', errorMessage);
-                displayMessage('registration-error-message', errorMessage);
-            }
-        }
-    }
-
-    // Helper function to process Google user (create document and redirect)
-    async function processGoogleUser(user) {
-        if (!user || !user.uid) {
-            console.error('Invalid user object in processGoogleUser:', user);
-            throw new Error('UID null o non valido per Google user');
-        }
-        
-        // Clear the flag immediately after successful redirect sign-in
-        sessionStorage.removeItem('googleSignInInProgress');
-        sessionStorage.setItem('justLoggedIn', 'true');
-
-        // Create user document BEFORE redirect (critical for mobile)
-        console.log('Processing Google user, creating user document...');
-        try {
-            await createGoogleUserDocument(user);
-            console.log('Google user document created successfully');
-        } catch (dbError) {
-            console.error('Error creating user document for Google user:', dbError);
-            // Continue with redirect even if document creation fails
-            // The onAuthStateChanged will handle document creation as fallback
-        }
-        
-        // Redirect to lista_scheda.html after successful processing
-        console.log('Redirecting to lista_scheda.html after Google sign-in...');
-        window.location.href = '../lista_schede/lista_scheda.html';
-    }
-
-    // Check if we're returning from Google redirect and handle it
-    const urlParams = new URLSearchParams(window.location.search);
-    const isReturningFromGoogle = urlParams.has('signIn') || 
-                                 sessionStorage.getItem('googleSignInInProgress') === 'true' ||
-                                 (document.referrer && document.referrer.includes('accounts.google.com'));
-
-    console.log('Redirect detection check:');
-    console.log('- URL params has signIn:', urlParams.has('signIn'));
-    console.log('- SessionStorage googleSignInInProgress:', sessionStorage.getItem('googleSignInInProgress'));
-    console.log('- Document referrer from Google:', document.referrer && document.referrer.includes('accounts.google.com'));
-    console.log('- isReturningFromGoogle:', isReturningFromGoogle);
-
-    if (isReturningFromGoogle) {
-        console.log('Detected return from Google redirect, starting processing...');
-        handleGoogleRedirectResult();
-    }
-
-    // Additional fallback: Check if user is authenticated but we're still on auth page
-    setTimeout(async () => {
-        const currentUser = auth.currentUser;
-        if (currentUser && currentUser.email && window.location.pathname.includes('auth.html')) {
-            console.log('User is authenticated but still on auth page, processing...');
-            sessionStorage.removeItem('googleSignInInProgress');
-            await processGoogleUser(currentUser);
-        }
-    }, 3000);
-
     // Handle authentication state changes
     firebase.auth().onAuthStateChanged(async user => {
-        const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
-        
-        // Skip processing if we're in the middle of a Google redirect
-        // This prevents conflicts between getRedirectResult and onAuthStateChanged
-        if (isGoogleSignInInProgress && isReturningFromGoogle) {
-            console.log('Skipping onAuthStateChanged during Google redirect processing - getRedirectResult will handle it');
-            return;
-        }
-        
         if (user) {
             // Validate user object before proceeding
             if (!user || !user.uid) {
@@ -639,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Redirect to lista_schede.html only if not already handled by getRedirectResult
                 // and not already on lista_scheda.html
-                if (!isReturningFromGoogle && !window.location.href.includes('lista_scheda.html')) {
+                if (!window.location.href.includes('lista_scheda.html')) {
                     console.log('Redirecting to lista_schede.html from onAuthStateChanged...');
                     window.location.href = '../lista_schede/lista_scheda.html';
                 }
