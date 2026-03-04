@@ -367,6 +367,8 @@ auth.onAuthStateChanged(async (user) => {
             if (!userDoc.exists) {
                 console.log('User document not found, creating one...');
                 await createGoogleUserDocument(user);
+                // Reload the document after creation
+                await userDoc.ref.get();
             }
             
             // Check if user has completed registration
@@ -374,20 +376,32 @@ auth.onAuthStateChanged(async (user) => {
             if (userData && userData.username) {
                 // User is complete, redirect to main app
                 if (!window.location.pathname.includes('crea_scheda.html') && 
-                    !window.location.pathname.includes('lista_schede.html')) {
+                    !window.location.pathname.includes('lista_schede.html') &&
+                    !window.location.pathname.includes('schede_condivise.html') &&
+                    !window.location.pathname.includes('impostazioni.html')) {
+                    console.log('User has username, redirecting to crea_scheda');
                     window.location.href = '../crea_scheda/crea_scheda.html';
                 }
             } else {
-                // User needs to complete registration
+                // User needs to complete registration (username)
                 if (!window.location.pathname.includes('lista_schede.html')) {
+                    console.log('User needs username, redirecting to lista_schede');
                     window.location.href = '../lista_schede/lista_schede.html';
                 }
             }
         } catch (error) {
             console.error('Error checking user document:', error);
+            // If there's an error, still try to redirect to lista_schede
+            if (!window.location.pathname.includes('lista_schede.html')) {
+                window.location.href = '../lista_schede/lista_schede.html';
+            }
         }
     } else {
         console.log('User is signed out');
+        // Only redirect to auth if not already on auth page
+        if (!window.location.pathname.includes('auth.html')) {
+            window.location.href = '../auth/auth.html';
+        }
     }
 });
 
@@ -396,10 +410,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle redirect result on page load
     handleRedirectResult();
     
+    // Load username checker if not on auth page
+    if (!window.location.pathname.includes('auth.html')) {
+        // Load username checker script
+        const script = document.createElement('script');
+        script.src = '../components/username_checker.js';
+        script.onload = () => {
+            console.log('Username checker loaded');
+        };
+        document.head.appendChild(script);
+    }
+    
     // Form submissions
-    registrationForm.addEventListener('submit', handleRegistration);
-    loginForm.addEventListener('submit', handleLogin);
-    forgotPasswordForm.addEventListener('submit', handleForgotPassword);
+    if (registrationForm) registrationForm.addEventListener('submit', handleRegistration);
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    if (forgotPasswordForm) forgotPasswordForm.addEventListener('submit', handleForgotPassword);
     
     // Form switching
     showLoginLinks.forEach(link => {
@@ -461,5 +486,11 @@ window.authFunctions = {
     showForgotPassword,
     signInWithGoogle,
     validateEmail,
-    validatePassword
+    validatePassword,
+    createGoogleUserDocument,
+    handleRedirectResult
 };
+
+// Make auth and db available globally for other components
+window.auth = auth;
+window.db = db;

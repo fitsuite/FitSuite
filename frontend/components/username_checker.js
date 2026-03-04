@@ -10,14 +10,15 @@
     // Initialize Firebase if not already initialized
     function initFirebase() {
         if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-            // Firebase config should be loaded from config.js
+            // Firebase config should match auth.html
             const firebaseConfig = {
-                apiKey: "AIzaSyBkK7C6X3E8l9M0n1O2p3Q4r5s6t7u8v9w",
-                authDomain: "fitsuite-app.firebaseapp.com",
-                projectId: "fitsuite-app",
-                storageBucket: "fitsuite-app.appspot.com",
-                messagingSenderId: "123456789012",
-                appId: "1:123456789012:web:abcdef123456789012345678"
+                apiKey: "AIzaSyCEgbB9rBBKOov3aDma0DMn-EuU0bGMMYo",
+                authDomain: "fitsuite-a7b6c.firebaseapp.com",
+                projectId: "fitsuite-a7b6c",
+                storageBucket: "fitsuite-a7b6c.firebasestorage.app",
+                messagingSenderId: "721614273457",
+                appId: "1:721614273457:web:195f48279fafd01a1f5b90",
+                measurementId: "G-W4ME455MH5"
             };
             firebase.initializeApp(firebaseConfig);
         }
