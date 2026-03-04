@@ -362,15 +362,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                         console.error('Error creating user document for Google popup fallback user:', dbError);
                                     }
                                     
-                                    // Show success message
-                                    if (window.showSuccessToast) {
-                                        window.showSuccessToast('Accesso Google completato con popup fallback!');
-                                    }
-
-                                    // Redirect to lista_scheda.html after successful fallback login
-                                    setTimeout(() => {
-                                        window.location.href = '../lista_schede/lista_scheda.html';
-                                    }, 1500); // Small delay to show the success message
+                                    // Redirect immediately to lista_scheda.html after successful fallback login
+                                    window.location.href = '../lista_schede/lista_scheda.html';
                                     
                                 } catch (popupError) {
                                     console.error('Popup fallback also failed:', popupError);
@@ -437,15 +430,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Continue with sign-in even if document creation fails initially
                         }
                         
-                        // Show success message
-                        if (window.showSuccessToast) {
-                            window.showSuccessToast('Accesso Google completato!');
-                        }
-
-                        // Redirect to lista_scheda.html after successful login
-                        setTimeout(() => {
-                            window.location.href = '../lista_schede/lista_scheda.html';
-                        }, 1500); // Small delay to show the success message
+                        // Redirect immediately to lista_scheda.html after successful login
+                        window.location.href = '../lista_schede/lista_scheda.html';
                     }
                     
                 } catch (error) {
