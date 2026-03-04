@@ -222,10 +222,18 @@ async function signInWithGoogle() {
 // Handle redirect result
 async function handleRedirectResult() {
     try {
+        console.log('Checking redirect result...');
         const result = await auth.getRedirectResult();
         if (result.user) {
-            console.log('Redirect result user:', result.user);
+            console.log('Redirect result user found:', result.user);
+            console.log('Creating Google user document...');
             await createGoogleUserDocument(result.user);
+            console.log('Google user document created, auth state change will handle redirect');
+            
+            // Force a small delay to ensure document is created before auth state change
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } else {
+            console.log('No redirect result user found');
         }
     } catch (error) {
         console.error('Redirect result error:', error);
@@ -358,21 +366,32 @@ async function handleForgotPassword(e) {
 
 // Auth state observer
 auth.onAuthStateChanged(async (user) => {
+    console.log('Auth state changed - User:', user ? user.uid : 'null');
+    
     if (user) {
         console.log('User is signed in:', user.uid);
+        console.log('User email:', user.email);
+        console.log('Current page:', window.location.pathname);
         
         try {
+            console.log('Fetching user document...');
             const userDoc = await db.collection('users').doc(user.uid).get();
+            console.log('User document exists:', userDoc.exists);
             
             if (!userDoc.exists) {
                 console.log('User document not found, creating one...');
                 await createGoogleUserDocument(user);
                 // Reload the document after creation
+                console.log('Reloading user document after creation...');
                 await userDoc.ref.get();
+                console.log('User document reloaded');
             }
             
             // Check if user has completed registration
             const userData = userDoc.data();
+            console.log('User data:', userData);
+            console.log('User has username:', userData ? userData.username : 'no data');
+            
             if (userData && userData.username) {
                 // User is complete, redirect to main app
                 if (!window.location.pathname.includes('crea_scheda.html') && 
@@ -381,18 +400,23 @@ auth.onAuthStateChanged(async (user) => {
                     !window.location.pathname.includes('impostazioni.html')) {
                     console.log('User has username, redirecting to crea_scheda');
                     window.location.href = '../crea_scheda/crea_scheda.html';
+                } else {
+                    console.log('User has username but already on valid page, staying put');
                 }
             } else {
                 // User needs to complete registration (username)
                 if (!window.location.pathname.includes('lista_schede.html')) {
                     console.log('User needs username, redirecting to lista_schede');
                     window.location.href = '../lista_schede/lista_schede.html';
+                } else {
+                    console.log('User needs username and is on lista_schede, username checker will handle it');
                 }
             }
         } catch (error) {
             console.error('Error checking user document:', error);
             // If there's an error, still try to redirect to lista_schede
             if (!window.location.pathname.includes('lista_schede.html')) {
+                console.log('Error occurred, redirecting to lista_schede as fallback');
                 window.location.href = '../lista_schede/lista_schede.html';
             }
         }
@@ -400,7 +424,10 @@ auth.onAuthStateChanged(async (user) => {
         console.log('User is signed out');
         // Only redirect to auth if not already on auth page
         if (!window.location.pathname.includes('auth.html')) {
+            console.log('Redirecting to auth page');
             window.location.href = '../auth/auth.html';
+        } else {
+            console.log('Already on auth page, staying put');
         }
     }
 });
