@@ -265,130 +265,131 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.showLoadingToast('Accesso con Google in corso...');
                     }
                     
-                    if (isMobile) {
-                        // Use redirect for mobile devices
-                        console.log('Mobile detected, using signInWithRedirect...');
+                    // if (isMobile) {
+                    //     // Use redirect for mobile devices
+                    //     console.log('Mobile detected, using signInWithRedirect...');
                         
-                        // Set a timeout to clear the flag if redirect takes too long
-                        setTimeout(() => {
-                            if (sessionStorage.getItem('googleSignInInProgress') === 'true') {
-                                console.log('Google sign-in timeout, clearing flag');
-                                sessionStorage.removeItem('googleSignInInProgress');
-                                if (window.hideLoadingToast) {
-                                    window.hideLoadingToast();
-                                }
-                                displayMessage('login-error-message', 'Timeout durante l\'accesso Google. Riprova.');
-                                displayMessage('registration-error-message', 'Timeout durante l\'accesso Google. Riprova.');
-                            }
-                        }, 60000); // Increased to 60 seconds timeout for mobile
+                    //     // Set a timeout to clear the flag if redirect takes too long
+                    //     setTimeout(() => {
+                    //         if (sessionStorage.getItem('googleSignInInProgress') === 'true') {
+                    //             console.log('Google sign-in timeout, clearing flag');
+                    //             sessionStorage.removeItem('googleSignInInProgress');
+                    //             if (window.hideLoadingToast) {
+                    //                 window.hideLoadingToast();
+                    //             }
+                    //             displayMessage('login-error-message', 'Timeout durante l\'accesso Google. Riprova.');
+                    //             displayMessage('registration-error-message', 'Timeout durante l\'accesso Google. Riprova.');
+                    //         }
+                    //     }, 60000); // Increased to 60 seconds timeout for mobile
                         
-                        try {
-                            console.log('Attempting signInWithRedirect...');
-                            console.log('Provider config:', provider.toJSON ? provider.toJSON() : 'Provider object');
-                            console.log('Current URL before redirect:', window.location.href);
+                    //     try {
+                    //         console.log('Attempting signInWithRedirect...');
+                    //         console.log('Provider config:', provider.toJSON ? provider.toJSON() : 'Provider object');
+                    //         console.log('Current URL before redirect:', window.location.href);
                             
-                            const redirectPromise = auth.signInWithRedirect(provider);
-                            console.log('Redirect promise created:', redirectPromise);
+                    //         const redirectPromise = auth.signInWithRedirect(provider);
+                    //         console.log('Redirect promise created:', redirectPromise);
                             
-                            await redirectPromise;
-                            console.log('signInWithRedirect initiated successfully');
+                    //         await redirectPromise;
+                    //         console.log('signInWithRedirect initiated successfully');
                             
-                            // Add a small delay to check if redirect actually happens
-                            setTimeout(() => {
-                                console.log('Checking if redirect happened after 2 seconds...');
-                                console.log('Current URL after supposed redirect:', window.location.href);
-                            }, 2000);
+                    //         // Add a small delay to check if redirect actually happens
+                    //         setTimeout(() => {
+                    //             console.log('Checking if redirect happened after 2 seconds...');
+                    //             console.log('Current URL after supposed redirect:', window.location.href);
+                    //         }, 2000);
                             
-                        } catch (redirectError) {
-                            console.error('Redirect failed, trying popup as fallback:', redirectError);
+                    //     } catch (redirectError) {
+                    //         console.error('Redirect failed, trying popup as fallback:', redirectError);
                             
-                            // Fallback to popup if redirect fails (might be blocked)
-                            if (redirectError.code === 'auth/unauthorized-domain' || 
-                                redirectError.message.includes('ERR_BLOCKED_BY_CLIENT') ||
-                                redirectError.message.includes('Failed to fetch')) {
+                    //         // Fallback to popup if redirect fails (might be blocked)
+                    //         if (redirectError.code === 'auth/unauthorized-domain' || 
+                    //             redirectError.message.includes('ERR_BLOCKED_BY_CLIENT') ||
+                    //             redirectError.message.includes('Failed to fetch')) {
                                 
-                                console.log('Redirect blocked, trying popup fallback...');
+                    //             console.log('Redirect blocked, trying popup fallback...');
                                 
-                                // Show specific error for mobile redirect failure
-                                const message = 'Redirect Google bloccato su mobile.\n\n' +
-                                             'Tentativo fallback con popup...\n' +
-                                             'Se anche questo fallisce:\n' +
-                                             '1. Disabilita ad-blocker per questo sito\n' +
-                                             '2. Prova con browser in incognito\n' +
-                                             '3. Usa il login email/password temporaneamente';
+                    //             // Show specific error for mobile redirect failure
+                    //             const message = 'Redirect Google bloccato su mobile.\n\n' +
+                    //                          'Tentativo fallback con popup...\n' +
+                    //                          'Se anche questo fallisce:\n' +
+                    //                          '1. Disabilita ad-blocker per questo sito\n' +
+                    //                          '2. Prova con browser in incognito\n' +
+                    //                          '3. Usa il login email/password temporaneamente';
                                 
-                                displayMessage('login-error-message', message);
-                                displayMessage('registration-error-message', message);
+                    //             displayMessage('login-error-message', message);
+                    //             displayMessage('registration-error-message', message);
                                 
-                                // Try popup as fallback
-                                try {
-                                    console.log('Trying popup fallback on mobile...');
-                                    const result = await auth.signInWithPopup(provider);
-                                    console.log('Popup fallback successful on mobile!');
+                    //             // Try popup as fallback
+                    //             try {
+                    //                 console.log('Trying popup fallback on mobile...');
+                    //                 const result = await auth.signInWithPopup(provider);
+                    //                 console.log('Popup fallback successful on mobile!');
                                     
-                                    // Hide loading state
-                                    if (window.hideLoadingToast) {
-                                        window.hideLoadingToast();
-                                    }
+                    //                 // Hide loading state
+                    //                 if (window.hideLoadingToast) {
+                    //                     window.hideLoadingToast();
+                    //                 }
                                     
-                                    // Clear the flag immediately after successful popup sign-in
-                                    sessionStorage.removeItem('googleSignInInProgress');
+                    //                 // Clear the flag immediately after successful popup sign-in
+                    //                 sessionStorage.removeItem('googleSignInInProgress');
                                     
-                                    // Create user document immediately after successful Google sign-in
-                                    const user = result.user;
-                                    console.log('Google popup fallback successful, creating user document...');
+                    //                 // Create user document immediately after successful Google sign-in
+                    //                 const user = result.user;
+                    //                 console.log('Google popup fallback successful, creating user document...');
                                     
-                                    try {
-                                        // Check if user document exists, create if missing
-                                        const userDoc = await db.collection('users').doc(user.uid).get();
-                                        if (!userDoc.exists) {
-                                            console.log('Creating user document for Google popup fallback user...');
-                                            await db.collection('users').doc(user.uid).set({
-                                                email: user.email,
-                                                username: null, // Will be set later when user chooses one
-                                                phoneNumber: user.phoneNumber || "",
-                                                preferences: {
-                                                    color: "Arancione",
-                                                    language: "Italiano",
-                                                    notifications: "Consenti tutti"
-                                                },
-                                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                                            });
-                                            console.log('User document created for Google popup fallback user');
-                                        } else {
-                                            console.log('User document already exists for Google popup fallback user');
-                                        }
-                                    } catch (dbError) {
-                                        console.error('Error creating user document for Google popup fallback user:', dbError);
-                                    }
+                    //                 try {
+                    //                     // Check if user document exists, create if missing
+                    //                     const userDoc = await db.collection('users').doc(user.uid).get();
+                    //                     if (!userDoc.exists) {
+                    //                         console.log('Creating user document for Google popup fallback user...');
+                    //                         await db.collection('users').doc(user.uid).set({
+                    //                             email: user.email,
+                    //                             username: null, // Will be set later when user chooses one
+                    //                             phoneNumber: user.phoneNumber || "",
+                    //                             preferences: {
+                    //                                 color: "Arancione",
+                    //                                 language: "Italiano",
+                    //                                 notifications: "Consenti tutti"
+                    //                             },
+                    //                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    //                         });
+                    //                         console.log('User document created for Google popup fallback user');
+                    //                     } else {
+                    //                         console.log('User document already exists for Google popup fallback user');
+                    //                     }
+                    //                 } catch (dbError) {
+                    //                     console.error('Error creating user document for Google popup fallback user:', dbError);
+                    //                 }
                                     
-                                    // Redirect immediately to lista_scheda.html after successful fallback login
-                                    window.location.href = '../lista_schede/lista_scheda.html';
+                    //                 // Redirect immediately to lista_scheda.html after successful fallback login
+                    //                 window.location.href = '../lista_schede/lista_scheda.html';
                                     
-                                } catch (popupError) {
-                                    console.error('Popup fallback also failed:', popupError);
+                    //             } catch (popupError) {
+                    //                 console.error('Popup fallback also failed:', popupError);
                                     
-                                    const fallbackMessage = 'Sia redirect che popup Google sono falliti.\n\n' +
-                                                          'Soluzioni:\n' +
-                                                          '1. Disabilita ad-blocker per questo sito\n' +
-                                                          '2. Prova con browser in incognito\n' +
-                                                          '3. Usa il login email/password\n' +
-                                                          '4. Controlla connessione internet';
+                    //                 const fallbackMessage = 'Sia redirect che popup Google sono falliti.\n\n' +
+                    //                                       'Soluzioni:\n' +
+                    //                                       '1. Disabilita ad-blocker per questo sito\n' +
+                    //                                       '2. Prova con browser in incognito\n' +
+                    //                                       '3. Usa il login email/password\n' +
+                    //                                       '4. Controlla connessione internet';
                                     
-                                    displayMessage('login-error-message', fallbackMessage);
-                                    displayMessage('registration-error-message', fallbackMessage);
+                    //                 displayMessage('login-error-message', fallbackMessage);
+                    //                 displayMessage('registration-error-message', fallbackMessage);
                                     
-                                    if (window.hideLoadingToast) {
-                                        window.hideLoadingToast();
-                                    }
-                                    sessionStorage.removeItem('googleSignInInProgress');
-                                    return;
-                                }
-                            }
+                    //                 if (window.hideLoadingToast) {
+                    //                     window.hideLoadingToast();
+                    //                 }
+                    //                 sessionStorage.removeItem('googleSignInInProgress');
+                    //                 return;
+                    //             }
+                    //         }
                             
-                            throw redirectError; // Re-throw if not a blocking error
-                        }
-                    } else {
+                    //         throw redirectError; // Re-throw if not a blocking error
+                    //     }
+                    // } else 
+                        {
                         // Use popup for desktop
                         console.log('Desktop detected, using signInWithPopup...');
                         const result = await auth.signInWithPopup(provider);
