@@ -650,20 +650,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Create user document immediately after successful Google sign-in
                 console.log('Google redirect successful, creating user document...');
                 
-                // Use async/await for better error handling
+                // Redirect immediately like PC version, then handle document creation
+                window.location.href = '../lista_schede/lista_scheda.html';
+                
+                // Handle document creation asynchronously (non-blocking)
                 createGoogleUserDocument(user).then(() => {
                     console.log('Google redirect user document creation completed');
-                    if (window.showSuccessToast) {
-                        window.showSuccessToast('Accesso Google completato!');
-                    }
-                    // Redirect to lista_schede.html after successful processing
-                    setTimeout(() => {
-                        window.location.href = '../lista_schede/lista_scheda.html';
-                    }, 1000);
                 }).catch(dbError => {
                     console.error('Error creating user document for Google redirect user:', dbError);
-                    displayMessage('login-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
-                    displayMessage('registration-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
+                    // Don't show error message to user since they're already redirected
                 });
                 
             } else {
