@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearMessages('login-error-message'); // Clear login errors before Google sign-in
                     clearMessages('registration-error-message'); // Also clear registration errors
                     sessionStorage.setItem('justLoggedIn', 'true');
-                    localStorage.setItem('googleSignInInProgress', 'true'); // Set flag to prevent redirect
+                    sessionStorage.setItem('googleSignInInProgress', 'true'); // Set flag to prevent redirect
                     
                     console.log('Starting Google sign-in...');
                     
@@ -270,14 +270,30 @@ if (isMobile) {
     console.log('Mobile detected, using signInWithRedirect...');
     
     // Salviamo uno stato per sapere che stiamo provando ad accedere
-    localStorage.setItem('googleSignInInProgress', 'true');
+    sessionStorage.setItem('googleSignInInProgress', 'true');
     
     try {
         // Su mobile, questa riga interrompe l'esecuzione e carica la pagina di Google
         await auth.signInWithRedirect(provider);
-    } catch (error) {
-        console.error("Errore nel lancio del redirect:", error);
-        displayMessage('login-error-message', "Impossibile avviare il login. Controlla le impostazioni del browser.");
+    } catch (redirectError) {
+        console.error("Errore nel redirect, tentando con popup:", redirectError);
+        
+        // Fallback: prova con popup se il redirect fallisce
+        try {
+            const result = await auth.signInWithPopup(provider);
+            
+            if (window.hideLoadingToast) window.hideLoadingToast();
+            
+            // Sincronizziamo l'utente sul database
+            await createGoogleUserDocument(result.user);
+            
+            // Vai alla pagina finale
+            window.location.href = '../lista_schede/lista_scheda.html';
+            
+        } catch (popupError) {
+            console.error('Anche il popup è fallito:', popupError);
+            displayMessage('login-error-message', "Impossibile completare il login Google. Prova con un altro browser.");
+        }
     }
 
 } else {
@@ -318,7 +334,7 @@ if (isMobile) {
                     }
                     
                     // Clear the flag on error
-                    localStorage.removeItem('googleSignInInProgress');
+                    sessionStorage.removeItem('googleSignInInProgress');
                     
                     // Special handling for unauthorized domain error
                     if (error.code === 'auth/unauthorized-domain') {
@@ -482,9 +498,11 @@ if (isMobile) {
     }
 
     // Handle Google Redirect Result (for mobile and redirect flows) - IMPROVED HANDLER
-    // Check if we're returning from Google redirect
+    // Check if we're returning from Google redirect - detection più robusta
     const urlParams = new URLSearchParams(window.location.search);
-    const isReturningFromGoogle = urlParams.has('signIn') || localStorage.getItem('googleSignInInProgress') === 'true';
+    const hasGoogleParams = urlParams.has('signIn') || urlParams.has('code') || urlParams.has('state');
+    const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
+    const isReturningFromGoogle = hasGoogleParams || isGoogleSignInInProgress;
     
     if (isReturningFromGoogle) {
         console.log('Detected return from Google redirect, processing getRedirectResult...');
@@ -494,7 +512,18 @@ if (isMobile) {
             window.showLoadingToast('Completamento accesso Google...');
         }
         
+        // Aggiungo un timeout per evitare attese infinite su mobile
+        const redirectTimeout = setTimeout(() => {
+            console.log('Redirect timeout - cleaning up state');
+            sessionStorage.removeItem('googleSignInInProgress');
+            if (window.hideLoadingToast) {
+                window.hideLoadingToast();
+            }
+            displayMessage('login-error-message', 'Timeout del login Google. Riprova.');
+        }, 15000); // 15 secondi di timeout
+        
         auth.getRedirectResult().then(function(result) {
+            clearTimeout(redirectTimeout); // Cancello il timeout se va a buon fine
             console.log('getRedirectResult executed. Result:', result);
             
             // Clear loading state
@@ -520,7 +549,7 @@ if (isMobile) {
                 }
                 
                 // Clear the flag immediately after successful redirect sign-in
-                localStorage.removeItem('googleSignInInProgress');
+                sessionStorage.removeItem('googleSignInInProgress');
 
                 // Create user document immediately after successful Google sign-in
                 console.log('Google redirect successful, creating user document...');
@@ -542,14 +571,16 @@ if (isMobile) {
                 });
                 
             } else {
+                clearTimeout(redirectTimeout); // Cancello il timeout anche se nessun utente
                 console.log('No user in redirect result - might be page refresh or direct access');
                 // Clear the flag if no user found
-                localStorage.removeItem('googleSignInInProgress');
+                sessionStorage.removeItem('googleSignInInProgress');
             }
         }).catch(function(error) {
+            clearTimeout(redirectTimeout); // Cancello il timeout anche in caso di errore
             console.error('Error in getRedirectResult:', error);
             // Clear the flag on error
-            localStorage.removeItem('googleSignInInProgress');
+            sessionStorage.removeItem('googleSignInInProgress');
             
             // Clear loading state
             if (window.hideLoadingToast) {
@@ -565,7 +596,7 @@ if (isMobile) {
 
     // Handle authentication state changes
     firebase.auth().onAuthStateChanged(async user => {
-        const isGoogleSignInInProgress = localStorage.getItem('googleSignInInProgress') === 'true';
+        const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
         
         // Skip processing if we're in the middle of a Google redirect
         if (isGoogleSignInInProgress && isReturningFromGoogle) {
@@ -579,7 +610,7 @@ if (isMobile) {
                 console.error('Invalid user object in onAuthStateChanged:', user);
                 displayMessage('login-error-message', 'Errore critico: UID utente non valido. Riprova l\'accesso.');
                 displayMessage('registration-error-message', 'Errore critico: UID utente non valido. Riprova l\'accesso.');
-                localStorage.removeItem('googleSignInInProgress');
+                sessionStorage.removeItem('googleSignInInProgress');
                 return;
             }
             
@@ -617,7 +648,7 @@ if (isMobile) {
                 }
                 
                 // Clear Google sign-in flag
-                localStorage.removeItem('googleSignInInProgress');
+                sessionStorage.removeItem('googleSignInInProgress');
                 
                 // Redirect to lista_schede.html only if not already redirected by getRedirectResult
                 if (!isReturningFromGoogle) {
@@ -628,13 +659,13 @@ if (isMobile) {
             } catch (error) {
                 console.error('Error processing user data:', error);
                 displayMessage('login-error-message', getFirebaseErrorMessage(error.code));
-                localStorage.removeItem('googleSignInInProgress');
+                sessionStorage.removeItem('googleSignInInProgress');
             }
         } else {
             // User is signed out.
             console.log('User is signed out.');
             // Clear Google sign-in flag when signed out
-            localStorage.removeItem('googleSignInInProgress');
+            sessionStorage.removeItem('googleSignInInProgress');
         }
     });
 
