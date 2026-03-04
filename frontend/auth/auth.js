@@ -253,6 +253,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Use redirect for mobile devices
                         console.log('Mobile detected, using signInWithRedirect...');
                         
+                        // Set a timeout to handle redirect completion
+                        setTimeout(() => {
+                            if (sessionStorage.getItem('googleSignInInProgress') === 'true') {
+                                console.log('Redirect timeout, checking auth state...');
+                                sessionStorage.removeItem('googleSignInInProgress');
+                                if (window.hideLoadingToast) {
+                                    window.hideLoadingToast();
+                                }
+                            }
+                        }, 10000); // 10 second timeout
+                        
                         await auth.signInWithRedirect(provider);
                         console.log('signInWithRedirect initiated successfully');
                         
@@ -412,57 +423,47 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await auth.getRedirectResult();
             console.log('getRedirectResult executed successfully. Result:', result);
             
+            // Check if user is currently authenticated (even if getRedirectResult returns null)
+            const currentUser = auth.currentUser;
+            console.log('Current auth user:', currentUser);
+            
             // Clear loading state
             if (window.hideLoadingToast) {
                 window.hideLoadingToast();
             }
             
-            if (result.credential) {
-                // This gives you a Google Access Token. You can use it to access the Google API.
-                const token = result.credential.accessToken;
-                console.log('Google Access Token received:', token);
+            // Handle successful redirect result
+            if (result.user) {
+                console.log('Google Redirect User authenticated via result:', result.user);
+                await processGoogleUser(result.user);
+                return;
             }
             
-            if (result.user) {
-                // The signed-in user info.
-                const user = result.user;
-                console.log('Google Redirect User authenticated:', user);
-                
-                // Validate user object before proceeding
-                if (!user || !user.uid) {
-                    console.error('Invalid user object from redirect result:', user);
-                    throw new Error('UID null o non valido dal redirect Google');
-                }
-                
-                // Clear the flag immediately after successful redirect sign-in
-                sessionStorage.removeItem('googleSignInInProgress');
-                sessionStorage.setItem('justLoggedIn', 'true');
-
-                // Create user document BEFORE redirect (critical for mobile)
-                console.log('Google redirect successful, creating user document...');
-                try {
-                    await createGoogleUserDocument(user);
-                    console.log('Google redirect user document created successfully');
-                } catch (dbError) {
-                    console.error('Error creating user document for Google redirect user:', dbError);
-                    // Continue with redirect even if document creation fails
-                    // The onAuthStateChanged will handle document creation as fallback
-                }
-                
-                // Redirect to lista_scheda.html after successful processing
-                console.log('Redirecting to lista_scheda.html after Google sign-in...');
-                window.location.href = '../lista_schede/lista_scheda.html';
-                
-            } else {
-                console.log('No user in redirect result - might be page refresh or direct access');
-                // Clear the flag if no user found
-                sessionStorage.removeItem('googleSignInInProgress');
-                
-                // Clear loading state
-                if (window.hideLoadingToast) {
-                    window.hideLoadingToast();
-                }
+            // Handle case where getRedirectResult returns null but user is authenticated
+            if (currentUser && currentUser.email) {
+                console.log('User authenticated via currentUser (getRedirectResult was null):', currentUser);
+                await processGoogleUser(currentUser);
+                return;
             }
+            
+            // No user found - might be page refresh or direct access
+            console.log('No user in redirect result or currentUser - might be page refresh or direct access');
+            
+            // Clear the flag if no user found
+            sessionStorage.removeItem('googleSignInInProgress');
+            
+            // Try to wait a bit for auth state to settle
+            setTimeout(async () => {
+                const userAfterWait = auth.currentUser;
+                if (userAfterWait && userAfterWait.email) {
+                    console.log('User found after wait:', userAfterWait);
+                    await processGoogleUser(userAfterWait);
+                } else {
+                    console.log('Still no user after wait, clearing flags');
+                    sessionStorage.removeItem('googleSignInInProgress');
+                    sessionStorage.removeItem('justLoggedIn');
+                }
+            }, 2000);
             
         } catch (error) {
             console.error('Error in getRedirectResult:', error);
@@ -515,14 +516,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Helper function to process Google user (create document and redirect)
+    async function processGoogleUser(user) {
+        if (!user || !user.uid) {
+            console.error('Invalid user object in processGoogleUser:', user);
+            throw new Error('UID null o non valido per Google user');
+        }
+        
+        // Clear the flag immediately after successful redirect sign-in
+        sessionStorage.removeItem('googleSignInInProgress');
+        sessionStorage.setItem('justLoggedIn', 'true');
+
+        // Create user document BEFORE redirect (critical for mobile)
+        console.log('Processing Google user, creating user document...');
+        try {
+            await createGoogleUserDocument(user);
+            console.log('Google user document created successfully');
+        } catch (dbError) {
+            console.error('Error creating user document for Google user:', dbError);
+            // Continue with redirect even if document creation fails
+            // The onAuthStateChanged will handle document creation as fallback
+        }
+        
+        // Redirect to lista_scheda.html after successful processing
+        console.log('Redirecting to lista_scheda.html after Google sign-in...');
+        window.location.href = '../lista_schede/lista_scheda.html';
+    }
+
     // Check if we're returning from Google redirect and handle it
     const urlParams = new URLSearchParams(window.location.search);
-    const isReturningFromGoogle = urlParams.has('signIn') || sessionStorage.getItem('googleSignInInProgress') === 'true';
+    const isReturningFromGoogle = urlParams.has('signIn') || 
+                                 sessionStorage.getItem('googleSignInInProgress') === 'true' ||
+                                 (document.referrer && document.referrer.includes('accounts.google.com'));
+
+    console.log('Redirect detection check:');
+    console.log('- URL params has signIn:', urlParams.has('signIn'));
+    console.log('- SessionStorage googleSignInInProgress:', sessionStorage.getItem('googleSignInInProgress'));
+    console.log('- Document referrer from Google:', document.referrer && document.referrer.includes('accounts.google.com'));
+    console.log('- isReturningFromGoogle:', isReturningFromGoogle);
 
     if (isReturningFromGoogle) {
         console.log('Detected return from Google redirect, starting processing...');
         handleGoogleRedirectResult();
     }
+
+    // Additional fallback: Check if user is authenticated but we're still on auth page
+    setTimeout(async () => {
+        const currentUser = auth.currentUser;
+        if (currentUser && currentUser.email && window.location.pathname.includes('auth.html')) {
+            console.log('User is authenticated but still on auth page, processing...');
+            sessionStorage.removeItem('googleSignInInProgress');
+            await processGoogleUser(currentUser);
+        }
+    }, 3000);
 
     // Handle authentication state changes
     firebase.auth().onAuthStateChanged(async user => {
