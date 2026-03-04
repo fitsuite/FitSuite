@@ -1,7 +1,7 @@
 /* Sidebar Styling */
 .sidebar {
     box-sizing: border-box;
-    width: 215px; /* Ridotta da 215px per avere 20px di spazio a destra dei contenuti */
+    width: 215px; /* Default for small screens */
     background-color: #1a1a1a;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
@@ -14,6 +14,19 @@
     transition: transform 0.3s ease, width 0.3s ease;
     z-index: 1000;
     overflow: hidden;
+}
+
+/* Responsive sidebar width */
+@media (min-width: 1200px) {
+    .sidebar {
+        width: 25vw;
+    }
+}
+
+@media (min-width: 1920px) {
+    .sidebar {
+        width: 80vw;
+    }
 }
 
 /* Mobile Sidebar Styles */
@@ -117,7 +130,7 @@
     background: transparent;
     padding: 6px 0px 6px 0px;
     border-radius: 12px;
-    width: 195px;
+    width: 100%;
     margin: 0; /* Allineato a sinistra */
     box-sizing: border-box;
 }
@@ -165,7 +178,7 @@
 }
 
 .new-routine-btn, .view-routines-btn {
-    width: 195px; /* Aumentata da 175px per utilizzare lo spazio aggiuntivo */
+    width: 100%; /* Aumentata da 175px per utilizzare lo spazio aggiuntivo */
     padding: 12px 10px;
     box-sizing: border-box;
     display: flex;
@@ -240,7 +253,7 @@
     color: var(--text-gray);
     margin-bottom: 12px;
     flex-shrink: 0;
-    width: 195px; /* Uniformata la larghezza del titolo ai riquadri */
+    width: 100%; /* Uniformata la larghezza del titolo ai riquadri */
     margin: 0; /* Allineato a sinistra */
 }
 
@@ -253,7 +266,7 @@
     overflow-y: auto;
     flex-grow: 1;
     max-height: calc(100vh - 420px);
-    width: 200px;
+    width: 100%;
     margin: 15px 0 15px 0;
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
@@ -366,7 +379,7 @@
     pointer-events: auto;
     z-index: 1;
     position: relative;
-    width: 195px;
+    width: 100%;
     margin: 0;
     margin-top: 0px;
     box-sizing: border-box;
