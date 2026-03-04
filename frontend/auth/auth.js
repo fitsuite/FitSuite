@@ -641,8 +641,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Use async/await for better error handling
             createGoogleUserDocument(user).then(() => {
                 console.log('Google redirect user document creation completed');
-                // Redirect immediately to lista_scheda.html after successful mobile login
-                window.location.href = '../lista_schede/lista_scheda.html';
+                // Don't redirect here - let onAuthStateChanged handle it to avoid conflicts
+                if (window.showSuccessToast) {
+                    window.showSuccessToast('Accesso Google completato!');
+                }
             }).catch(dbError => {
                 console.error('Error creating user document for Google redirect user:', dbError);
                 displayMessage('login-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
@@ -690,63 +692,6 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('lastUserId', user.uid);
             
             try {
-                // Handle Google redirect completion - Skip if already handled by getRedirectResult
-                if (isGoogleSignInInProgress) {
-                    console.log('Google sign-in in progress, checking if already handled...');
-                    
-                    // Wait a bit to see if getRedirectResult handles it
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    // Check if user is still in progress (getRedirectResult should have cleared it)
-                    if (sessionStorage.getItem('googleSignInInProgress') === 'true') {
-                        console.log('Google redirect not handled by getRedirectResult, processing here...');
-                        
-                        try {
-                            const result = await auth.getRedirectResult();
-                            console.log('Google redirect result in onAuthStateChanged:', result);
-                            
-                            // Validate result user
-                            if (result.user && result.user.uid) {
-                                await createGoogleUserDocument(result.user);
-                                console.log('Google redirect user document creation completed in onAuthStateChanged');
-                            } else {
-                                console.warn('No valid user in redirect result within onAuthStateChanged');
-                            }
-                            
-                            // Hide loading state
-                            if (window.hideLoadingToast) {
-                                window.hideLoadingToast();
-                            }
-                            
-                            // Show success message
-                            if (window.showSuccessToast) {
-                                window.showSuccessToast('Accesso Google completato!');
-                            }
-                        } catch (error) {
-                            console.error('Error getting redirect result in onAuthStateChanged:', error);
-                            
-                            // Hide loading state
-                            if (window.hideLoadingToast) {
-                                window.hideLoadingToast();
-                            }
-                            
-                            // Show error message
-                            const errorMessage = getFirebaseErrorMessage(error.code);
-                            displayMessage('login-error-message', errorMessage);
-                            displayMessage('registration-error-message', errorMessage);
-                            
-                            // Clear the flag and sign out on error
-                            sessionStorage.removeItem('googleSignInInProgress');
-                            await auth.signOut();
-                            return;
-                        }
-                    } else {
-                        console.log('Google redirect already handled by getRedirectResult');
-                        // Don't process further, let the redirect handler take care
-                        return;
-                    }
-                }
-                
                 // Check if user document exists, create if not
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 if (!userDoc.exists) {
