@@ -240,6 +240,9 @@ async function signInWithGoogle() {
 // Handle redirect result
 async function handleRedirectResult() {
     console.log('=== REDIRECT RESULT HANDLER START ===');
+    console.log('Current domain:', window.location.hostname);
+    console.log('Current URL:', window.location.href);
+    
     try {
         console.log('Calling getRedirectResult()...');
         const result = await auth.getRedirectResult();
@@ -263,6 +266,21 @@ async function handleRedirectResult() {
         } else {
             console.log('=== NO REDIRECT RESULT ===');
             console.log('No redirect result user found - this is normal for initial page load');
+            
+            // Check if this might be a domain issue
+            const hostname = window.location.hostname;
+            console.log('Checking domain authorization...');
+            console.log('Hostname:', hostname);
+            
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                console.log('✅ Running on localhost - domain should be authorized');
+            } else if (hostname.includes('github.io')) {
+                console.log('⚠️ Running on GitHub Pages - check if fitsuite.github.io is authorized');
+                showError(loginError, 'Dominio GitHub Pages non autorizzato. Aggiungi fitsuite.github.io alla Firebase Console.');
+            } else {
+                console.log('⚠️ Running on custom domain - check if it\'s authorized in Firebase Console');
+                showError(loginError, `Dominio ${hostname} non autorizzato. Aggiungilo alla Firebase Console.`);
+            }
         }
     } catch (error) {
         console.error('=== REDIRECT RESULT ERROR ===');
@@ -270,7 +288,11 @@ async function handleRedirectResult() {
         console.error('Error message:', error.message);
         console.error('Full error:', error);
         
-        if (error.code !== 'auth/no-auth-event') {
+        if (error.code === 'auth/unauthorized-domain') {
+            console.log('❌ CONFIRMED: Unauthorized domain error');
+            const hostname = window.location.hostname;
+            showError(loginError, `ERRORE: Dominio ${hostname} non autorizzato. Vai su Firebase Console → Authentication → Settings → Authorized domains e aggiungi questo dominio.`);
+        } else if (error.code !== 'auth/no-auth-event') {
             console.log('Error is not "no-auth-event", showing to user');
             showError(loginError, getFirebaseErrorMessage(error));
         } else {
@@ -545,7 +567,69 @@ document.addEventListener('DOMContentLoaded', async () => {
             forgotPasswordSuccess.textContent = '';
         });
     }
+    
+    // Test Firebase configuration button
+    const testFirebaseBtn = document.getElementById('test-firebase-btn');
+    if (testFirebaseBtn) {
+        testFirebaseBtn.addEventListener('click', testFirebaseConfiguration);
+    }
 });
+
+// Test Firebase configuration
+async function testFirebaseConfiguration() {
+    console.log('=== TESTING FIREBASE CONFIGURATION ===');
+    
+    try {
+        // Test 1: Check Firebase initialization
+        console.log('✅ Firebase initialized:', !!firebase.apps.length);
+        
+        // Test 2: Check current domain
+        const hostname = window.location.hostname;
+        console.log('📍 Current hostname:', hostname);
+        
+        // Test 3: Try to get current user
+        const currentUser = auth.currentUser;
+        console.log('👤 Current user:', currentUser ? currentUser.uid : 'null');
+        
+        // Test 4: Try Google Sign-In with popup to test domain
+        console.log('🔍 Testing Google provider...');
+        const provider = new firebase.auth.GoogleAuthProvider();
+        console.log('✅ Google provider created successfully');
+        
+        // Test 5: Check if we can access Firestore
+        console.log('🗄️ Testing Firestore access...');
+        const testDoc = await db.collection('test').doc('test').get();
+        console.log('✅ Firestore accessible');
+        
+        console.log('=== TEST RESULTS ===');
+        console.log('✅ Firebase properly initialized');
+        console.log('✅ Auth provider working');
+        console.log('✅ Firestore accessible');
+        
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            console.log('✅ Running on localhost - should work');
+            alert('✅ Configurazione Firebase OK! Stai eseguendo su localhost, il login dovrebbe funzionare.');
+        } else if (hostname.includes('github.io')) {
+            console.log('⚠️ Running on GitHub Pages');
+            alert('⚠️ GitHub Pages rilevato. Assicurati che fitsuite.github.io sia aggiunto ai domini autorizzati nella Firebase Console.');
+        } else {
+            console.log('✅ Running on custom domain');
+            alert(`✅ Configurazione Firebase OK! Dominio: ${hostname}. Assicurati che sia autorizzato nella Firebase Console.`);
+        }
+        
+    } catch (error) {
+        console.error('=== FIREBASE TEST ERROR ===');
+        console.error('Error:', error);
+        
+        if (error.code === 'auth/unauthorized-domain') {
+            alert(`❌ ERRORE DOMINIO: ${window.location.hostname} non è autorizzato! Vai su Firebase Console → Authentication → Settings → Authorized domains e aggiungi questo dominio.`);
+        } else if (error.code === 'permission-denied') {
+            alert('❌ ERRORE PERMESSI: Non hai accesso al database. Controlla le regole di sicurezza di Firestore.');
+        } else {
+            alert(`❌ ERRORE: ${error.message}`);
+        }
+    }
+}
 
 // Export functions for external use if needed
 window.authFunctions = {
