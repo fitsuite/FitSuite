@@ -189,31 +189,49 @@ function getFirebaseErrorMessage(error) {
 
 // Google Sign-In
 async function signInWithGoogle() {
+    console.log('=== GOOGLE SIGN-IN START ===');
     const provider = new firebase.auth.GoogleAuthProvider();
+    console.log('Google provider created');
     
     try {
-        const shouldUseRedirect = isMobileDevice() || isGitHubPages();
+        const isMobile = isMobileDevice();
+        const isGitHub = isGitHubPages();
+        const shouldUseRedirect = isMobile || isGitHub;
+        
+        console.log('Device detection - Mobile:', isMobile, 'GitHub Pages:', isGitHub);
+        console.log('Using method:', shouldUseRedirect ? 'REDIRECT' : 'POPUP');
         
         if (shouldUseRedirect) {
-            console.log('Using redirect method for Google Sign-In');
+            console.log('Starting Google Sign-In with REDIRECT method...');
             await auth.signInWithRedirect(provider);
+            console.log('Redirect initiated successfully');
         } else {
-            console.log('Using popup method for Google Sign-In');
+            console.log('Starting Google Sign-In with POPUP method...');
             const result = await auth.signInWithPopup(provider);
+            console.log('Popup successful, user:', result.user.uid);
+            console.log('Creating Google user document...');
             await createGoogleUserDocument(result.user);
+            console.log('Google user document created successfully');
         }
     } catch (error) {
-        console.error('Google Sign-In error:', error);
+        console.error('=== GOOGLE SIGN-IN ERROR ===');
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Full error:', error);
         
         if (error.code === 'auth/popup-blocked' || error.message.includes('Cross-Origin-Opener-Policy')) {
-            console.log('Popup blocked, trying redirect method');
+            console.log('Popup blocked, trying redirect method as fallback...');
             try {
                 await auth.signInWithRedirect(provider);
+                console.log('Fallback redirect initiated');
             } catch (redirectError) {
-                console.error('Redirect method also failed:', redirectError);
+                console.error('=== FALLBACK REDIRECT ERROR ===');
+                console.error('Redirect error code:', redirectError.code);
+                console.error('Redirect error message:', redirectError.message);
                 showError(loginError, getFirebaseErrorMessage(redirectError));
             }
         } else {
+            console.log('Showing error to user:', getFirebaseErrorMessage(error));
             showError(loginError, getFirebaseErrorMessage(error));
         }
     }
@@ -221,26 +239,45 @@ async function signInWithGoogle() {
 
 // Handle redirect result
 async function handleRedirectResult() {
+    console.log('=== REDIRECT RESULT HANDLER START ===');
     try {
-        console.log('Checking redirect result...');
+        console.log('Calling getRedirectResult()...');
         const result = await auth.getRedirectResult();
+        console.log('getRedirectResult() completed');
+        console.log('Result user:', result.user ? result.user.uid : 'null');
+        console.log('Result credential:', result.credential ? 'present' : 'null');
+        console.log('Operation type:', result.operationType || 'null');
+        
         if (result.user) {
-            console.log('Redirect result user found:', result.user);
+            console.log('=== REDIRECT SUCCESS ===');
+            console.log('Redirect result user found:', result.user.uid);
+            console.log('User email:', result.user.email);
             console.log('Creating Google user document...');
             await createGoogleUserDocument(result.user);
             console.log('Google user document created, auth state change will handle redirect');
             
             // Force a small delay to ensure document is created before auth state change
+            console.log('Waiting 500ms for document creation to settle...');
             await new Promise(resolve => setTimeout(resolve, 500));
+            console.log('Delay completed, redirect result handler finished');
         } else {
-            console.log('No redirect result user found');
+            console.log('=== NO REDIRECT RESULT ===');
+            console.log('No redirect result user found - this is normal for initial page load');
         }
     } catch (error) {
-        console.error('Redirect result error:', error);
+        console.error('=== REDIRECT RESULT ERROR ===');
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Full error:', error);
+        
         if (error.code !== 'auth/no-auth-event') {
+            console.log('Error is not "no-auth-event", showing to user');
             showError(loginError, getFirebaseErrorMessage(error));
+        } else {
+            console.log('Error is "no-auth-event" - this is normal, no action needed');
         }
     }
+    console.log('=== REDIRECT RESULT HANDLER END ===');
 }
 
 // Registration form handler
