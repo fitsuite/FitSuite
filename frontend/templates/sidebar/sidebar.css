@@ -269,7 +269,7 @@
     padding-bottom: 0;
     overflow-y: auto;
     flex-grow: 1;
-    max-height: calc(100vh - 420px);
+    max-height: calc(100vh - 402px);
     width: 100%;
     margin: 15px 0 15px 0;
     scrollbar-width: thin;
@@ -310,7 +310,7 @@
 /* For mobile */
 @media (max-width: 992px) {
     .routine-list {
-        max-height: calc(100vh - 400px); /* Further adjusted for mobile to ensure footer is always visible */
+        max-height: calc(100vh - 382px); /* Further adjusted for mobile to ensure footer is always visible */
     }
 }
 
@@ -358,8 +358,8 @@
 
 .sidebar-footer {
     margin-top: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 12px;
+    border-top: 0;
+    padding-top: 0;
     padding-bottom: 0px;
     flex-shrink: 0;
     position: sticky;
