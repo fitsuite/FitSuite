@@ -401,8 +401,17 @@ async function handleForgotPassword(e) {
     }
 }
 
-// Auth state observer
-auth.onAuthStateChanged(async (user) => {
+// Initialize Firebase and handle redirect result FIRST
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('=== DOM CONTENT LOADED ===');
+    
+    // Handle redirect result BEFORE setting up auth state listener
+    console.log('Processing redirect result first...');
+    await handleRedirectResult();
+    
+    // Now set up auth state listener
+    console.log('Setting up auth state listener...');
+    auth.onAuthStateChanged(async (user) => {
     console.log('Auth state changed - User:', user ? user.uid : 'null');
     
     if (user) {
@@ -468,11 +477,6 @@ auth.onAuthStateChanged(async (user) => {
         }
     }
 });
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', () => {
-    // Handle redirect result on page load
-    handleRedirectResult();
     
     // Load username checker if not on auth page
     if (!window.location.pathname.includes('auth.html')) {
