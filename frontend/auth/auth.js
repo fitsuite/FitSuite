@@ -275,25 +275,9 @@ if (isMobile) {
     try {
         // Su mobile, questa riga interrompe l'esecuzione e carica la pagina di Google
         await auth.signInWithRedirect(provider);
-    } catch (redirectError) {
-        console.error("Errore nel redirect, tentando con popup:", redirectError);
-        
-        // Fallback: prova con popup se il redirect fallisce
-        try {
-            const result = await auth.signInWithPopup(provider);
-            
-            if (window.hideLoadingToast) window.hideLoadingToast();
-            
-            // Sincronizziamo l'utente sul database
-            await createGoogleUserDocument(result.user);
-            
-            // Vai alla pagina finale
-            window.location.href = '../lista_schede/lista_scheda.html';
-            
-        } catch (popupError) {
-            console.error('Anche il popup è fallito:', popupError);
-            displayMessage('login-error-message', "Impossibile completare il login Google. Prova con un altro browser.");
-        }
+    } catch (error) {
+        console.error("Errore nel lancio del redirect:", error);
+        displayMessage('login-error-message', "Impossibile avviare il login. Controlla le impostazioni del browser.");
     }
 
 } else {
@@ -306,7 +290,7 @@ if (isMobile) {
         if (window.hideLoadingToast) window.hideLoadingToast();
         
         // Sincronizziamo l'utente sul database
-        await createGoogleUserDocument(result.user);
+        await handleUserSync(result.user);
         
         // Vai alla pagina finale
         window.location.href = '../lista_schede/lista_scheda.html';
@@ -498,11 +482,9 @@ if (isMobile) {
     }
 
     // Handle Google Redirect Result (for mobile and redirect flows) - IMPROVED HANDLER
-    // Check if we're returning from Google redirect - detection più robusta
+    // Check if we're returning from Google redirect
     const urlParams = new URLSearchParams(window.location.search);
-    const hasGoogleParams = urlParams.has('signIn') || urlParams.has('code') || urlParams.has('state');
-    const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
-    const isReturningFromGoogle = hasGoogleParams || isGoogleSignInInProgress;
+    const isReturningFromGoogle = urlParams.has('signIn') || sessionStorage.getItem('googleSignInInProgress') === 'true';
     
     if (isReturningFromGoogle) {
         console.log('Detected return from Google redirect, processing getRedirectResult...');
@@ -512,18 +494,7 @@ if (isMobile) {
             window.showLoadingToast('Completamento accesso Google...');
         }
         
-        // Aggiungo un timeout per evitare attese infinite su mobile
-        const redirectTimeout = setTimeout(() => {
-            console.log('Redirect timeout - cleaning up state');
-            sessionStorage.removeItem('googleSignInInProgress');
-            if (window.hideLoadingToast) {
-                window.hideLoadingToast();
-            }
-            displayMessage('login-error-message', 'Timeout del login Google. Riprova.');
-        }, 15000); // 15 secondi di timeout
-        
         auth.getRedirectResult().then(function(result) {
-            clearTimeout(redirectTimeout); // Cancello il timeout se va a buon fine
             console.log('getRedirectResult executed. Result:', result);
             
             // Clear loading state
@@ -571,13 +542,11 @@ if (isMobile) {
                 });
                 
             } else {
-                clearTimeout(redirectTimeout); // Cancello il timeout anche se nessun utente
                 console.log('No user in redirect result - might be page refresh or direct access');
                 // Clear the flag if no user found
                 sessionStorage.removeItem('googleSignInInProgress');
             }
         }).catch(function(error) {
-            clearTimeout(redirectTimeout); // Cancello il timeout anche in caso di errore
             console.error('Error in getRedirectResult:', error);
             // Clear the flag on error
             sessionStorage.removeItem('googleSignInInProgress');
