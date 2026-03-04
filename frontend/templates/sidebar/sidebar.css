@@ -1,37 +1,26 @@
 /* Sidebar Styling */
 .sidebar {
     box-sizing: border-box;
-    width: 215px; /* Default for small screens */
+    width: clamp(215px, 18vw, 320px); /* Dimensione lineare: min 215px, ideale 18vw, max 320px */
     background-color: #1a1a1a;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
     padding: 10px 10px 10px 10px; /* 10px sopra, 10px destra, 10px sotto, 10px sinistra */
-    position: fixed;
+    position: relative;
     top: 0;
     bottom: 0;
     left: 0;
-    transition: transform 0.3s ease, width 0.3s ease;
+    transition: width 0.3s ease;
     z-index: 1000;
     overflow: hidden;
-}
-
-/* Responsive sidebar width */
-@media (min-width: 1200px) {
-    .sidebar {
-        width: 25vw;
-    }
-}
-
-@media (min-width: 1920px) {
-    .sidebar {
-        width: 80vw;
-    }
+    flex-shrink: 0;
 }
 
 /* Mobile Sidebar Styles */
 @media (max-width: 992px) {
     .sidebar {
+        position: fixed;
         transform: translateX(-100%);
         width: 215px; /* Allineato alla larghezza desktop ridotta */
         box-shadow: 2px 0 10px rgba(0,0,0,0.5);
@@ -39,6 +28,7 @@
         left: 0;
         overflow-y: auto;
         z-index: 1002;
+        flex-shrink: 0;
     }
 
     .sidebar.open {

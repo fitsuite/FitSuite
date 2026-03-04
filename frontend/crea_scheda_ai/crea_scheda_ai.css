@@ -18,7 +18,6 @@
 }
 
 .main-content {
-    margin-left: 215px;
     flex-grow: 1;
     padding: 40px 20px;
     display: flex;

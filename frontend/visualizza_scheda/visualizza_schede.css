@@ -19,12 +19,11 @@
 }
 
 .main-content {
-    margin-left: 215px; /* Sostituito var(--sidebar-width) con valore fisso 215px */
     flex-grow: 1;
     padding: 60px 0;
     display: flex;
     flex-direction: column;
-    align-items: center; /* Ripristinato per centrare il contenuto principale */
+    align-items: center;
     background: var(--background-gradient);
     min-height: 100vh;
 }

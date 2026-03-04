@@ -30,7 +30,6 @@ body.settings-body {
 
 
 .main-content {
-    margin-left: 215px; /* Sostituito var(--sidebar-width) con valore fisso 215px */
     flex-grow: 1;
     padding: 60px 0; /* Rimossa padding laterale per gestire il header a piena larghezza */
     display: flex;
