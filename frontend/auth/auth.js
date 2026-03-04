@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 displayMessage('login-error-message', 'Timeout durante l\'accesso Google. Riprova.');
                                 displayMessage('registration-error-message', 'Timeout durante l\'accesso Google. Riprova.');
                             }
-                        }, 30000); // 30 seconds timeout
+                        }, 60000); // Increased to 60 seconds timeout for mobile
                         
                         try {
                             console.log('Attempting signInWithRedirect...');
@@ -606,75 +606,97 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Handle Google Redirect Result (for mobile and redirect flows) - UNIFIED HANDLER
-    auth.getRedirectResult().then(function(result) {
-        console.log('getRedirectResult executed. Result:', result);
+    // Handle Google Redirect Result (for mobile and redirect flows) - IMPROVED HANDLER
+    // Check if we're returning from Google redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const isReturningFromGoogle = urlParams.has('signIn') || sessionStorage.getItem('googleSignInInProgress') === 'true';
+    
+    if (isReturningFromGoogle) {
+        console.log('Detected return from Google redirect, processing getRedirectResult...');
         
-        if (result.credential) {
-            // This gives you a Google Access Token. You can use it to access the Google API.
-            var token = result.credential.accessToken;
-            console.log('Google Access Token:', token);
+        // Show loading state for redirect processing
+        if (window.showLoadingToast) {
+            window.showLoadingToast('Completamento accesso Google...');
         }
         
-        if (result.user) {
-            // The signed-in user info.
-            var user = result.user;
-            console.log('Google Redirect User:', user);
+        auth.getRedirectResult().then(function(result) {
+            console.log('getRedirectResult executed. Result:', result);
             
-            // Validate user object before proceeding
-            if (!user || !user.uid) {
-                console.error('Invalid user object from redirect result:', user);
-                throw new Error('UID null o non valido dal redirect Google');
-            }
-            
-            // Clear the flag immediately after successful redirect sign-in
-            sessionStorage.removeItem('googleSignInInProgress');
-
-            // Hide loading state
+            // Clear loading state
             if (window.hideLoadingToast) {
                 window.hideLoadingToast();
             }
-
-            // Create user document immediately after successful Google sign-in
-            console.log('Google redirect successful, creating user document...');
             
-            // Use async/await for better error handling
-            createGoogleUserDocument(user).then(() => {
-                console.log('Google redirect user document creation completed');
-                // Don't redirect here - let onAuthStateChanged handle it to avoid conflicts
-                if (window.showSuccessToast) {
-                    window.showSuccessToast('Accesso Google completato!');
+            if (result.credential) {
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                var token = result.credential.accessToken;
+                console.log('Google Access Token:', token);
+            }
+            
+            if (result.user) {
+                // The signed-in user info.
+                var user = result.user;
+                console.log('Google Redirect User:', user);
+                
+                // Validate user object before proceeding
+                if (!user || !user.uid) {
+                    console.error('Invalid user object from redirect result:', user);
+                    throw new Error('UID null o non valido dal redirect Google');
                 }
-            }).catch(dbError => {
-                console.error('Error creating user document for Google redirect user:', dbError);
-                displayMessage('login-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
-                displayMessage('registration-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
-            });
-            
-        } else {
-            console.log('No user in redirect result - might be page refresh or direct access');
-            // Clear the flag if no user found
+                
+                // Clear the flag immediately after successful redirect sign-in
+                sessionStorage.removeItem('googleSignInInProgress');
+
+                // Create user document immediately after successful Google sign-in
+                console.log('Google redirect successful, creating user document...');
+                
+                // Use async/await for better error handling
+                createGoogleUserDocument(user).then(() => {
+                    console.log('Google redirect user document creation completed');
+                    if (window.showSuccessToast) {
+                        window.showSuccessToast('Accesso Google completato!');
+                    }
+                    // Redirect to lista_schede.html after successful processing
+                    setTimeout(() => {
+                        window.location.href = '../lista_schede/lista_scheda.html';
+                    }, 1000);
+                }).catch(dbError => {
+                    console.error('Error creating user document for Google redirect user:', dbError);
+                    displayMessage('login-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
+                    displayMessage('registration-error-message', 'Errore durante la creazione del profilo utente. Riprova.');
+                });
+                
+            } else {
+                console.log('No user in redirect result - might be page refresh or direct access');
+                // Clear the flag if no user found
+                sessionStorage.removeItem('googleSignInInProgress');
+            }
+        }).catch(function(error) {
+            console.error('Error in getRedirectResult:', error);
+            // Clear the flag on error
             sessionStorage.removeItem('googleSignInInProgress');
-        }
-    }).catch(function(error) {
-        console.error('Error in getRedirectResult:', error);
-        // Clear the flag on error
-        sessionStorage.removeItem('googleSignInInProgress');
-        
-        // Hide loading state
-        if (window.hideLoadingToast) {
-            window.hideLoadingToast();
-        }
-        
-        // Show error message
-        const errorMessage = getFirebaseErrorMessage(error.code);
-        displayMessage('login-error-message', errorMessage);
-        displayMessage('registration-error-message', errorMessage);
-    });
+            
+            // Clear loading state
+            if (window.hideLoadingToast) {
+                window.hideLoadingToast();
+            }
+            
+            // Show error message
+            const errorMessage = getFirebaseErrorMessage(error.code);
+            displayMessage('login-error-message', errorMessage);
+            displayMessage('registration-error-message', errorMessage);
+        });
+    }
 
     // Handle authentication state changes
     firebase.auth().onAuthStateChanged(async user => {
         const isGoogleSignInInProgress = sessionStorage.getItem('googleSignInInProgress') === 'true';
+        
+        // Skip processing if we're in the middle of a Google redirect
+        if (isGoogleSignInInProgress && isReturningFromGoogle) {
+            console.log('Skipping onAuthStateChanged during Google redirect processing');
+            return;
+        }
         
         if (user) {
             // Validate user object before proceeding
@@ -722,9 +744,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Clear Google sign-in flag
                 sessionStorage.removeItem('googleSignInInProgress');
                 
-                // Redirect to lista_schede.html
-                console.log('Redirecting to lista_schede.html...');
-                window.location.href = '../lista_schede/lista_scheda.html';
+                // Redirect to lista_schede.html only if not already redirected by getRedirectResult
+                if (!isReturningFromGoogle) {
+                    console.log('Redirecting to lista_schede.html...');
+                    window.location.href = '../lista_schede/lista_scheda.html';
+                }
                 
             } catch (error) {
                 console.error('Error processing user data:', error);
