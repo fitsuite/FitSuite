@@ -573,7 +573,7 @@ body.settings-body {
 
     .card-title {
         font-size: 28px; /* Riduci la dimensione del titolo della card */
-        text-align: center; /* Centra il titolo della card */
+        text-align: left; /* Allinea a sinistra il titolo della card */
         margin-bottom: 15px;
     }
 

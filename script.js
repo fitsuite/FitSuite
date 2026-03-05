@@ -273,5 +273,17 @@ async function init() {
     }
 }
 
+// Sidebar routine list scroll gradient
+const routineList = document.getElementById('user-routine-list-sidebar');
+if (routineList) {
+    routineList.addEventListener('scroll', () => {
+        if (routineList.scrollTop > 0) {
+            routineList.classList.add('scrolled');
+        } else {
+            routineList.classList.remove('scrolled');
+        }
+    });
+}
+
 // Avvia l'applicazione quando la pagina è pronta
 window.addEventListener('DOMContentLoaded', init);
