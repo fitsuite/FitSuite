@@ -269,7 +269,7 @@
     padding-bottom: 0;
     overflow-y: auto;
     flex-grow: 1;
-    max-height: calc(100vh - 232px);
+    max-height: calc(100vh - 252px); /* Aumentato il valore per ridurre l'altezza massima */
     width: 100%;
     margin: 15px 0 15px 0;
     scrollbar-width: thin;
@@ -309,7 +309,7 @@
 /* For mobile */
 @media (max-width: 992px) {
     .routine-list {
-        max-height: calc(100vh - 312px); /* Further adjusted to eliminate space before settings button */
+        max-height: calc(100vh - 332px); /* Aumentato di 20px per compensare il padding del footer */
     }
 }
 
@@ -359,7 +359,7 @@
     margin-top: 0;
     border-top: 0;
     padding-top: 0;
-    padding-bottom: 0px;
+    padding-bottom: 20px; /* Aggiunto padding inferiore per lasciare spazio */
     flex-shrink: 0;
     position: sticky;
     bottom: -20px;
