@@ -269,14 +269,13 @@
     padding-bottom: 0;
     overflow-y: auto;
     flex-grow: 1;
-    max-height: calc(100vh - 402px);
+    max-height: calc(100vh - 232px);
     width: 100%;
     margin: 15px 0 15px 0;
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
     transition: scrollbar-color 0.3s ease;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
-    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+    overscroll-behavior: contain;
 }
 
 .nav-section:hover .routine-list {
@@ -310,7 +309,7 @@
 /* For mobile */
 @media (max-width: 992px) {
     .routine-list {
-        max-height: calc(100vh - 382px); /* Further adjusted for mobile to ensure footer is always visible */
+        max-height: calc(100vh - 312px); /* Further adjusted to eliminate space before settings button */
     }
 }
 

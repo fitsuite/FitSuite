@@ -189,11 +189,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Listen for cross-tab updates
-    window.addEventListener('routinesUpdatedFromOtherTab', () => {
-        console.log('Routines updated in another tab, refreshing...');
-        fetchRoutines(auth.currentUser.uid, true);
-    });
+    // Listen for cross-tab updates - REMOVED to prevent infinite refresh loops
+    // The CacheManager already handles cross-tab synchronization automatically
 
     // Listen for window resize to update menu visibility
     window.addEventListener('resize', () => {
