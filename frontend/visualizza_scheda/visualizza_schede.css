@@ -137,6 +137,19 @@
     padding: 0 20px;
 }
 
+/* Additional responsive wrapper adjustments */
+@media (max-width: 480px) {
+    .visualizza-scheda-wrapper {
+        padding: 0 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .visualizza-scheda-wrapper {
+        padding: 0 10px;
+    }
+}
+
 .card-section {
     background: var(--bg-card);
     padding: 20px;
@@ -285,8 +298,8 @@
     background: var(--bg-card);
     border-radius: 16px;
     padding: 20px 16px;
-    width: 90%;
-    max-width: 320px;
+    width: 95%;
+    max-width: 300px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     position: relative;
     display: flex;
@@ -587,7 +600,8 @@
     .popup-card {
         padding: 18px 14px;
         margin: 8px;
-        max-width: 300px;
+        max-width: 280px;
+        width: 90%;
     }
 
     .popup-exercise-name {
@@ -652,7 +666,8 @@
 /* Media query per schermi grandi */
 @media (min-width: 1200px) {
     .popup-card {
-        max-width: 340px;
+        max-width: 320px;
+        width: 85%;
         padding: 22px 18px;
     }
 
@@ -708,13 +723,73 @@
     }
 }
 
+/* Media query per schermi molto grandi */
+@media (min-width: 1600px) {
+    .popup-card {
+        max-width: 350px;
+        width: 80%;
+        padding: 24px 20px;
+    }
+
+    .popup-exercise-name {
+        font-size: 20px;
+    }
+
+    .popup-exercise-gif {
+        max-width: 220px;
+    }
+
+    .popup-notes-section {
+        margin: 20px 0;
+        padding: 20px;
+    }
+
+    .notes-header {
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+
+    .exercise-notes-textarea {
+        min-height: 100px;
+        max-height: 160px;
+        padding: 16px;
+        font-size: 15px;
+    }
+
+    .save-notes-btn {
+        padding: 10px 20px;
+        font-size: 14px;
+        min-height: 36px;
+    }
+
+    .step-card {
+        padding: 16px;
+        gap: 14px;
+        min-height: auto;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .step-number {
+        font-size: 18px;
+        min-width: 28px;
+    }
+
+    .step-text {
+        font-size: 15px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
+}
+
 /* Media query per schermi più piccoli */
 @media (max-width: 480px) {
     .popup-card {
         padding: 16px 12px;
         margin: 5px;
-        width: calc(100% - 10px);
-        max-width: 280px;
+        width: 95%;
+        max-width: 260px;
     }
 
     .popup-exercise-name {
