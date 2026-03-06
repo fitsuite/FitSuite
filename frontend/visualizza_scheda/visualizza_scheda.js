@@ -102,6 +102,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Gestione Back Button per i Popup ---
+    function pushPopupState() {
+        history.pushState({ popup: true }, null, window.location.href);
+    }
+
+    function isAnyPopupOpen() {
+        return document.querySelector('.popup-overlay.active, .modal.active, .custom-popup-overlay.show, #share-popup-overlay.show') !== null;
+    }
+
+    function closeAllPopups() {
+        // exercise-detail-popup
+        if (exerciseDetailPopup && exerciseDetailPopup.classList.contains('active')) {
+            hideExerciseDetailPopup();
+        }
+
+        // edit-confirm-modal
+        const editModal = document.getElementById('edit-confirm-modal');
+        if (editModal && editModal.classList.contains('active')) {
+            editModal.classList.remove('active');
+        }
+
+        // customPopup
+        const customPopup = document.getElementById('customPopup');
+        if (customPopup && customPopup.classList.contains('show')) {
+            customPopup.classList.remove('show');
+        }
+
+        // share-popup
+        if (window.SharePopup && window.SharePopup.overlay && window.SharePopup.overlay.classList.contains('show')) {
+            window.SharePopup.hide();
+        }
+    }
+
+    window.addEventListener('popstate', (event) => {
+        if (isAnyPopupOpen()) {
+            closeAllPopups();
+            // Evita che il browser torni effettivamente alla pagina precedente
+            // In realtà il popstate è già avvenuto, ma avendo fatto pushState prima,
+            // ora siamo tornati allo stato precedente (quello senza popup).
+        }
+    });
+
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -258,7 +300,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Gestione click Edit
         editBtn.onclick = (e) => {
             e.preventDefault();
-            if (modal) modal.classList.add('active');
+            if (modal) {
+                modal.classList.add('active');
+                pushPopupState();
+            }
         };
 
         // Gestione click Share
@@ -285,7 +330,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (cancelBtn) {
             cancelBtn.onclick = () => {
-                if (modal) modal.classList.remove('active');
+                if (modal && modal.classList.contains('active')) {
+                    modal.classList.remove('active');
+                    if (history.state && history.state.popup) {
+                        history.back();
+                    }
+                }
             };
         }
     }
@@ -294,8 +344,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('edit-confirm-modal');
     if (modal) {
         modal.addEventListener('click', (event) => {
-            if (event.target === modal) {
+            if (event.target === modal && modal.classList.contains('active')) {
                 modal.classList.remove('active');
+                if (history.state && history.state.popup) {
+                    history.back();
+                }
             }
         });
     }
@@ -467,7 +520,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSavingNotes = false;
 
     function hideExerciseDetailPopup() {
-        exerciseDetailPopup.classList.remove('active');
+        if (exerciseDetailPopup && exerciseDetailPopup.classList.contains('active')) {
+            exerciseDetailPopup.classList.remove('active');
+            // Se il popup è stato chiuso manualmente e siamo in uno stato con popup nel history, torniamo indietro
+            if (history.state && history.state.popup) {
+                history.back();
+            }
+        }
         // Clear current exercise data
         currentExerciseData = null;
         currentRoutineData = null;
@@ -979,6 +1038,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             updateStepper();
             exerciseDetailPopup.classList.add('active');
+            pushPopupState();
         } else {
             console.warn(`Dati per l'esercizio "${exerciseName}" non trovati.`);
         }

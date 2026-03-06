@@ -102,6 +102,17 @@ class SharePopup {
                 this.hideSearchResults();
             }
         });
+
+        // Gestione tasto indietro per chiudere il popup
+        window.addEventListener('popstate', () => {
+            if (this.overlay && this.overlay.classList.contains('show')) {
+                this.overlay.classList.remove('show');
+                this.currentRoutineId = null;
+                this.currentRoutine = null;
+                this.sharedUsers = [];
+                this.searchResults = [];
+            }
+        });
     }
 
     async show(routineId, routine) {
@@ -122,6 +133,9 @@ class SharePopup {
         this.hideSearchResults();
         
         // Show popup
+        if (!history.state || !history.state.popup) {
+            history.pushState({ popup: true }, null, window.location.href);
+        }
         this.overlay.classList.add('show');
     }
 
@@ -129,7 +143,13 @@ class SharePopup {
         // Auto-save before closing
         await this.saveShareChanges();
         
-        this.overlay.classList.remove('show');
+        if (this.overlay && this.overlay.classList.contains('show')) {
+            this.overlay.classList.remove('show');
+            // Se il popup è stato chiuso manualmente e siamo in uno stato con popup nel history, torniamo indietro
+            if (history.state && history.state.popup) {
+                history.back();
+            }
+        }
         this.currentRoutineId = null;
         this.currentRoutine = null;
         this.sharedUsers = [];
