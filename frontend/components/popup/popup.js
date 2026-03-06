@@ -27,12 +27,7 @@
             const input = document.getElementById('customPopupInput');
 
             function closePopup(result) {
-                if (overlay.classList.contains('show')) {
-                    overlay.classList.remove('show');
-                    if (history.state && history.state.popup) {
-                        history.back();
-                    }
-                }
+                overlay.classList.remove('show');
                 if (resolvePromise) {
                     resolvePromise(result);
                     resolvePromise = null;
@@ -55,17 +50,6 @@
             input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     okBtn.click();
-                }
-            });
-
-            // Gestione tasto indietro per chiudere il popup
-            window.addEventListener('popstate', () => {
-                if (overlay.classList.contains('show')) {
-                    overlay.classList.remove('show');
-                    if (resolvePromise) {
-                        resolvePromise(null);
-                        resolvePromise = null;
-                    }
                 }
             });
         }
@@ -97,12 +81,6 @@
         // So no need to remove listeners.
     }
 
-    function pushPopupState() {
-        if (!history.state || !history.state.popup) {
-            history.pushState({ popup: true }, null, window.location.href);
-        }
-    }
-
     // Override window.alert
     window.alert = function(message, title = 'Avviso') {
         return new Promise((resolve) => {
@@ -118,7 +96,6 @@
             messageEl.textContent = message;
             
             resolvePromise = resolve;
-            pushPopupState();
             popup.classList.add('show');
         });
     };
@@ -145,7 +122,6 @@
                 resolve(!!result);
             };
             
-            pushPopupState();
             popup.classList.add('show');
         });
     };
@@ -173,7 +149,6 @@
             setTimeout(() => inputEl.focus(), 100);
             
             resolvePromise = resolve;
-            pushPopupState();
             popup.classList.add('show');
         });
     };
