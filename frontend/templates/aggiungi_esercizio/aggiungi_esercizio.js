@@ -46,7 +46,7 @@ const AddExerciseModal = {
     },
 
     setupCategoryButtons: function() {
-        const categoryButtons = document.querySelectorAll('.category-btn');
+        const categoryButtons = document.querySelectorAll('.category-btn[data-category]');
         categoryButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const category = btn.dataset.category;
