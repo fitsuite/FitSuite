@@ -17,6 +17,7 @@ const AddExerciseModal = {
         await this.loadExercises();
         this.setupListeners();
         this.setupCategoryButtons();
+        this.updateFilterBadges();
         this.showCategory('bodyParts'); // Show body parts by default
     },
 
@@ -62,17 +63,6 @@ const AddExerciseModal = {
     showCategory: function(category) {
         this.currentCategory = category;
         
-        // Update title
-        const titleElement = document.getElementById('current-category-title');
-        const titles = {
-            bodyParts: 'Parti del corpo',
-            equipments: 'Attrezzatura',
-            muscles: 'Muscoli'
-        };
-        if (titleElement) {
-            titleElement.textContent = titles[category] || 'Filtri';
-        }
-        
         // Generate filters for the selected category
         this.generateFilters();
     },
@@ -91,15 +81,12 @@ const AddExerciseModal = {
             // Header container
             const header = document.createElement('div');
             header.className = 'filter-header';
+            header.style.cursor = 'default'; // No longer clickable
             
             const h3 = document.createElement('h3');
             h3.textContent = title;
             
-            const icon = document.createElement('i');
-            icon.className = 'fas fa-chevron-down filter-toggle-icon';
-            
             header.appendChild(h3);
-            header.appendChild(icon);
             group.appendChild(header);
 
             const optionsDiv = document.createElement('div');
@@ -135,11 +122,6 @@ const AddExerciseModal = {
             });
 
             group.appendChild(optionsDiv);
-            
-            // Toggle functionality
-            header.addEventListener('click', () => {
-                group.classList.toggle('collapsed');
-            });
             
             return group;
         };
@@ -189,7 +171,29 @@ const AddExerciseModal = {
             else this.selectedTargetMuscles.delete(value);
         }
 
+        this.updateFilterBadges();
         this.filterExercises();
+    },
+
+    updateFilterBadges: function() {
+        const badges = {
+            bodyParts: this.selectedBodyParts.size,
+            equipments: this.selectedEquipments.size,
+            muscles: this.selectedTargetMuscles.size
+        };
+
+        Object.keys(badges).forEach(category => {
+            const badge = document.querySelector(`.filter-badge[data-count="${category}"]`);
+            if (badge) {
+                const count = badges[category];
+                badge.textContent = count;
+                if (count > 0) {
+                    badge.classList.add('active');
+                } else {
+                    badge.classList.remove('active');
+                }
+            }
+        });
     },
 
     renderExercises: function() {
@@ -249,6 +253,8 @@ const AddExerciseModal = {
         this.selectedBodyParts.clear();
         this.selectedEquipments.clear();
         this.selectedTargetMuscles.clear();
+        
+        this.updateFilterBadges();
         
         // Uncheck all checkboxes
         const filtersContainer = document.getElementById('dynamic-filters');
