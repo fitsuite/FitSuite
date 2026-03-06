@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createExerciseRowHTML(exercise) {
         return `
-            <div class="col-drag exercise-drag-handle">
+            <div class="exercise-drag-handle">
                 <i class="fas fa-grip-lines"></i>
             </div>
             <div class="col-name">
