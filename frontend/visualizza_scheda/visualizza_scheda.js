@@ -102,6 +102,88 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Popup Navigation Management ---
+    function isAnyPopupOpen() {
+        const editModal = document.getElementById('edit-confirm-modal');
+        const exercisePopup = document.getElementById('exercise-detail-popup');
+        const sharePopup = document.getElementById('share-popup-overlay');
+        const customPopup = document.getElementById('customPopup');
+
+        return (editModal && editModal.classList.contains('active')) ||
+               (exercisePopup && exercisePopup.classList.contains('active')) ||
+               (sharePopup && sharePopup.classList.contains('show')) ||
+               (customPopup && customPopup.classList.contains('show'));
+    }
+
+    function hideEditModal(fromBackAction = false) {
+        const editModal = document.getElementById('edit-confirm-modal');
+        if (editModal && editModal.classList.contains('active')) {
+            editModal.classList.remove('active');
+            // If we closed it manually (not from back action), pop the state
+            if (!fromBackAction && history.state && history.state.popupOpen) {
+                history.back();
+            }
+        }
+    }
+
+    function closeAllPopups(isBackAction = false) {
+        let closedAny = false;
+
+        // Edit Modal
+        const editModal = document.getElementById('edit-confirm-modal');
+        if (editModal && editModal.classList.contains('active')) {
+            hideEditModal(isBackAction);
+            closedAny = true;
+        }
+
+        // Exercise Popup
+        const exercisePopup = document.getElementById('exercise-detail-popup');
+        if (exercisePopup && exercisePopup.classList.contains('active')) {
+            hideExerciseDetailPopup(isBackAction);
+            closedAny = true;
+        }
+
+        // Share Popup
+        const sharePopup = document.getElementById('share-popup-overlay');
+        if (sharePopup && sharePopup.classList.contains('show')) {
+            if (window.SharePopup && typeof window.SharePopup.hide === 'function') {
+                window.SharePopup.hide();
+            } else {
+                sharePopup.classList.remove('show');
+            }
+            // Note: SharePopup.hide() might not support fromBackAction yet, 
+            // but we'll handle it if needed. For now, manual back popping is in the hide method.
+            closedAny = true;
+        }
+
+        // Custom Popup (Alert/Confirm)
+        const customPopup = document.getElementById('customPopup');
+        if (customPopup && customPopup.classList.contains('show')) {
+            const cancelBtn = document.getElementById('customPopupCancel');
+            if (cancelBtn && cancelBtn.style.display !== 'none') {
+                cancelBtn.click();
+            } else {
+                const okBtn = document.getElementById('customPopupOk');
+                if (okBtn) okBtn.click();
+            }
+            closedAny = true;
+        }
+    }
+
+    function pushPopupState() {
+        if (!history.state || !history.state.popupOpen) {
+            history.pushState({ popupOpen: true }, '');
+        }
+    }
+
+    window.addEventListener('popstate', (event) => {
+        // Handle visualizza_scheda specific popups
+        hideEditModal(true);
+        hideExerciseDetailPopup(true);
+        
+        // Other components (SharePopup, customPopup) handle their own popstate
+    });
+
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -258,7 +340,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Gestione click Edit
         editBtn.onclick = (e) => {
             e.preventDefault();
-            if (modal) modal.classList.add('active');
+            if (modal) {
+                modal.classList.add('active');
+                pushPopupState();
+            }
         };
 
         // Gestione click Share
@@ -285,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (cancelBtn) {
             cancelBtn.onclick = () => {
-                if (modal) modal.classList.remove('active');
+                hideEditModal(false);
             };
         }
     }
@@ -295,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modal) {
         modal.addEventListener('click', (event) => {
             if (event.target === modal) {
-                modal.classList.remove('active');
+                hideEditModal(false);
             }
         });
     }
@@ -474,11 +559,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentRoutineData = null;
     let isSavingNotes = false;
 
-    function hideExerciseDetailPopup() {
-        exerciseDetailPopup.classList.remove('active');
+    function hideExerciseDetailPopup(fromBackAction = false) {
+        const exerciseDetailPopup = document.getElementById('exercise-detail-popup');
+        if (exerciseDetailPopup) {
+            exerciseDetailPopup.classList.remove('active');
+        }
         // Clear current exercise data
         currentExerciseData = null;
         currentRoutineData = null;
+
+        // If we closed it manually (not from back action), pop the state
+        if (!fromBackAction && history.state && history.state.popupOpen) {
+            history.back();
+        }
     }
 
     // Notes functionality
@@ -926,6 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showExerciseDetailPopup(exerciseName, exerciseData = null, routineData = null) {
         console.log("Tentativo di mostrare popup per esercizio:", exerciseName);
+        pushPopupState();
 
         const languagePreference = localStorage.getItem('languagePreference') || 'it';
         const exerciseDataFromList = allExercisesData.find(ex => (languagePreference === 'it' ? ex.name_it : ex.name) === exerciseName);

@@ -85,6 +85,13 @@ class SharePopup {
             }
         });
 
+        // Listen for popstate to close popup
+        window.addEventListener('popstate', (event) => {
+            if (this.overlay && this.overlay.classList.contains('show')) {
+                this.hide(true);
+            }
+        });
+
         // Search input
         const searchInput = document.getElementById('user-search-input');
         if (searchInput) {
@@ -107,6 +114,11 @@ class SharePopup {
     async show(routineId, routine) {
         this.currentRoutineId = routineId;
         this.currentRoutine = routine;
+
+        // Push state for back button handling
+        if (!history.state || !history.state.popupOpen) {
+            history.pushState({ popupOpen: true }, '');
+        }
         
         // Update routine name in title
         const routineNameEl = document.getElementById('share-routine-name');
@@ -125,7 +137,7 @@ class SharePopup {
         this.overlay.classList.add('show');
     }
 
-    async hide() {
+    async hide(fromBackAction = false) {
         // Auto-save before closing
         await this.saveShareChanges();
         
@@ -134,6 +146,11 @@ class SharePopup {
         this.currentRoutine = null;
         this.sharedUsers = [];
         this.searchResults = [];
+
+        // If we closed it manually (not from back action), pop the state
+        if (!fromBackAction && history.state && history.state.popupOpen) {
+            history.back();
+        }
     }
 
     async loadSharedUsers() {

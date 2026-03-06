@@ -16,6 +16,13 @@
 
     let resolvePromise = null;
 
+    // Helper to push a dummy state to history to handle back button
+    function pushPopupState() {
+        if (!history.state || !history.state.popupOpen) {
+            history.pushState({ popupOpen: true }, '');
+        }
+    }
+
     // Append to body when DOM is ready
     function initPopup() {
         if (!document.getElementById('customPopup')) {
@@ -26,11 +33,16 @@
             const cancelBtn = document.getElementById('customPopupCancel');
             const input = document.getElementById('customPopupInput');
 
-            function closePopup(result) {
+            function closePopup(result, fromBackAction = false) {
                 overlay.classList.remove('show');
                 if (resolvePromise) {
                     resolvePromise(result);
                     resolvePromise = null;
+                }
+                
+                // If we closed it manually (not from back action), pop the state
+                if (!fromBackAction && history.state && history.state.popupOpen) {
+                    history.back();
                 }
             }
 
@@ -50,6 +62,17 @@
             input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     okBtn.click();
+                }
+            });
+
+            // Listen for popstate to close popup
+            window.addEventListener('popstate', (event) => {
+                if (overlay.classList.contains('show')) {
+                    if (cancelBtn && cancelBtn.style.display !== 'none') {
+                        closePopup(null, true);
+                    } else {
+                        closePopup(true, true);
+                    }
                 }
             });
         }
@@ -87,6 +110,7 @@
             if (!document.getElementById('customPopup')) initPopup();
             
             resetPopup();
+            pushPopupState();
             
             const popup = document.getElementById('customPopup');
             const titleEl = document.getElementById('customPopupTitle');
@@ -106,6 +130,7 @@
             if (!document.getElementById('customPopup')) initPopup();
             
             resetPopup();
+            pushPopupState();
             
             const popup = document.getElementById('customPopup');
             const titleEl = document.getElementById('customPopupTitle');
@@ -132,6 +157,7 @@
             if (!document.getElementById('customPopup')) initPopup();
             
             resetPopup();
+            pushPopupState();
             
             const popup = document.getElementById('customPopup');
             const titleEl = document.getElementById('customPopupTitle');
