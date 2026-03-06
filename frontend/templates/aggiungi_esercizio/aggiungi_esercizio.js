@@ -5,11 +5,19 @@ const AddExerciseModal = {
     selectedEquipments: new Set(),
     selectedTargetMuscles: new Set(),
     targetSedutaId: null,
+    currentCategory: 'bodyParts',
+    filterData: {
+        bodyParts: new Set(),
+        equipments: new Set(),
+        muscles: new Set()
+    },
 
     init: async function() {
         console.log('Initializing Add Exercise Modal...');
         await this.loadExercises();
         this.setupListeners();
+        this.setupCategoryButtons();
+        this.showCategory('bodyParts'); // Show body parts by default
     },
 
     loadExercises: async function() {
@@ -18,6 +26,7 @@ const AddExerciseModal = {
             this.allExercises = await response.json();
             this.filteredExercises = this.allExercises;
             console.log(`Loaded ${this.allExercises.length} exercises.`);
+            this.extractFilterData();
             this.generateFilters();
             this.renderExercises();
         } catch (error) {
@@ -27,20 +36,52 @@ const AddExerciseModal = {
         }
     },
 
+    extractFilterData: function() {
+        // Extract unique values and store them
+        this.allExercises.forEach(ex => {
+            if (ex.bodyParts_it) ex.bodyParts_it.forEach(bp => this.filterData.bodyParts.add(bp));
+            if (ex.equipments_it) ex.equipments_it.forEach(eq => this.filterData.equipments.add(eq));
+            if (ex.targetMuscles_it) ex.targetMuscles_it.forEach(tm => this.filterData.muscles.add(tm));
+        });
+    },
+
+    setupCategoryButtons: function() {
+        const categoryButtons = document.querySelectorAll('.category-btn');
+        categoryButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const category = btn.dataset.category;
+                this.showCategory(category);
+                
+                // Update active state
+                categoryButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+    },
+
+    showCategory: function(category) {
+        this.currentCategory = category;
+        
+        // Update title
+        const titleElement = document.getElementById('current-category-title');
+        const titles = {
+            bodyParts: 'Parti del corpo',
+            equipments: 'Attrezzatura',
+            muscles: 'Muscoli'
+        };
+        if (titleElement) {
+            titleElement.textContent = titles[category] || 'Filtri';
+        }
+        
+        // Generate filters for the selected category
+        this.generateFilters();
+    },
+
     generateFilters: function() {
         const filtersContainer = document.getElementById('dynamic-filters');
         if (!filtersContainer) return;
 
-        // Extract unique values
-        const bodyParts = new Set();
-        const equipments = new Set();
-        const targetMuscles = new Set();
-
-        this.allExercises.forEach(ex => {
-            if (ex.bodyParts_it) ex.bodyParts_it.forEach(bp => bodyParts.add(bp));
-            if (ex.equipments_it) ex.equipments_it.forEach(eq => equipments.add(eq));
-            if (ex.targetMuscles_it) ex.targetMuscles_it.forEach(tm => targetMuscles.add(tm));
-        });
+        filtersContainer.innerHTML = '';
 
         // Helper to create filter group
         const createFilterGroup = (title, items, type) => {
@@ -65,7 +106,7 @@ const AddExerciseModal = {
             optionsDiv.className = 'filter-options';
 
             // Sort items alphabetically
-            const sortedItems = Array.from(items).sort((a, b) => a.localeCompare(b));
+            const sortedItems = Array.from(items).sort((a, b) => a.localeCompare(b, 'it'));
 
             sortedItems.forEach(item => {
                 const label = document.createElement('label');
@@ -74,7 +115,11 @@ const AddExerciseModal = {
                 const input = document.createElement('input');
                 input.type = 'checkbox';
                 input.value = item;
-                input.dataset.type = type; // 'bodyPart', 'equipment', 'targetMuscle'
+                input.dataset.type = type;
+
+                // Check if this filter was previously selected
+                const isSelected = this.isFilterSelected(type, item);
+                input.checked = isSelected;
 
                 const slider = document.createElement('span');
                 slider.className = 'slider round';
@@ -99,33 +144,52 @@ const AddExerciseModal = {
             return group;
         };
 
-        filtersContainer.innerHTML = '';
-        filtersContainer.appendChild(createFilterGroup('Parti del Corpo', bodyParts, 'bodyPart'));
-        filtersContainer.appendChild(createFilterGroup('Attrezzatura', equipments, 'equipment'));
-        filtersContainer.appendChild(createFilterGroup('Muscoli', targetMuscles, 'targetMuscle'));
+        // Generate filters based on current category
+        if (this.currentCategory === 'bodyParts' && this.filterData.bodyParts.size > 0) {
+            filtersContainer.appendChild(createFilterGroup('Parti del corpo', this.filterData.bodyParts, 'bodyPart'));
+        } else if (this.currentCategory === 'equipments' && this.filterData.equipments.size > 0) {
+            filtersContainer.appendChild(createFilterGroup('Attrezzatura', this.filterData.equipments, 'equipment'));
+        } else if (this.currentCategory === 'muscles' && this.filterData.muscles.size > 0) {
+            filtersContainer.appendChild(createFilterGroup('Muscoli', this.filterData.muscles, 'targetMuscle'));
+        }
 
         // Add event listeners to new checkboxes
         const checkboxes = filtersContainer.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(cb => {
             cb.addEventListener('change', (e) => {
-                const type = e.target.dataset.type;
-                const value = e.target.value;
-                const checked = e.target.checked;
-
-                if (type === 'bodyPart') {
-                    if (checked) this.selectedBodyParts.add(value);
-                    else this.selectedBodyParts.delete(value);
-                } else if (type === 'equipment') {
-                    if (checked) this.selectedEquipments.add(value);
-                    else this.selectedEquipments.delete(value);
-                } else if (type === 'targetMuscle') {
-                    if (checked) this.selectedTargetMuscles.add(value);
-                    else this.selectedTargetMuscles.delete(value);
-                }
-
-                this.filterExercises();
+                this.handleFilterChange(e);
             });
         });
+    },
+
+    isFilterSelected: function(type, value) {
+        if (type === 'bodyPart') {
+            return this.selectedBodyParts.has(value);
+        } else if (type === 'equipment') {
+            return this.selectedEquipments.has(value);
+        } else if (type === 'targetMuscle') {
+            return this.selectedTargetMuscles.has(value);
+        }
+        return false;
+    },
+
+    handleFilterChange: function(e) {
+        const type = e.target.dataset.type;
+        const value = e.target.value;
+        const checked = e.target.checked;
+
+        if (type === 'bodyPart') {
+            if (checked) this.selectedBodyParts.add(value);
+            else this.selectedBodyParts.delete(value);
+        } else if (type === 'equipment') {
+            if (checked) this.selectedEquipments.add(value);
+            else this.selectedEquipments.delete(value);
+        } else if (type === 'targetMuscle') {
+            if (checked) this.selectedTargetMuscles.add(value);
+            else this.selectedTargetMuscles.delete(value);
+        }
+
+        this.filterExercises();
     },
 
     renderExercises: function() {

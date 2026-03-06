@@ -1,116 +1,354 @@
 /* Add Exercise Modal Styles */
+
 .exercise-modal-content {
-    width: 90%;
-    max-width: 1100px;
+
+    width: 95%;
+
+    max-width: 1400px;
+
     height: 90vh;
+
     display: flex;
+
     flex-direction: column;
-    background-color: #1a1a1a; /* Dark background */
+
+    background-color: var(--bg-dark, #1a1a1a);
+
     padding: 0;
+
     overflow: hidden;
-    border: 2px solid var(--primary-color); /* Orange border as per image */
-    border-radius: 15px; /* Rounded corners */
+
+    border: 2px solid var(--primary-color, #ff6600);
+
+    border-radius: 15px;
+
     box-shadow: 0 0 20px rgba(0,0,0,0.8);
+
 }
+
+
 
 .modal-header {
+
     display: flex;
-    justify-content: center; /* Center title */
+
+    justify-content: center;
+
     align-items: center;
+
     padding: 20px;
-    background-color: #1a1a1a;
+
+    background-color: var(--bg-dark, #1a1a1a);
+
     position: relative;
+
     border-bottom: none;
+
+    flex-shrink: 0;
+
+    margin-bottom: 0;
+
 }
+
+
 
 .modal-title {
+
     color: var(--primary-color);
+
     font-size: 32px;
+
     font-weight: bold;
+
     margin: 0;
+
 }
+
+
 
 .close-modal-btn {
+
     position: absolute;
+
     right: 20px;
+
     top: 50%;
+
     transform: translateY(-50%);
+
     background: transparent;
+
     border: none;
+
     color: #888;
+
     font-size: 24px;
+
     cursor: pointer;
+
     transition: color 0.2s;
+
 }
+
+
 
 .close-modal-btn:hover {
+
     color: var(--primary-color);
+
 }
+
+
 
 .reset-filters-btn {
-    width: 100%;
+
     background-color: transparent;
-    border: 1px solid var(--primary-color);
-    color: var(--primary-color);
-    font-size: 14px;
-    padding: 12px;
+
+    border: 2px solid var(--primary-color, #ff6600);
+
+    color: var(--primary-color, #ff6600);
+
+    font-size: 13px;
+
+    padding: 8px 15px;
+
     border-radius: 8px;
+
     cursor: pointer;
+
     transition: all 0.2s;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
-    gap: 8px;
-    margin-bottom: 20px;
+
+    gap: 6px;
+
+    white-space: nowrap;
+
 }
+
+
 
 .reset-filters-btn:hover {
-    background-color: var(--primary-color);
-    color: white;
+
+    background-color: var(--primary-color, #ff6600);
+
+    color: var(--text-white, #ffffff);
+
 }
+
+
 
 .reset-filters-btn i {
+
     font-size: 12px;
+
 }
 
+
+
 .modal-body {
+
     display: flex;
+
     flex-grow: 1;
+
     overflow: hidden;
-    padding: 20px;
+
+    padding: 0 20px 20px 20px;
+
     gap: 20px;
+
+    min-height: 0;
+
+    margin-top: 0;
+
 }
+
+
 
 /* Sidebar Filters */
 .filters-sidebar {
-    width: 300px;
+    width: 380px;
     background-color: transparent;
-    padding-right: 10px;
-    overflow-y: auto;
-    flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
+    flex-shrink: 0;
+    min-height: 0;
+    margin-top: 0;
 }
+
+/* Filter Categories */
+.filter-categories {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    flex-shrink: 0;
+    width: 100%;
+}
+
+.category-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 4px;
+    background-color: var(--bg-card, #262626);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    color: var(--text-gray, #a0a0a0);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    min-height: 55px;
+    flex: 1;
+}
+
+
+
+.category-btn:hover {
+
+    background-color: #333;
+
+    border-color: var(--primary-color, #ff6600);
+
+    color: var(--text-white, #ffffff);
+
+}
+
+
+
+.category-btn.active {
+
+    background-color: var(--primary-color, #ff6600);
+
+    border-color: var(--primary-color, #ff6600);
+
+    color: var(--text-white, #ffffff);
+
+    box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3);
+
+}
+
+
+
+.category-btn i {
+
+    font-size: 14px;
+
+    width: 16px;
+
+    text-align: center;
+
+}
+
+
+
+/* Filters Content */
+
+.filters-content {
+
+    display: flex;
+
+    flex-direction: column;
+
+    flex-grow: 1;
+
+    min-height: 0;
+
+    overflow: hidden;
+
+}
+
+
+
+.filters-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 10px;
+
+    flex-shrink: 0;
+
+}
+
+
+
+.filters-header h3 {
+
+    color: var(--primary-color, #ff6600);
+
+    font-size: 18px;
+
+    margin: 0;
+
+    font-weight: 600;
+
+    text-transform: capitalize;
+
+}
+
+
+
+.dynamic-filters {
+
+    flex-grow: 1;
+
+    overflow-y: auto;
+
+    padding-right: 5px;
+
+    min-height: 0;
+
+}
+
+
 
 .filter-group {
-    background-color: #222;
+
+    background-color: var(--bg-card, #262626);
+
     padding: 15px;
+
     border-radius: 10px;
-    border: 1px solid #333;
-    margin-bottom: 10px; /* Ensure spacing between groups */
+
+    border: 1px solid #444;
+
+    margin-bottom: 15px;
+
 }
+
+
 
 .filter-header {
+
     display: flex;
+
     justify-content: space-between;
+
     align-items: center;
+
     cursor: pointer;
+
     margin-bottom: 15px;
+
 }
 
+
+
 .filter-group h3 {
-    color: var(--primary-color);
+    color: var(--primary-color, #ff6600);
     font-size: 18px;
     margin: 0;
     font-weight: 600;
@@ -120,6 +358,7 @@
 .filter-toggle-icon {
     color: #888;
     transition: transform 0.3s ease;
+    font-size: 18px;
 }
 
 .filter-group.collapsed .filter-toggle-icon {
@@ -133,257 +372,463 @@
 .filter-options {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    max-height: 300px; /* Limit height for long lists */
+    gap: 15px;
+    max-height: 400px; /* Limit height for long lists */
     overflow-y: auto;
     padding-right: 5px;
 }
 
+
+
 /* Custom Scrollbar for filter options */
+
 .filter-options::-webkit-scrollbar {
+
     width: 4px;
+
 }
+
 .filter-options::-webkit-scrollbar-track {
+
     background: #222;
+
 }
+
 .filter-options::-webkit-scrollbar-thumb {
+
     background: #444;
+
     border-radius: 2px;
+
 }
+
+
 
 /* Main Content Area */
+
 .main-content-area {
+
     flex-grow: 1;
+
     display: flex;
+
     flex-direction: column;
+
     gap: 20px;
+
     overflow: hidden;
+
 }
 
-/* Search Area */
-.search-area-full {
-    width: 100%;
-    padding: 0 20px 20px 20px;
-    background-color: #1a1a1a;
-    flex-shrink: 0;
+
+
+/* Exercises Section */
+
+.exercises-section {
+
+    flex-grow: 1;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 20px;
+
+    overflow: hidden;
+
+    min-height: 0;
+
+    margin-top: 0;
+
 }
+
+
+
+/* Search Container */
 
 .search-container {
+
     position: relative;
+
     width: 100%;
+
+    flex-shrink: 0;
+
 }
+
+
 
 .search-container .search-icon {
     position: absolute;
-    left: 15px;
+    left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: #ccc;
-    font-size: 20px;
+    color: var(--text-gray, #a0a0a0);
+    font-size: 16px;
 }
 
 #exercise-search {
     width: 100%;
-    padding: 15px 15px 15px 50px;
-    background-color: #333;
-    border: 1px solid #444;
+    padding: 10px 10px 10px 40px;
+    background-color: var(--bg-card, #262626);
+    border: 2px solid #444;
     border-radius: 8px;
-    color: white;
-    font-size: 18px;
+    color: var(--text-white, #ffffff);
+    font-size: 14px;
     outline: none;
+    transition: border-color 0.3s ease;
 }
+
+
+
+#exercise-search::placeholder {
+
+    color: var(--text-gray, #a0a0a0);
+
+}
+
+
 
 #exercise-search:focus {
-    border-color: var(--primary-color);
+
+    border-color: var(--primary-color, #ff6600);
+
 }
 
+
+
 /* Exercises Grid */
+
 .exercises-grid-container {
+
     flex-grow: 1;
+
     overflow-y: auto;
-    /* padding: 5px; */ 
+
+    min-height: 0;
+
 }
+
+
 
 .exercises-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    padding: 5px;
 }
 
+
+
 .exercise-card {
-    background-color: #222;
-    border: 1px solid var(--primary-color);
-    border-radius: 12px;
+    background-color: var(--bg-card, #262626);
+    border: 2px solid #444;
+    border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s ease;
     position: relative;
 }
 
+
+
 .exercise-card:hover {
+
     transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(255, 102, 0, 0.2); /* Fallback opacity handled by JS usually, but this is CSS only so maybe use var with rgba? */
+
+    border-color: var(--primary-color, #ff6600);
+
+    box-shadow: 0 8px 25px rgba(255, 102, 0, 0.25);
+
 }
-/* Note: CSS variables inside rgba() is tricky if the variable is a hex code. 
-   Assuming --primary-color is hex. 
-   However, we can just use the variable for border and color. 
-   For shadow, we might need an RGB variable or just keep orange as a default if we can't compute it.
-   Wait, sidebar.js sets --primary-color-rgb. Let's use that if available.
-   FitSuite seems to use --primary-color as hex. 
-   Let's check if --primary-color-rgb is available. 
-   In sidebar.js it IS set. 
-   So I can use rgba(var(--primary-color-rgb), 0.2).
-*/
+
+
+
 
 
 .card-image {
     width: 100%;
-    height: 180px;
+    height: 120px;
     background-color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px;
+    padding: 8px;
 }
+
+
 
 .card-image img {
+
     max-width: 100%;
+
     max-height: 100%;
+
     object-fit: contain;
+
 }
+
+
 
 .card-info {
-    padding: 10px;
+
+    padding: 12px;
+
     text-align: center;
-    border-top: 1px solid #333;
-    background-color: #222;
+
+    border-top: 1px solid #444;
+
+    background-color: var(--bg-card, #262626);
+
 }
+
+
 
 .card-info h4 {
-    color: var(--primary-color);
-    font-size: 16px;
+
+    color: var(--primary-color, #ff6600);
+
+    font-size: 14px;
+
     margin: 0;
+
     white-space: nowrap;
+
     overflow: hidden;
+
     text-overflow: ellipsis;
+
+    font-weight: 500;
+
 }
+
+
 
 /* Toggle Switch */
+
 .toggle-switch {
+
     position: relative;
+
     display: flex;
+
     align-items: center;
+
     cursor: pointer;
+
     gap: 10px;
+
 }
+
+
 
 .toggle-switch input {
+
     opacity: 0;
+
     width: 0;
+
     height: 0;
+
 }
+
+
 
 .slider {
+
     position: relative;
+
     width: 46px;
+
     height: 24px;
+
     background-color: #555;
+
     transition: .4s;
+
     border-radius: 34px;
+
     flex-shrink: 0;
+
 }
+
+
 
 .slider:before {
+
     position: absolute;
+
     content: "";
+
     height: 18px;
+
     width: 18px;
+
     left: 3px;
+
     bottom: 3px;
+
     background-color: white;
+
     transition: .4s;
+
     border-radius: 50%;
+
 }
+
+
 
 input:checked + .slider {
+
     background-color: var(--primary-color);
+
 }
+
+
 
 input:checked + .slider:before {
+
     transform: translateX(22px);
+
 }
+
+
 
 .label-text {
-    color: #ccc;
-    font-size: 15px;
+    color: var(--text-gray, #a0a0a0);
+    font-size: 16px;
     user-select: none;
     text-transform: capitalize;
-    white-space: nowrap; /* Prevent wrapping */
+    white-space: nowrap;
 }
+
+
 
 input:checked ~ .label-text {
-    color: white;
+
+    color: var(--text-white, #ffffff);
+
     font-weight: 500;
+
 }
+
+
 
 /* Scrollbar Styling */
-.filters-sidebar::-webkit-scrollbar,
-.exercises-grid-container::-webkit-scrollbar,
-.filter-options::-webkit-scrollbar {
+
+.dynamic-filters::-webkit-scrollbar,
+
+.exercises-grid-container::-webkit-scrollbar {
+
     width: 8px;
+
 }
 
-.filters-sidebar::-webkit-scrollbar-track,
-.exercises-grid-container::-webkit-scrollbar-track,
-.filter-options::-webkit-scrollbar-track {
-    background: #1a1a1a;
+
+
+.dynamic-filters::-webkit-scrollbar-track,
+
+.exercises-grid-container::-webkit-scrollbar-track {
+
+    background: var(--bg-dark, #1a1a1a);
+
 }
 
-.filters-sidebar::-webkit-scrollbar-thumb,
-.exercises-grid-container::-webkit-scrollbar-thumb,
-.filter-options::-webkit-scrollbar-thumb {
-    background: #444;
-    border-radius: 4px;
-}
 
-.filters-sidebar::-webkit-scrollbar-thumb:hover,
-.exercises-grid-container::-webkit-scrollbar-thumb:hover,
-.filter-options::-webkit-scrollbar-thumb:hover {
+
+.dynamic-filters::-webkit-scrollbar-thumb,
+
+.exercises-grid-container::-webkit-scrollbar-thumb {
+
     background: #555;
+
+    border-radius: 4px;
+
 }
 
-@media (max-width: 900px) {
+
+
+.dynamic-filters::-webkit-scrollbar-thumb:hover,
+
+.exercises-grid-container::-webkit-scrollbar-thumb:hover {
+
+    background: #666;
+
+}
+
+
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .exercise-modal-content {
+        width: 98%;
+        max-width: none;
+    }
+    
+    .filters-sidebar {
+        width: 320px;
+    }
+}
+
+@media (max-width: 950px) {
     .modal-body {
         flex-direction: column;
-        overflow-y: auto; /* Allow scrolling */
+        overflow-y: auto;
+        padding: 15px;
     }
     
     .filters-sidebar {
         width: 100%;
         height: auto;
-        max-height: none;
-        flex-direction: column;
-        overflow-x: hidden;
-        overflow-y: visible;
-        padding-bottom: 20px;
         flex-shrink: 0;
     }
 
-    .filter-group {
-        width: 100%;
-        min-width: 0;
-        height: auto;
-        overflow-y: visible;
-        margin-bottom: 10px;
+    .filter-categories {
+        overflow-x: auto;
+        padding-bottom: 5px;
+        gap: 10px;
+        justify-content: flex-start;
     }
 
-    .main-content-area {
-        overflow: visible;
-        height: auto;
+    .category-btn {
+        min-width: 100px;
+        min-height: 50px;
     }
 
-    .exercises-grid-container {
-        overflow: visible;
-        height: auto;
+    .filters-content {
+        max-height: 300px;
+        margin-top: 10px;
+    }
+
+    .exercises-section {
+        min-height: 400px;
+        margin-top: 10px;
     }
 }
+
+@media (max-width: 600px) {
+    .exercise-modal-content {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+        border: none;
+    }
+    
+    .modal-header {
+        padding: 15px;
+    }
+    
+    .modal-title {
+        font-size: 24px;
+    }
+    
+    .exercises-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 10px;
+    }
+    
+    .card-info h4 {
+        font-size: 12px;
+    }
+}
+

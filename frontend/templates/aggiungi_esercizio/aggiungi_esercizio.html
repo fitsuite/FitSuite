@@ -1,36 +1,114 @@
 <div id="add-exercise-modal" class="modal">
+
     <div class="modal-content exercise-modal-content">
+
         <div class="modal-header">
+
             <h2 class="modal-title">Aggiungi esercizio</h2>
+
             <button class="close-modal-btn" id="close-exercise-modal"><i class="fas fa-times"></i></button>
+
         </div>
+
         
-        <div class="search-area-full">
-            <div class="search-container">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="exercise-search" placeholder="Cerca" autocomplete="off">
-            </div>
-        </div>
 
         <div class="modal-body">
+
+            <!-- Left Sidebar - Filter Categories -->
+
             <aside class="filters-sidebar">
-                <button id="reset-filters-btn" class="reset-filters-btn">
-                    <i class="fas fa-undo"></i> Reset Filtri
-                </button>
-                <!-- Filters will be injected dynamically -->
-                <div id="dynamic-filters"></div>
+
+                <div class="filter-categories">
+
+                    <button class="category-btn active" data-category="bodyParts">
+
+                        <i class="fas fa-user"></i>
+
+                        Parti del corpo
+
+                    </button>
+
+                    <button class="category-btn" data-category="equipments">
+
+                        <i class="fas fa-dumbbell"></i>
+
+                        Attrezzatura
+
+                    </button>
+
+                    <button class="category-btn" data-category="muscles">
+
+                        <i class="fas fa-bullseye"></i>
+
+                        Muscoli
+
+                    </button>
+
+                </div>
+
+                
+
+                <div class="filters-content">
+
+                    <div class="filters-header">
+
+                        <h3 id="current-category-title">Parti del corpo</h3>
+
+                        <button id="reset-filters-btn" class="reset-filters-btn">
+
+                            <i class="fas fa-undo"></i> Reset
+
+                        </button>
+
+                    </div>
+
+                    <div id="dynamic-filters" class="dynamic-filters">
+
+                        <!-- Filters will be injected dynamically -->
+
+                    </div>
+
+                </div>
+
             </aside>
 
-            <div class="main-content-area">
-                <div class="exercises-grid-container">
-                    <div id="exercises-grid" class="exercises-grid">
-                        <!-- Exercises will be injected here -->
-                    </div>
-                    <div id="no-exercises-found" style="display: none; text-align: center; color: var(--text-gray); width: 100%; margin-top: 20px;">
-                        Nessun esercizio trovato.
-                    </div>
+
+
+            <!-- Right Section - Exercises -->
+
+            <main class="exercises-section">
+
+                <div class="search-container">
+
+                    <i class="fas fa-search search-icon"></i>
+
+                    <input type="text" id="exercise-search" placeholder="Cerca esercizi..." autocomplete="off">
+
                 </div>
-            </div>
+
+                
+
+                <div class="exercises-grid-container">
+
+                    <div id="exercises-grid" class="exercises-grid">
+
+                        <!-- Exercises will be injected here -->
+
+                    </div>
+
+                    <div id="no-exercises-found" style="display: none; text-align: center; color: var(--text-gray); width: 100%; margin-top: 20px;">
+
+                        Nessun esercizio trovato.
+
+                    </div>
+
+                </div>
+
+            </main>
+
         </div>
+
     </div>
+
 </div>
+
