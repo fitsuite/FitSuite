@@ -500,7 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="col-rep">
                 <div class="number-input-wrapper">
-                    <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
+                    <input type="text" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 43 || event.charCode === 45 || event.charCode === 47">
                     <div class="spin-btns">
                         <button class="spin-btn spin-up"><i class="fas fa-chevron-up"></i></button>
                         <button class="spin-btn spin-down"><i class="fas fa-chevron-down"></i></button>
@@ -509,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="col-set">
                 <div class="number-input-wrapper">
-                    <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
+                    <input type="text" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 43 || event.charCode === 45 || event.charCode === 47">
                     <div class="spin-btns">
                         <button class="spin-btn spin-up"><i class="fas fa-chevron-up"></i></button>
                         <button class="spin-btn spin-down"><i class="fas fa-chevron-down"></i></button>
@@ -519,7 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="col-rest">
                 <div class="input-with-unit">
                     <div class="number-input-wrapper">
-                        <input type="number" min="0" class="exercise-input center-text" value="30" onkeypress="return (event.charCode >= 48 && event.charCode <= 57)">
+                        <input type="text" class="exercise-input center-text" value="30" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 43 || event.charCode === 45 || event.charCode === 47">
                         <div class="spin-btns">
                             <button class="spin-btn spin-up"><i class="fas fa-chevron-up"></i></button>
                             <button class="spin-btn spin-down"><i class="fas fa-chevron-down"></i></button>
@@ -531,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="col-weight">
                 <div class="input-with-unit">
                     <div class="number-input-wrapper">
-                        <input type="number" min="0" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.key === '.'">
+                        <input type="text" class="exercise-input center-text empty-placeholder" value="" placeholder="-" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 43 || event.charCode === 45 || event.charCode === 47 || event.key === '.'">
                         <div class="spin-btns">
                             <button class="spin-btn spin-up"><i class="fas fa-chevron-up"></i></button>
                             <button class="spin-btn spin-down"><i class="fas fa-chevron-down"></i></button>
@@ -594,32 +594,48 @@ document.addEventListener('DOMContentLoaded', () => {
              }
         });
 
-        // Add input validation for numeric fields
-        const numericInputs = exerciseRow.querySelectorAll('input[type="number"]');
-        numericInputs.forEach(input => {
+        // Unified validation for numeric-like fields (Rep, Set, Rest, Weight)
+        const workoutInputs = exerciseRow.querySelectorAll('.col-rep input, .col-set input, .col-rest input, .col-weight input');
+        workoutInputs.forEach(input => {
             input.addEventListener('input', (e) => {
                 let val = e.target.value;
                 
-                // Remove leading zeros (unless it's just "0")
-                if (val.length > 1 && val.startsWith('0')) {
-                    val = val.replace(/^0+/, '');
-                }
+                // Allow only numbers, '+', '-', '/', and '.' (for weight)
+                val = val.replace(/[^0-9\+\-\/\.]/g, '');
                 
-                // Limit to max 999
-                if (parseInt(val) > 999) {
-                    val = "999";
-                }
+                // Remove redundant separators (e.g. "8++10" -> "8+10")
+                val = val.replace(/[\+\-\/\.]{2,}/g, (match) => match[0]);
+
+                // Split by separators to validate each numeric part
+                const segments = val.split(/([\+\-\/\.])/);
+                const validatedSegments = segments.map(segment => {
+                    // If it's a numeric part
+                    if (/^\d+$/.test(segment)) {
+                        // Remove leading zeros (unless it's just "0")
+                        if (segment.length > 1 && segment.startsWith('0')) {
+                            segment = segment.replace(/^0+/, '');
+                        }
+                        // Limit to max 999
+                        if (parseInt(segment) > 999) {
+                            segment = "999";
+                        }
+                    }
+                    return segment;
+                });
+
+                val = validatedSegments.join('');
+
+                // Limit length for UI consistency
+                if (val.length > 10) val = val.substring(0, 10);
                 
-                // Update value if changed
                 if (e.target.value !== val) {
                     e.target.value = val;
                 }
             });
-            
-            // Prevent non-numeric characters (already partially handled by onkeypress in HTML, 
-            // but let's be thorough for paste/drag)
+
+            // Prevent unwanted characters on keydown (for safety)
             input.addEventListener('keydown', (e) => {
-                if (['e', 'E', '+', '-'].includes(e.key)) {
+                if (['e', 'E'].includes(e.key)) {
                     e.preventDefault();
                 }
             });

@@ -398,13 +398,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         const exerciseRow = document.createElement('div');
                         exerciseRow.className = 'exercise-row';
+                        
+                        // Formatta i valori con '-' se mancanti e aggiunge unità di misura fisse
+                        const reps = exercise.reps || '-';
+                        const sets = exercise.sets || '-';
+                        const rest = exercise.rest ? `${exercise.rest} sec` : '- sec';
+                        const weight = exercise.weight ? `${exercise.weight} kg` : '- kg';
+                        const note = exercise.note || '-';
+
                         exerciseRow.innerHTML = `
                             <span class="exercise-detail col-name">${displayExerciseName}</span>
-                            <span class="exercise-detail col-rep">${exercise.reps}</span>
-                            <span class="exercise-detail col-set">${exercise.sets}</span>
-                            <span class="exercise-detail col-rest">${exercise.rest}</span>
-                            <span class="exercise-detail col-weight">${exercise.weight}</span>
-                            <span class="exercise-detail col-note">${exercise.note}</span>
+                            <span class="exercise-detail col-rep">${reps}</span>
+                            <span class="exercise-detail col-set">${sets}</span>
+                            <span class="exercise-detail col-rest">${rest}</span>
+                            <span class="exercise-detail col-weight">${weight}</span>
+                            <span class="exercise-detail col-note">${note}</span>
                             <span class="exercise-detail col-photo">
                                 <img src="${exercise.photo || 'https://via.placeholder.com/90'}" alt="Esercizio" data-exercise-name="${displayExerciseName}" class="exercise-gif-thumbnail">
                             </span>

@@ -20,7 +20,7 @@
 
 .main-content {
     flex-grow: 1;
-    padding: 60px 0;
+    padding: 20px 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -152,11 +152,11 @@
 
 .card-section {
     background: var(--bg-card);
-    padding: 20px;
+    padding: 15px 20px;
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
     width: 100%;
 }
 
@@ -164,7 +164,7 @@
     color: var(--primary-color);
     font-size: 18px;
     font-weight: 700;
-    margin-bottom: 10px;
+    margin-bottom: 0;
     min-width: 20px;
     display: inline-block;
     outline: none;
@@ -204,9 +204,9 @@
 
 .seduta-header {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     position: relative;
     width: 100%;
 }
@@ -215,9 +215,8 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    justify-content: center;
+    justify-content: flex-start;
     flex: 1;
-    margin: 0 auto;
 }
 
 .collapse-seduta-btn {
@@ -247,9 +246,10 @@
 
 .seduta-exercises-header {
     display: grid;
-    grid-template-columns: 2.5fr 0.6fr 0.6fr 1fr 1fr 2.5fr 100px; /* Adjusted for view mode */
-    gap: 15px;
-    padding: 0 15px;
+    /* Updated grid: Name (left), Rep, Set, Rest, Weight, Note (wider), Photo (right) */
+    grid-template-columns: 1.5fr 0.5fr 0.5fr 0.8fr 0.8fr 3fr minmax(80px, 1fr);
+    gap: 20px;
+    padding: 0 25px; /* Added 25px padding from the borders */
     margin-bottom: 5px;
     align-items: center;
 }
@@ -261,15 +261,23 @@
     white-space: nowrap;
 }
 
-.header-col.col-name, .header-col.col-note {
-    text-align: left;
+.header-col.col-name {
+    text-align: left; /* Align header "Esercizio" to the left */
+}
+
+.header-col.col-photo {
+    text-align: right; /* Align header "Foto" to the right */
+}
+
+.header-col.col-note {
+    text-align: center;
 }
 
 .seduta-content {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    padding: 20px 0 0 0;
+    padding: 10px 0 0 0;
 }
 
 /* Stili per il Popup Dettaglio Esercizio */
@@ -1066,14 +1074,16 @@
 
 .exercise-row {
     display: grid;
-    grid-template-columns: 2.5fr 0.6fr 0.6fr 1fr 1fr 2.5fr 100px; /* Adjusted for view mode */
-    gap: 15px;
-    padding: 15px;
+    /* Updated grid: Name (left), Rep, Set, Rest, Weight, Note (wider), Photo (right) */
+    grid-template-columns: 1.5fr 0.5fr 0.5fr 0.8fr 0.8fr 3fr minmax(80px, 1fr);
+    gap: 20px;
+    padding: 10px 25px; /* Added 25px horizontal padding from the borders */
     background: #333;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     align-items: center;
     position: relative;
+    margin-bottom: 15px;
 }
 
 .exercise-detail {
@@ -1084,12 +1094,16 @@
 }
 
 .exercise-detail.col-name {
-    text-align: left;
+    text-align: left; /* Name aligned left against the 25px padding */
     font-weight: 500;
 }
 
+.exercise-detail.col-photo {
+    text-align: right; /* Photo aligned right against the 25px padding */
+}
+
 .exercise-detail.col-note {
-    text-align: left;
+    text-align: center;
     white-space: pre-wrap; /* Preserve whitespace and allow wrapping */
 }
 
@@ -1100,7 +1114,8 @@
     border-radius: 6px;
     border: 1px solid #555;
     display: block;
-    margin: 0 auto;
+    margin-right: 0; /* Align to the right of the column */
+    margin-left: auto; /* Align to the right of the column */
 }
 
 /* Tablet/Laptop scaling */
@@ -1121,15 +1136,15 @@
     }
     
     .seduta-exercises-header {
-        grid-template-columns: 2fr 0.8fr 0.8fr 1.2fr 1.2fr 2fr 70px; /* Optimized proportions */
-        gap: 8px;
-        padding: 0 10px;
+        grid-template-columns: 1.2fr 0.5fr 0.5fr 0.8fr 0.8fr 2fr minmax(60px, 1fr);
+        gap: 10px;
+        padding: 0 15px;
     }
 
     .exercise-row {
-        grid-template-columns: 2fr 0.8fr 0.8fr 1.2fr 1.2fr 2fr 70px; /* Match header */
-        gap: 8px;
-        padding: 10px;
+        grid-template-columns: 1.2fr 0.5fr 0.5fr 0.8fr 0.8fr 2fr minmax(60px, 1fr);
+        gap: 10px;
+        padding: 10px 15px;
     }
     
     .header-col {
