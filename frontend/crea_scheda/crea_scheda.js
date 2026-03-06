@@ -488,12 +488,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelDeleteBtn = document.getElementById('cancel-delete');
 
     function createExerciseRowHTML(exercise) {
+        const rawName = exercise.name_it || exercise.name;
+        const capitalizedName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+        
         return `
             <div class="exercise-drag-handle">
                 <i class="fas fa-grip-lines"></i>
             </div>
             <div class="col-name">
-                <input type="text" class="exercise-input name-input" value="${exercise.name_it || exercise.name}" readonly title="${exercise.name_it || exercise.name}">
+                <input type="text" class="exercise-input name-input" value="${capitalizedName}" readonly title="${capitalizedName}">
             </div>
             <div class="col-rep">
                 <div class="number-input-wrapper">
@@ -589,6 +592,37 @@ document.addEventListener('DOMContentLoaded', () => {
              } else {
                  console.error("Cannot open modal: missing modal or sedutaId");
              }
+        });
+
+        // Add input validation for numeric fields
+        const numericInputs = exerciseRow.querySelectorAll('input[type="number"]');
+        numericInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                let val = e.target.value;
+                
+                // Remove leading zeros (unless it's just "0")
+                if (val.length > 1 && val.startsWith('0')) {
+                    val = val.replace(/^0+/, '');
+                }
+                
+                // Limit to max 999
+                if (parseInt(val) > 999) {
+                    val = "999";
+                }
+                
+                // Update value if changed
+                if (e.target.value !== val) {
+                    e.target.value = val;
+                }
+            });
+            
+            // Prevent non-numeric characters (already partially handled by onkeypress in HTML, 
+            // but let's be thorough for paste/drag)
+            input.addEventListener('keydown', (e) => {
+                if (['e', 'E', '+', '-'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
         });
 
         menuTrigger.addEventListener('click', (e) => {
@@ -770,7 +804,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="header-col col-rep">Rep</span>
                     <span class="header-col col-set">Serie</span>
                     <span class="header-col col-rest">Recupero</span>
-                    <span class="header-col col-weight">Peso (kg)</span>
+                    <span class="header-col col-weight">Peso</span>
                     <span class="header-col col-note">Nota</span>
                     <span class="header-col col-photo">Foto</span>
                     <span class="header-col col-actions"></span>

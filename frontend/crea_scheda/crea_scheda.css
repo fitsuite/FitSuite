@@ -579,8 +579,8 @@ body {
 .seduta-exercises-header {
     display: grid;
     /* Updated columns: Name, Rep, Set, Rest, Weight, Note, Photo, Actions */
-    /* Note column changed to 100px to match Photo */
-    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr 100px 100px 20px;
+    /* Changed fixed 100px to minmax for responsiveness */
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr minmax(120px, 1.2fr) minmax(80px, 1fr) 20px;
     gap: 20px; /* Increased gap from 8px */
     padding: 0 15px;
     margin-bottom: 5px;
@@ -595,7 +595,8 @@ body {
 }
 
 .header-col.col-name {
-    text-align: left;
+    text-align: center; /* Changed from right to center to be centered above input */
+    padding-right: 0; /* Removed padding for centering */
 }
 
 .header-col.col-note {
@@ -606,7 +607,7 @@ body {
 .exercise-row {
     display: grid !important;
     /* Match header columns */
-    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr 100px 100px 20px;
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr minmax(120px, 1.2fr) minmax(80px, 1fr) 20px;
     gap: 20px; /* Increased gap from 8px */
     padding: 8px;
     background: #333; /* Darker background distinct from seduta card */
@@ -667,7 +668,7 @@ body {
     border: 1px solid #444; 
     color: white;
     border-radius: 6px;
-    padding: 8px;
+    padding: 12px 8px; /* Increased top/bottom padding by 4px each for 8px total height increase */
     width: 100%;
     font-size: 14px;
     outline: none;
@@ -689,7 +690,8 @@ body {
 }
 
 .name-input {
-    text-align: left;
+    text-align: left; /* Changed from right to left as requested */
+    padding-left: 15px; /* Replaced padding-right with padding-left for left alignment */
     font-weight: 500;
     font-size: 13px; /* Reduced by 1 from 14px */
     text-overflow: ellipsis;
@@ -714,7 +716,7 @@ body {
 .col-rep .exercise-input,
 .col-set .exercise-input {
     width: 100%;
-    max-width: 60px; /* Restrict width */
+    max-width: 60px; /* Max width 60px as requested */
     margin: 0 auto;
     display: block;
 }
@@ -723,8 +725,10 @@ body {
 .col-set .number-input-wrapper,
 .col-rest .number-input-wrapper,
 .col-weight .number-input-wrapper {
-    width: 60px;
-    flex-shrink: 0;
+    width: 100%;
+    max-width: 60px; /* Max width 60px as requested */
+    flex-shrink: 1; /* Allows shrinking on small screens */
+    margin: 0 auto; /* Center within column */
 }
 
 .col-rest .exercise-input,
@@ -738,20 +742,23 @@ body {
     font-family: inherit;
     overflow: hidden;
     background: #222;
-    width: 90px; /* Match photo width */
+    width: 100%; 
+    max-width: 120px; /* Increased from 90px */
     margin: 0 auto; /* Center like photo */
     display: block;
 }
 
 .col-photo img {
-    width: 90px; /* Increased size */
-    height: 90px; /* Increased size */
+    width: 100%; 
+    max-width: 90px; /* Max width 90px as requested */
+    height: auto;
+    aspect-ratio: 1;
     object-fit: cover;
     border-radius: 6px;
     border: 1px solid #555;
     display: block;
     margin: 0 auto;
-    transform: translateX(15px); /* Move 15px to the right */
+    /* Removed transform: translateX(15px) to center properly */
 }
 
 /* Exercise Action Menu */
@@ -820,7 +827,7 @@ body {
 }
 
 .superset-wrapper .exercise-row {
-    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr 100px 100px 20px !important;
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr minmax(80px, 1fr) minmax(80px, 1fr) 20px !important;
     margin-bottom: 0 !important;
     border: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
