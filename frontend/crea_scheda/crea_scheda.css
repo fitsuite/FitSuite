@@ -90,6 +90,14 @@ body {
     flex-direction: column;
     gap: 0;
     padding: 0 20px;
+    transition: max-width 0.3s ease;
+}
+
+/* Allow more space on very large screens for rectangular notes */
+@media (min-width: 1600px) {
+    .crea-scheda-wrapper {
+        max-width: 1400px;
+    }
 }
 
 .card-section {
@@ -579,8 +587,8 @@ body {
 .seduta-exercises-header {
     display: grid;
     /* Updated columns: Name, Rep, Set, Rest, Weight, Note, Photo, Actions */
-    /* Changed fixed 100px to minmax for responsiveness */
-    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr minmax(120px, 1.2fr) minmax(80px, 1fr) 20px;
+    /* Note column adapts between 90px (square) and 120px max by default */
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr minmax(90px, 1fr) minmax(80px, 1fr) 20px;
     gap: 20px; /* Increased gap from 8px */
     padding: 0 15px;
     margin-bottom: 5px;
@@ -607,7 +615,7 @@ body {
 .exercise-row {
     display: grid !important;
     /* Match header columns */
-    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr minmax(120px, 1.2fr) minmax(80px, 1fr) 20px;
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr minmax(90px, 1fr) minmax(80px, 1fr) 20px;
     gap: 20px; /* Increased gap from 8px */
     padding: 8px;
     background: #333; /* Darker background distinct from seduta card */
@@ -738,14 +746,23 @@ body {
 
 .note-input {
     resize: none;
-    height: 90px; /* Increased height */
+    height: 90px; /* Square height 90px */
     font-family: inherit;
     overflow: hidden;
     background: #222;
     width: 100%; 
-    max-width: 120px; /* Increased from 90px */
+    min-width: 90px; /* Min width to keep it square (90x90) */
+    max-width: 120px; /* Default square max width */
     margin: 0 auto; /* Center like photo */
     display: block;
+    transition: max-width 0.3s ease;
+}
+
+/* On larger screens, allow notes to become rectangular */
+@media (min-width: 1400px) {
+    .note-input {
+        max-width: 300px; /* Make it rectangular */
+    }
 }
 
 .col-photo img {
@@ -827,7 +844,7 @@ body {
 }
 
 .superset-wrapper .exercise-row {
-    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr minmax(80px, 1fr) minmax(80px, 1fr) 20px !important;
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr minmax(90px, 1fr) minmax(80px, 1fr) 20px !important;
     margin-bottom: 0 !important;
     border: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
