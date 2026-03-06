@@ -80,6 +80,61 @@ document.addEventListener('DOMContentLoaded', () => {
         'Rosa': 'linear-gradient(135deg, #2b1625 0%, #1a1a1a 100%)'
     };
 
+    // --- Popup Navigation Management ---
+    function pushPopupState() {
+        if (!history.state || !history.state.popupOpen) {
+            history.pushState({ popupOpen: true }, '');
+        }
+    }
+
+    function isAnyPopupOpen() {
+        const calendarModal = document.getElementById('calendar-modal');
+        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+        const addExerciseModal = document.getElementById('add-exercise-modal');
+
+        return (calendarModal && calendarModal.classList.contains('active')) ||
+               (deleteConfirmModal && deleteConfirmModal.classList.contains('active')) ||
+               (addExerciseModal && addExerciseModal.style.display === 'flex');
+    }
+
+    window.addEventListener('popstate', (event) => {
+        // Calendar Modal
+        const calendarModal = document.getElementById('calendar-modal');
+        if (calendarModal && calendarModal.classList.contains('active')) {
+            hideCalendarModal(true);
+        }
+
+        // Delete Seduta Modal
+        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+        if (deleteConfirmModal && deleteConfirmModal.classList.contains('active')) {
+            hideDeleteModal(true);
+        }
+
+        // Add Exercise Modal (handles its own popstate if AddExerciseModal object is used)
+        // But we can ensure it here too if needed.
+    });
+
+    function hideCalendarModal(fromBackAction = false) {
+        const calendarModal = document.getElementById('calendar-modal');
+        if (calendarModal && calendarModal.classList.contains('active')) {
+            calendarModal.classList.remove('active');
+            if (!fromBackAction && history.state && history.state.popupOpen) {
+                history.back();
+            }
+        }
+    }
+
+    function hideDeleteModal(fromBackAction = false) {
+        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+        if (deleteConfirmModal && deleteConfirmModal.classList.contains('active')) {
+            deleteConfirmModal.classList.remove('active');
+            sedutaToDelete = null;
+            if (!fromBackAction && history.state && history.state.popupOpen) {
+                history.back();
+            }
+        }
+    }
+
     // Helper to wait for sidebar
     function waitForSidebar() {
         return new Promise(resolve => {
@@ -379,6 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalContent.style.transform = '';
         modalContent.style.margin = '';
 
+        pushPopupState();
         calendarModal.classList.add('active');
         renderCalendar();
     });
@@ -386,12 +442,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Close modal when clicking outside content
     calendarModal.addEventListener('click', (e) => {
         if (e.target === calendarModal) {
-            calendarModal.classList.remove('active');
+            hideCalendarModal(false);
         }
     });
 
     closeCalendarBtn.addEventListener('click', () => {
-        calendarModal.classList.remove('active');
+        hideCalendarModal(false);
     });
 
     prevMonthBtn.addEventListener('click', (e) => {
@@ -475,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dateRangeDisplay.textContent = selectedStartDate.toLocaleDateString('it-IT', options);
             }
             dateRangeDisplay.classList.add('date-set');
-            calendarModal.classList.remove('active');
+            hideCalendarModal(false);
         }
     });
 
@@ -945,6 +1001,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         deleteBtn.addEventListener('click', () => {
             sedutaToDelete = card;
+            pushPopupState();
             deleteConfirmModal.classList.add('active');
             dropdown.classList.remove('active');
         });
@@ -1026,14 +1083,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sedutaToDelete) {
             sedutaToDelete.remove();
             updateSeduteNumbers();
-            deleteConfirmModal.classList.remove('active');
-            sedutaToDelete = null;
+            hideDeleteModal(false);
         }
     });
 
     cancelDeleteBtn.addEventListener('click', () => {
-        deleteConfirmModal.classList.remove('active');
-        sedutaToDelete = null;
+        hideDeleteModal(false);
     });
 
     // Close dropdowns on click outside

@@ -307,6 +307,13 @@ const AddExerciseModal = {
                 }
             });
         }
+
+        // Handle back button to close modal
+        window.addEventListener('popstate', (event) => {
+            if (modal && modal.style.display === 'flex') {
+                this.close(true);
+            }
+        });
     },
 
     filterExercises: function() {
@@ -351,17 +358,27 @@ const AddExerciseModal = {
         this.targetSedutaId = sedutaId;
         const modal = document.getElementById('add-exercise-modal');
         if (modal) {
+            // Push dummy state to history for back button handling
+            if (!history.state || !history.state.popupOpen) {
+                history.pushState({ popupOpen: true }, '');
+            }
+            
             modal.style.display = 'flex';
             // Force redraw/rendering if needed
             this.renderExercises(); 
         }
     },
 
-    close: function() {
+    close: function(fromBackAction = false) {
         this.targetSedutaId = null;
         const modal = document.getElementById('add-exercise-modal');
         if (modal) {
             modal.style.display = 'none';
+            
+            // If closed manually (not via back button), remove the state from history
+            if (!fromBackAction && history.state && history.state.popupOpen) {
+                history.back();
+            }
         }
     }
 };
