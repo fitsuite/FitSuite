@@ -1,52 +1,47 @@
-/* Sidebar Styling */
+/* Sidebar Styling - Stesso design per entrambi gli stati */
 .sidebar {
     box-sizing: border-box;
-    width: clamp(215px, 18vw, 320px); /* Dimensione lineare: min 215px, ideale 18vw, max 320px */
+    width: 215px; /* Larghezza fissa identica per entrambi gli stati */
     background-color: #1a1a1a;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
-    padding: 10px 10px 10px 10px; /* 10px sopra, 10px destra, 10px sotto, 10px sinistra */
+    padding: 10px 10px 10px 10px; /* Padding identico */
     position: fixed;
     top: 0;
     bottom: 0;
     left: 0;
-    transition: width 0.3s ease;
+    transition: transform 0.3s ease; /* Solo transform per mobile, non width */
     z-index: 1000;
     overflow: hidden;
     flex-shrink: 0;
 }
 
-/* Container per riservare spazio alla sidebar */
+/* Container per riservare spazio alla sidebar - sempre visibile su desktop */
 .sidebar-spacer {
-    width: clamp(215px, 18vw, 320px);
+    width: 215px; /* Larghezza fissa identica alla sidebar */
     flex-shrink: 0;
-    display: none; /* Nascosto di default */
+    display: block; /* Sempre visibile su desktop */
 }
 
-/* Mostra lo spacer solo su desktop */
-@media (min-width: 993px) {
+/* Nascondi solo su mobile */
+@media (max-width: 992px) {
     .sidebar-spacer {
-        display: block;
+        display: none;
     }
 }
 
-/* Mobile Sidebar Styles */
+/* Mobile Sidebar Styles - Solo transform per nascondere/mostrare */
 @media (max-width: 992px) {
     .sidebar {
-        position: fixed;
-        transform: translateX(-100%);
-        width: 215px; /* Allineato alla larghezza desktop ridotta */
+        transform: translateX(-100%); /* Nascondi a sinistra */
         box-shadow: 2px 0 10px rgba(0,0,0,0.5);
-        top: 0;
-        left: 0;
         overflow-y: auto;
         z-index: 1002;
-        flex-shrink: 0;
     }
 
     .sidebar.open {
-        transform: translateX(0);
+        transform: translateX(0); /* Mostra */
     }
 
     .sidebar-nav {
@@ -249,6 +244,11 @@
     min-height: 0; /* Important for flexbox with overflow */
 }
 
+.sidebar-spacer-flex {
+    flex-grow: 1;
+    min-height: 20px; /* Spazio minimo per separare il contenuto dal footer */
+}
+
 .nav-section-title {
     display: flex;
     align-items: center;
@@ -269,14 +269,13 @@
     padding-bottom: 0;
     overflow-y: auto;
     flex-grow: 1;
-    max-height: calc(100vh - 402px);
+    max-height: calc(100vh - 252px); /* Aumentato il valore per ridurre l'altezza massima */
     width: 100%;
     margin: 15px 0 15px 0;
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
     transition: scrollbar-color 0.3s ease;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
-    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+    overscroll-behavior: contain;
 }
 
 .nav-section:hover .routine-list {
@@ -310,7 +309,7 @@
 /* For mobile */
 @media (max-width: 992px) {
     .routine-list {
-        max-height: calc(100vh - 382px); /* Further adjusted for mobile to ensure footer is always visible */
+        max-height: calc(100vh - 332px); /* Aumentato di 20px per compensare il padding del footer */
     }
 }
 
@@ -360,7 +359,7 @@
     margin-top: 0;
     border-top: 0;
     padding-top: 0;
-    padding-bottom: 0px;
+    padding-bottom: 20px; /* Aggiunto padding inferiore per lasciare spazio */
     flex-shrink: 0;
     position: sticky;
     bottom: -20px;

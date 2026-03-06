@@ -203,7 +203,7 @@ body {
 
 .seduta-card .drag-handle {
     position: absolute;
-    left: -35px; /* Move outside to the left */
+    left: -25px; /* Move outside to the left */
     top: 50%;
     transform: translateY(-50%);
     margin: 0;
@@ -358,6 +358,10 @@ body {
 
 .summary-item i {
     color: var(--primary-color);
+}
+
+.seduta-body {
+    padding-left: 15px;
 }
 
 .seduta-content {
@@ -574,9 +578,9 @@ body {
 /* Modified grid for larger photos and better weight column */
 .seduta-exercises-header {
     display: grid;
-    /* Updated columns: Drag, Name, Rep, Set, Rest, Weight, Note, Photo, Actions */
+    /* Updated columns: Name, Rep, Set, Rest, Weight, Note, Photo, Actions */
     /* Note column changed to 100px to match Photo */
-    grid-template-columns: 40px 2fr 0.6fr 0.6fr 1fr 1fr 100px 100px 40px;
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr 100px 100px 40px;
     gap: 20px; /* Increased gap from 8px */
     padding: 0 15px;
     margin-bottom: 5px;
@@ -602,7 +606,7 @@ body {
 .exercise-row {
     display: grid !important;
     /* Match header columns */
-    grid-template-columns: 40px 2fr 0.6fr 0.6fr 1fr 1fr 100px 100px 40px;
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr 100px 100px 40px;
     gap: 20px; /* Increased gap from 8px */
     padding: 15px;
     background: #333; /* Darker background distinct from seduta card */
@@ -622,6 +626,11 @@ body {
     align-items: center;
     gap: 3px; /* Space between lines */
     font-size: 14px;
+    position: absolute;
+    left: -25px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 10px 5px;
 }
 
 .exercise-drag-handle i {
@@ -771,12 +780,10 @@ body {
     margin-bottom: 15px;
     position: relative;
     padding: 7.5px 15px; /* Half vertical padding to share with rows */
-    gap: 20px; /* Horizontal gap between handle and list */
     align-items: stretch; /* Ensure handle stretches */
 }
 
 .superset-drag-handle {
-    width: 40px; /* Match grid column width */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -787,8 +794,11 @@ body {
     color: var(--text-gray);
     gap: 3px;
     font-size: 14px;
-    padding: 0;
-    flex-shrink: 0;
+    position: absolute;
+    left: -25px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 10px 5px;
 }
 
 .superset-drag-handle i {

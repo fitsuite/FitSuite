@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userUsernameMain = document.getElementById('user-username-main');
     const userEmailMain = document.getElementById('user-email-main');
     const userPhone = document.getElementById('user-phone');
+    const editUsernameBtn = document.getElementById('edit-username-btn');
 
     // DOM Elements - Subscription
     const subscriptionExpiry = document.getElementById('subscription-expiry');
@@ -775,6 +776,213 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     } else {
         console.warn('Elemento con ID "confirm-notifications-change" non trovato nell\'HTML');
+    }
+
+    // Edit Username functionality
+    if (editUsernameBtn) {
+        editUsernameBtn.addEventListener('click', async () => {
+            await showUsernameChangePopup();
+        });
+    } else {
+        console.warn('Elemento con ID "edit-username-btn" non trovato nell\'HTML');
+    }
+
+    // Function to show username change popup
+    async function showUsernameChangePopup() {
+        try {
+            // Get current username (remove @ if present)
+            const currentUsername = userUsernameMain.textContent.replace('@', '');
+            
+            const newUsername = await window.showPrompt(
+                'Modifica username (3-20 caratteri, solo lettere, numeri e _):',
+                currentUsername,
+                'Modifica Username'
+            );
+
+            if (newUsername === null) {
+                return; // User cancelled
+            }
+
+            const trimmedUsername = newUsername.trim();
+
+            // Validate username
+            if (trimmedUsername.length < 3) {
+                await window.showErrorToast('L\'username deve contenere almeno 3 caratteri.');
+                await showUsernameChangePopup();
+                return;
+            }
+
+            if (trimmedUsername.length > 20) {
+                await window.showErrorToast('L\'username non può superare i 20 caratteri.');
+                await showUsernameChangePopup();
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
+                await window.showErrorToast('L\'username può contenere solo lettere, numeri e underscore.');
+                await showUsernameChangePopup();
+                return;
+            }
+
+            // Check if username is the same as current
+            if (trimmedUsername === currentUsername) {
+                await window.showSuccessToast('L\'username è già lo stesso.');
+                return;
+            }
+
+            // Show loading state
+            if (window.showLoadingToast) {
+                window.showLoadingToast('Verifica disponibilità username...');
+            }
+
+            // Check if username is unique
+            const isUnique = await isUsernameUnique(trimmedUsername);
+            
+            // Hide loading state
+            if (window.hideLoadingToast) {
+                window.hideLoadingToast();
+            }
+
+            if (!isUnique) {
+                await window.showErrorToast('Questo username è già stato scelto da un altro utente. Scegline un altro.');
+                await showUsernameChangePopup();
+                return;
+            }
+
+            // Update username in database
+            const updated = await updateUserUsername(currentUser.uid, trimmedUsername);
+            
+            if (updated) {
+                // Update UI
+                userUsernameMain.textContent = `@${trimmedUsername}`;
+                
+                // Update avatar
+                if (userInitialMain) {
+                    loadUserAvatar(currentUser.email, trimmedUsername, userInitialMain, 90);
+                }
+                
+                // Update local cache
+                updateLocalUserProfile(currentUser.uid, { username: trimmedUsername });
+                
+                // Dispatch custom event to notify other components
+                window.dispatchEvent(new CustomEvent('usernameUpdated', { 
+                    detail: { userId: currentUser.uid, username: trimmedUsername } 
+                }));
+                
+                await window.showSuccessToast(`Username aggiornato con successo a @${trimmedUsername}!`);
+            } else {
+                await window.showErrorToast('Errore nell\'aggiornamento dell\'username. Riprova.');
+            }
+
+        } catch (error) {
+            console.error('Error changing username:', error);
+            if (window.hideLoadingToast) {
+                window.hideLoadingToast();
+            }
+            await window.showErrorToast('Errore durante il cambio username: ' + error.message);
+        }
+    }
+
+    // Function to check if username is unique (reusing from username_checker.js logic)
+    async function isUsernameUnique(username) {
+        try {
+            console.log('Settings - Checking username uniqueness for:', username);
+            
+            const db = firebase.firestore();
+            
+            // Query only the users collection since we have permissions for it
+            const usersSnapshot = await db.collection('users')
+                .where('username', '==', username)
+                .limit(1)
+                .get();
+            
+            if (usersSnapshot.empty) {
+                console.log('Settings - Username is available (verified via users collection)');
+                return true;
+            } else {
+                console.log('Settings - Username already exists in users collection');
+                return false;
+            }
+            
+        } catch (error) {
+            console.error('Settings - Error checking username uniqueness:', error);
+            // Safer to assume not unique on error
+            return false;
+        }
+    }
+
+    // Function to update username in database
+    async function updateUserUsername(userId, username) {
+        try {
+            const db = firebase.firestore();
+            
+            // Show loading state
+            if (window.showLoadingToast) {
+                window.showLoadingToast('Salvataggio username...');
+            }
+            
+            // Simple update to users collection only
+            await db.collection('users').doc(userId).update({
+                username: username
+            });
+            
+            // Update local cache after successful update
+            try {
+                // Update CacheManager if available
+                if (window.CacheManager) {
+                    const cachedProfile = localStorage.getItem(`userProfile_${userId}`);
+                    if (cachedProfile) {
+                        const profile = JSON.parse(cachedProfile);
+                        profile.username = username;
+                        localStorage.setItem(`userProfile_${userId}`, JSON.stringify(profile));
+                    }
+                }
+                
+                // Update sidebar if loaded
+                const sidebarUsername = document.querySelector('#sidebar-username');
+                if (sidebarUsername) {
+                    sidebarUsername.textContent = `@${username}`;
+                }
+                
+                // Update any username elements in the current page
+                const usernameElements = document.querySelectorAll('[data-username]');
+                usernameElements.forEach(element => {
+                    element.textContent = `@${username}`;
+                });
+                
+            } catch (cacheError) {
+                console.warn('Error updating local cache:', cacheError);
+            }
+            
+            // Hide loading state
+            if (window.hideLoadingToast) {
+                window.hideLoadingToast();
+            }
+            
+            console.log('Username updated successfully');
+            return true;
+            
+        } catch (error) {
+            console.error('Error updating username:', error);
+            
+            // Hide loading state
+            if (window.hideLoadingToast) {
+                window.hideLoadingToast();
+            }
+            
+            // Handle specific errors
+            if (error.message && error.message.includes('permission-denied')) {
+                if (window.showErrorToast) {
+                    window.showErrorToast('Permessi insufficienti per salvare l\'username. Contatta l\'amministratore.');
+                }
+            } else {
+                if (window.showErrorToast) {
+                    window.showErrorToast('Errore nel salvataggio dell\'username. Riprova.');
+                }
+            }
+            
+            return false;
+        }
     }
 
     // Delete Account Logic
