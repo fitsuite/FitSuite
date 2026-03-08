@@ -114,6 +114,7 @@ body {
     color: var(--primary-color);
     font-size: 18px; /* Slightly smaller */
     font-weight: 700;
+    margin-top: 0;
     margin-bottom: 10px; /* Reduced margin */
     min-width: 20px;
     display: inline-block;

@@ -20,7 +20,7 @@
 
 .main-content {
     flex-grow: 1;
-    padding: 20px 0;
+    padding: 60px 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -30,15 +30,13 @@
 
 .content-header {
     width: 100%;
-    max-width: 1200px; /* Aggiunto per allineare con il wrapper */
-    margin: 0 auto 30px auto; /* Centra l'header e aggiunge margine inferiore */
+    margin-bottom: 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
     padding: 0 5%;
     gap: 20px;
-    flex-wrap: wrap;
 }
 
 .content-header h1 {
@@ -61,13 +59,13 @@
     background-color: transparent;
     color: var(--primary-color);
     border: 1px solid var(--primary-color);
-    padding: 12px 25px;
+    padding: 12px 35px;
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 14px;
     font-weight: 500;
-    min-width: 120px;
+    min-width: 160px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
@@ -85,7 +83,7 @@
     background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 12px 25px;
+    padding: 12px 35px;
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.2s;
@@ -93,7 +91,7 @@
     font-weight: 500;
     position: static;
     transform: none;
-    min-width: 120px;
+    min-width: 160px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
@@ -110,7 +108,7 @@
     background-color: transparent;
     color: #ff4444;
     border: 1px solid #ff4444;
-    padding: 10px 20px;
+    padding: 12px 35px;
     border-radius: 25px;
     cursor: pointer;
     transition: all 0.2s;
@@ -119,7 +117,9 @@
     white-space: nowrap;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+    min-width: 160px;
 }
 
 .remove-saved-btn:hover {
@@ -152,7 +152,7 @@
 
 .card-section {
     background: var(--bg-card);
-    padding: 15px 20px;
+    padding: 10px 20px 15px 20px; /* 10px top padding as requested */
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
@@ -164,6 +164,7 @@
     color: var(--primary-color);
     font-size: 18px;
     font-weight: 700;
+    margin-top: 0;
     margin-bottom: 0;
     min-width: 20px;
     display: inline-block;
@@ -179,7 +180,7 @@
 }
 
 #scheda-name {
-    font-size: 28px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--text-white);
     margin: 0;
@@ -189,7 +190,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    color: var(--text-gray);
+    color: white;
     font-size: 16px;
 }
 
@@ -246,10 +247,10 @@
 
 .seduta-exercises-header {
     display: grid;
-    /* Updated grid: Name (left), Rep, Set, Rest, Weight, Note (wider), Photo (right) */
-    grid-template-columns: 1.5fr 0.5fr 0.5fr 0.8fr 0.8fr 3fr minmax(80px, 1fr);
+    /* Match crea_scheda grid: Name, Rep, Set, Rest, Weight, Note (minmax), Photo */
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr minmax(90px, 1fr) minmax(80px, 1fr);
     gap: 20px;
-    padding: 0 25px; /* Added 25px padding from the borders */
+    padding: 0 25px;
     margin-bottom: 5px;
     align-items: center;
 }
@@ -266,7 +267,7 @@
 }
 
 .header-col.col-photo {
-    text-align: right; /* Align header "Foto" to the right */
+    text-align: center; /* Center "Foto" header relative to the photo column */
 }
 
 .header-col.col-note {
@@ -1074,8 +1075,8 @@
 
 .exercise-row {
     display: grid;
-    /* Updated grid: Name (left), Rep, Set, Rest, Weight, Note (wider), Photo (right) */
-    grid-template-columns: 1.5fr 0.5fr 0.5fr 0.8fr 0.8fr 3fr minmax(80px, 1fr);
+    /* Match crea_scheda grid: Name, Rep, Set, Rest, Weight, Note (minmax), Photo */
+    grid-template-columns: 2fr 0.6fr 0.6fr 1fr 1fr minmax(90px, 1fr) minmax(80px, 1fr);
     gap: 20px;
     padding: 10px 25px; /* Added 25px horizontal padding from the borders */
     background: #333;
@@ -1099,7 +1100,7 @@
 }
 
 .exercise-detail.col-photo {
-    text-align: right; /* Photo aligned right against the 25px padding */
+    text-align: center; /* Center photo within its column */
 }
 
 .exercise-detail.col-note {
@@ -1114,8 +1115,7 @@
     border-radius: 6px;
     border: 1px solid #555;
     display: block;
-    margin-right: 0; /* Align to the right of the column */
-    margin-left: auto; /* Align to the right of the column */
+    margin: 0 auto; /* Center photo horizontally */
 }
 
 /* Tablet/Laptop scaling */

@@ -487,8 +487,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Formatta i valori con '-' se mancanti e aggiunge unità di misura fisse
                         const reps = exercise.reps || '-';
                         const sets = exercise.sets || '-';
-                        const rest = exercise.rest ? `${exercise.rest} sec` : '- sec';
-                        const weight = exercise.weight ? `${exercise.weight} kg` : '- kg';
+                        const rest = exercise.rest ? `${exercise.rest} <span style="color: var(--text-gray)">sec</span>` : `- <span style="color: var(--text-gray)">sec</span>`;
+                        const weight = exercise.weight ? `${exercise.weight} <span style="color: var(--text-gray)">kg</span>` : `- <span style="color: var(--text-gray)">kg</span>`;
                         const note = exercise.note || '-';
 
                         exerciseRow.innerHTML = `
