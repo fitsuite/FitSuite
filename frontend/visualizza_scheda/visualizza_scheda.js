@@ -36,13 +36,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentUser = null;
     let allExercisesData = []; // Variabile per memorizzare tutti i dati degli esercizi
+    let exercisesMap = new Map(); // Map per lookup veloci per nome
+
+    // Store routine data globally for popup access
+    let globalRoutineData = null;
+
+    // Funzione per tradurre i nomi degli esercizi se il database è caricato
+    function updateExerciseNames() {
+        if (!allExercisesData || allExercisesData.length === 0) return;
+        
+        const exerciseElements = document.querySelectorAll('.col-name[data-original-name]');
+        exerciseElements.forEach(el => {
+            const originalName = el.dataset.originalName;
+            const fullExerciseData = exercisesMap.get(originalName);
+            if (fullExerciseData && fullExerciseData.name_it) {
+                el.textContent = fullExerciseData.name_it;
+                // Update also the img alt and dataset if they exist
+                const row = el.closest('.exercise-row');
+                if (row) {
+                    const img = row.querySelector('.exercise-gif-thumbnail');
+                    if (img) {
+                        img.alt = fullExerciseData.name_it;
+                        img.dataset.exerciseName = fullExerciseData.name_it;
+                    }
+                }
+            }
+        });
+    }
 
     // Carica i dati degli esercizi all'avvio
     async function loadAllExercisesData() {
         try {
             const response = await fetch('../../backend/data_it/esercizi_DATABASE_TOTALE.json');
             allExercisesData = await response.json();
-            console.log("Dati esercizi caricati:", allExercisesData);
+            
+            // Crea una Map per lookup veloci
+            exercisesMap = new Map(allExercisesData.map(ex => [ex.name, ex]));
+            
+            console.log("Dati esercizi caricati e mappati");
+            // Dopo il caricamento, aggiorna i nomi se la scheda è già renderizzata
+            updateExerciseNames();
         } catch (error) {
             console.error("Errore nel caricamento dei dati degli esercizi:", error);
         }
@@ -261,9 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (cachedRoutine) {
                     console.log("Routine loaded from cache:", routineId);
                     renderRoutine(cachedRoutine);
-                    // Hide loading screen immediately if possible, or let Promise.all handle it
-                    // But to be sure, we return early to skip DB
-                    await waitForImages();
+                    // Non aspettiamo le immagini per nascondere la loading screen
                     return;
                 }
             }
@@ -276,28 +307,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const routine = { id: routineDoc.id, ...routineDoc.data() };
                 renderRoutine(routine);
                 updateSingleRoutineInCache(uid, routine);
-                await waitForImages();
+                // Non aspettiamo le immagini per nascondere la loading screen
             } else {
                 console.error("Routine not found.");
-                // Optionally redirect or show an error
             }
         } catch (error) {
             console.error("Error loading routine data:", error);
         }
-    }
-
-    function waitForImages() {
-        const images = document.querySelectorAll('#sedute-container img');
-        if (images.length === 0) return Promise.resolve();
-
-        const promises = Array.from(images).map(img => {
-            if (img.complete) return Promise.resolve();
-            return new Promise(resolve => {
-                img.onload = resolve;
-                img.onerror = resolve; // Resolve even on error to avoid hanging
-            });
-        });
-        return Promise.all(promises);
     }
 
     function handleEditButton(routine) {
@@ -424,13 +440,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Store routine data globally for popup access
-    let globalRoutineData = null;
-
-    // Move this declaration before any usage
     function renderRoutine(routine) {
-        globalRoutineData = routine; // Store routine data for popup access
-        
+        globalRoutineData = routine;
         schedaNameElement.textContent = routine.name;
 
         const options = { day: 'numeric', month: 'short', year: 'numeric' };
@@ -444,103 +455,125 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         dateRangeDisplay.textContent = dateRangeText;
 
-        seduteContainer.innerHTML = ''; // Clear existing placeholder
-        if (routine.seduteData && routine.seduteData.length > 0) {
-            routine.seduteData.forEach(seduta => {
-                const sedutaCard = document.createElement('div');
-                sedutaCard.className = 'card-section seduta-card';
-                sedutaCard.dataset.sedutaId = seduta.id;
-                sedutaCard.innerHTML = `
-                    <div class="seduta-header">
-                        <div class="seduta-title-container">
-                            <button class="collapse-seduta-btn"><i class="fas fa-chevron-down"></i></button>
-                            <h3 class="section-label">${seduta.name}</h3>
-                        </div>
-                    </div>
-                    <div class="seduta-body">
-                        <div class="seduta-exercises-header">
-                            <span class="header-col col-name">Esercizio</span>
-                            <span class="header-col col-rep">Rep</span>
-                            <span class="header-col col-set">Serie</span>
-                            <span class="header-col col-rest">Recupero</span>
-                            <span class="header-col col-weight">Peso (kg)</span>
-                            <span class="header-col col-note">Nota</span>
-                            <span class="header-col col-photo">Foto</span>
-                        </div>
-                        <div class="seduta-content">
-                            <div class="exercises-list">
-                                <!-- Exercise rows will be dynamically loaded here -->
-                            </div>
-                        </div>
-                    </div>
-                `;
-                const exercisesList = sedutaCard.querySelector('.exercises-list');
-                if (seduta.exercises && seduta.exercises.length > 0) {
-                    seduta.exercises.forEach(exercise => {
-                        // Find the corresponding exercise in allExercisesData to get the Italian name
-                        const fullExerciseData = allExercisesData.find(ex => ex.name === exercise.name);
-                        const displayExerciseName = fullExerciseData ? fullExerciseData.name_it : exercise.name; // Use Italian name if found, otherwise fallback to original
-
-                        const exerciseRow = document.createElement('div');
-                        exerciseRow.className = 'exercise-row';
-                        
-                        // Formatta i valori con '-' se mancanti e aggiunge unità di misura fisse
-                        const reps = exercise.reps || '-';
-                        const sets = exercise.sets || '-';
-                        const rest = exercise.rest ? `${exercise.rest} <span style="color: var(--text-gray)">sec</span>` : `- <span style="color: var(--text-gray)">sec</span>`;
-                        const weight = exercise.weight ? `${exercise.weight} <span style="color: var(--text-gray)">kg</span>` : `- <span style="color: var(--text-gray)">kg</span>`;
-                        const note = exercise.note || '-';
-
-                        exerciseRow.innerHTML = `
-                            <span class="exercise-detail col-name">${displayExerciseName}</span>
-                            <span class="exercise-detail col-rep">${reps}</span>
-                            <span class="exercise-detail col-set">${sets}</span>
-                            <span class="exercise-detail col-rest">${rest}</span>
-                            <span class="exercise-detail col-weight">${weight}</span>
-                            <span class="exercise-detail col-note">${note}</span>
-                            <span class="exercise-detail col-photo">
-                                <img src="${exercise.photo || 'https://via.placeholder.com/90'}" alt="Esercizio" data-exercise-name="${displayExerciseName}" class="exercise-gif-thumbnail">
-                            </span>
-                        `;
-                        exercisesList.appendChild(exerciseRow);
-
-                        const exerciseGifThumbnail = exerciseRow.querySelector('.exercise-gif-thumbnail');
-                        if (exerciseGifThumbnail) {
-                            exerciseGifThumbnail.addEventListener('click', () => {
-                                // The data-exercise-name is already set to the Italian name
-                                // Pass exercise data and routine data to popup
-                                showExerciseDetailPopup(
-                                    exerciseGifThumbnail.dataset.exerciseName, 
-                                    exercise, 
-                                    globalRoutineData
-                                );
-                            });
-                        }
-                    });
-                } else {
-                    exercisesList.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 20px;">Nessun esercizio in questa seduta.</p>';
-                }
-                seduteContainer.appendChild(sedutaCard);
-
-                // Add collapse/expand functionality
-                const collapseBtn = sedutaCard.querySelector('.collapse-seduta-btn');
-                const sedutaBody = sedutaCard.querySelector('.seduta-body');
-
-                if (collapseBtn && sedutaBody) {
-
-
-                    collapseBtn.addEventListener('click', () => {
-                        sedutaBody.classList.toggle('collapsed');
-                        collapseBtn.classList.toggle('collapsed');
-                    });
-                }
-            });
-        } else {
-            seduteContainer.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 40px;">Nessuna seduta trovata per questa scheda.</p>';
-        }
+        seduteContainer.innerHTML = '';
         
-        // Handle button visibility based on ownership
-        handleEditButton(routine);
+        if (!routine.seduteData || routine.seduteData.length === 0) {
+            seduteContainer.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 40px;">Nessuna seduta trovata per questa scheda.</p>';
+            handleEditButton(routine);
+            return;
+        }
+
+        // Chunked rendering: renderizza le sedute una alla volta per non bloccare il thread principale
+        let sedutaIndex = 0;
+        
+        function renderNextSeduta() {
+            if (sedutaIndex >= routine.seduteData.length) {
+                handleEditButton(routine);
+                return;
+            }
+
+            const seduta = routine.seduteData[sedutaIndex];
+            const sedutaCard = createSedutaCard(seduta);
+            seduteContainer.appendChild(sedutaCard);
+            
+            sedutaIndex++;
+            // Renderizza la prossima seduta nel prossimo frame o dopo un piccolissimo delay
+            if (sedutaIndex < 3) {
+                // Le prime 2-3 sedute le renderizziamo subito o molto velocemente
+                renderNextSeduta();
+            } else {
+                // Le altre le dilazioniamo leggermente per mantenere la fluidità
+                requestAnimationFrame(renderNextSeduta);
+            }
+        }
+
+        renderNextSeduta();
+    }
+
+    function createSedutaCard(seduta) {
+        const sedutaCard = document.createElement('div');
+        sedutaCard.className = 'card-section seduta-card';
+        sedutaCard.dataset.sedutaId = seduta.id;
+        
+        sedutaCard.innerHTML = `
+            <div class="seduta-header">
+                <div class="seduta-title-container">
+                    <button class="collapse-seduta-btn"><i class="fas fa-chevron-down"></i></button>
+                    <h3 class="section-label">${seduta.name}</h3>
+                </div>
+            </div>
+            <div class="seduta-body">
+                <div class="seduta-exercises-header">
+                    <span class="header-col col-name">Esercizio</span>
+                    <span class="header-col col-rep">Rep</span>
+                    <span class="header-col col-set">Serie</span>
+                    <span class="header-col col-rest">Recupero</span>
+                    <span class="header-col col-weight">Peso (kg)</span>
+                    <span class="header-col col-note">Nota</span>
+                    <span class="header-col col-photo">Foto</span>
+                </div>
+                <div class="seduta-content">
+                    <div class="exercises-list"></div>
+                </div>
+            </div>
+        `;
+
+        const exercisesList = sedutaCard.querySelector('.exercises-list');
+        const fragment = document.createDocumentFragment();
+
+        if (seduta.exercises && seduta.exercises.length > 0) {
+            seduta.exercises.forEach(exercise => {
+                const fullExerciseData = exercisesMap.get(exercise.name);
+                const displayExerciseName = fullExerciseData ? fullExerciseData.name_it : exercise.name;
+
+                const exerciseRow = document.createElement('div');
+                exerciseRow.className = 'exercise-row';
+                
+                const reps = exercise.reps || '-';
+                const sets = exercise.sets || '-';
+                const rest = exercise.rest ? `${exercise.rest} <span style="color: var(--text-gray)">sec</span>` : `- <span style="color: var(--text-gray)">sec</span>`;
+                const weight = exercise.weight ? `${exercise.weight} <span style="color: var(--text-gray)">kg</span>` : `- <span style="color: var(--text-gray)">kg</span>`;
+                const note = exercise.note || '-';
+
+                exerciseRow.innerHTML = `
+                    <span class="exercise-detail col-name" data-original-name="${exercise.name}">${displayExerciseName}</span>
+                    <span class="exercise-detail col-rep">${reps}</span>
+                    <span class="exercise-detail col-set">${sets}</span>
+                    <span class="exercise-detail col-rest">${rest}</span>
+                    <span class="exercise-detail col-weight">${weight}</span>
+                    <span class="exercise-detail col-note">${note}</span>
+                    <span class="exercise-detail col-photo">
+                        <img src="${exercise.photo || 'https://via.placeholder.com/90'}" alt="${displayExerciseName}" data-exercise-name="${displayExerciseName}" class="exercise-gif-thumbnail" loading="lazy">
+                    </span>
+                `;
+                
+                const exerciseGifThumbnail = exerciseRow.querySelector('.exercise-gif-thumbnail');
+                if (exerciseGifThumbnail) {
+                    exerciseGifThumbnail.addEventListener('click', () => {
+                        showExerciseDetailPopup(
+                            exerciseGifThumbnail.dataset.exerciseName, 
+                            exercise, 
+                            globalRoutineData
+                        );
+                    });
+                }
+                fragment.appendChild(exerciseRow);
+            });
+            exercisesList.appendChild(fragment);
+        } else {
+            exercisesList.innerHTML = '<p style="text-align: center; color: var(--text-gray); padding: 20px;">Nessun esercizio in questa seduta.</p>';
+        }
+
+        const collapseBtn = sedutaCard.querySelector('.collapse-seduta-btn');
+        const sedutaBody = sedutaCard.querySelector('.seduta-body');
+        if (collapseBtn && sedutaBody) {
+            collapseBtn.addEventListener('click', () => {
+                sedutaBody.classList.toggle('collapsed');
+                collapseBtn.classList.toggle('collapsed');
+            });
+        }
+
+        return sedutaCard;
     }
 
     // Funzioni per la gestione del popup

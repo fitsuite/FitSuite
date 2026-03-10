@@ -186,6 +186,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lastUid) {
         console.log("Optimistic load for settings:", lastUid);
         applyThemeFromCache(lastUid);
+        // Carica i dati dal profilo in cache immediatamente
+        const cachedProfile = localStorage.getItem(`userProfile_${lastUid}`);
+        if (cachedProfile) {
+            try {
+                updateUIWithUserData(JSON.parse(cachedProfile));
+            } catch (e) {
+                console.error("Error optimistic profile load:", e);
+            }
+        }
         fetchUserData(lastUid);
     }
 
@@ -207,19 +216,28 @@ document.addEventListener('DOMContentLoaded', () => {
             // Load user avatar with Google profile picture fallback to initial
             loadUserAvatar(user.email, null, userInitialMain, 90);
             
-            // Set username - will be loaded from database
-            userUsernameMain.textContent = "@username";
-
-            // Apply cached theme immediately
+            // Apply cached theme and profile immediately
             applyThemeFromCache(user.uid);
+            const cachedProfile = localStorage.getItem(`userProfile_${user.uid}`);
+            if (cachedProfile) {
+                try {
+                    updateUIWithUserData(JSON.parse(cachedProfile));
+                } catch (e) {}
+            }
 
             try {
                 window.LoadingManager.nextStep('Caricamento dati profilo...');
-                // Fetch additional data from Firestore and wait for sidebar
-                await Promise.all([
-                    fetchUserData(user.uid),
-                    waitForSidebar()
-                ]);
+                // Fetch additional data from Firestore and wait for sidebar in parallel
+                // Non aspettiamo il completamento di fetchUserData per nascondere la loading screen
+                // se abbiamo già i dati in cache
+                const sidebarTask = waitForSidebar();
+                const dbTask = fetchUserData(user.uid);
+                
+                if (cachedProfile) {
+                    await sidebarTask;
+                } else {
+                    await Promise.all([dbTask, sidebarTask]);
+                }
                 
                 window.LoadingManager.nextStep('Preparazione interfaccia completata');
             } catch (error) {
@@ -293,44 +311,39 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch User Data from Firestore
     async function fetchUserData(uid) {
         // 1. Try Cache FIRST
-        if (window.CacheManager) {
-            const cachedPrefs = window.CacheManager.getPreferences(uid);
-            // We can't easily cache the *entire* user document with current CacheManager structure 
-            // because it splits preferences and routines. 
-            // However, we can at least use the preferences part if available.
-            // Ideally, we should extend CacheManager or use localStorage for the full user profile if needed.
-            // For now, let's check if we have preferences and if so, use them to avoid at least that part of the delay.
-            
-            // Actually, the user wants "NO DB calls" if cached. 
-            // So we should probably cache the entire user profile in CacheManager or localStorage.
-            
-            const cachedProfile = localStorage.getItem(`userProfile_${uid}`);
-            if (cachedProfile) {
-                try {
-                    const data = JSON.parse(cachedProfile);
-                    updateUIWithUserData(data);
-                    console.log("User data loaded from cache, skipping DB");
-                    return; // SKIP DB CALL
-                } catch (e) {
-                    console.error("Error parsing cached profile", e);
-                }
+        const cachedProfile = localStorage.getItem(`userProfile_${uid}`);
+        let cachedData = null;
+        if (cachedProfile) {
+            try {
+                cachedData = JSON.parse(cachedProfile);
+                updateUIWithUserData(cachedData);
+                console.log("User data loaded from cache, updating UI optimistically");
+            } catch (e) {
+                console.error("Error parsing cached profile", e);
             }
         }
 
         try {
-            console.log("User data not in cache, fetching from DB");
+            // Se abbiamo dati in cache, facciamo il fetch ma senza bloccare eccessivamente l'UI
+            // o se i dati sono molto recenti (es. meno di 5 minuti) potremmo anche saltare, 
+            // ma per ora facciamo un aggiornamento silenzioso.
+            console.log("Fetching fresh user data from DB");
             const doc = await db.collection('users').doc(uid).get();
             if (doc.exists) {
                 const data = doc.data();
                 
-                // Save to Cache (LocalStorage for full profile)
-                localStorage.setItem(`userProfile_${uid}`, JSON.stringify(data));
-                
-                updateUIWithUserData(data);
-                
-                // Also update CacheManager for preferences specifically
-                if (data.preferences && window.CacheManager) {
-                    window.CacheManager.savePreferences(uid, data.preferences);
+                // Verifica se i dati sono effettivamente cambiati prima di aggiornare l'UI e la cache
+                const dataString = JSON.stringify(data);
+                if (dataString !== cachedProfile) {
+                    console.log("Profile data changed, updating cache and UI");
+                    localStorage.setItem(`userProfile_${uid}`, dataString);
+                    updateUIWithUserData(data);
+                    
+                    if (data.preferences && window.CacheManager) {
+                        window.CacheManager.savePreferences(uid, data.preferences);
+                    }
+                } else {
+                    console.log("Profile data unchanged, skipping UI update");
                 }
             } else {
                 console.log("No such document! Creating one...");
