@@ -7,6 +7,7 @@ class SharePopup {
         this.searchResults = [];
         this.auth = firebase.auth();
         this.db = firebase.firestore();
+        this.searchTimeout = null;
         this.init();
     }
 
@@ -95,7 +96,25 @@ class SharePopup {
         // Search input
         const searchInput = document.getElementById('user-search-input');
         if (searchInput) {
-            searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value;
+                
+                // Clear existing timeout
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout);
+                }
+                
+                // If query is empty or too short, clear results immediately
+                if (!query || query.length < 2) {
+                    this.hideSearchResults();
+                    return;
+                }
+                
+                // Set new timeout for 3 seconds
+                this.searchTimeout = setTimeout(() => {
+                    this.handleSearch(query);
+                }, 3000);
+            });
             searchInput.addEventListener('focus', () => this.showSearchResults());
         }
 

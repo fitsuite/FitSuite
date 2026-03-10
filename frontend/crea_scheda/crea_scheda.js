@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmDateBtn = document.getElementById('confirm-date');
 
     let currentUser = null;
+    let currentUsername = null;
     let selectedStartDate = null;
     let selectedEndDate = null;
     let currentCalendarDate = new Date();
@@ -389,13 +390,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadUserPreferences(uid) {
+        // Try to get username from profile cache first
+        const cachedProfile = localStorage.getItem(`userProfile_${uid}`);
+        if (cachedProfile) {
+            try {
+                const profile = JSON.parse(cachedProfile);
+                if (profile.username) currentUsername = profile.username;
+            } catch (e) {}
+        }
+
         if (!window.CacheManager) return;
         
-        // 1. Try Cache
+        // 1. Try Cache for preferences
         const prefs = window.CacheManager.getPreferences(uid);
         if (prefs && prefs.color) {
             setPrimaryColor(prefs.color);
-            return;
+            if (currentUsername) return; // If we already have username, we're good
         }
 
         // 2. Network Fallback
@@ -403,6 +413,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const doc = await db.collection('users').doc(uid).get();
             if (doc.exists) {
                 const data = doc.data();
+                currentUsername = data.username;
+                // Cache it for next time
+                localStorage.setItem(`userProfile_${uid}`, JSON.stringify(data));
+                
                 if (data.preferences) {
                     if (data.preferences.color) {
                         setPrimaryColor(data.preferences.color);
@@ -1150,6 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const routineData = {
                 userId: currentUser.uid,
+                ownerName: currentUsername || 'Utente', // Save username for one-request display in shared lists
                 name: nome,
                 startDate: selectedStartDate ? firebase.firestore.Timestamp.fromDate(selectedStartDate) : null,
                 endDate: selectedEndDate ? firebase.firestore.Timestamp.fromDate(selectedEndDate) : null,

@@ -227,34 +227,67 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Process shared routines
             const processedIds = new Set(); // Track processed routine IDs to prevent duplicates
+            const ownerIdsToFetch = new Set();
+            const tempRoutines = [];
             
             for (const doc of sharedSnapshot.docs) {
                 const routineData = doc.data();
-                console.log("Processing shared routine:", doc.id, "owner:", routineData.userId);
-                
-                // Skip if already processed (duplicate)
-                if (processedIds.has(doc.id)) {
-                    console.log("Skipping duplicate routine:", doc.id);
-                    continue;
-                }
-                
-                // Don't include if user is also the owner
+                if (processedIds.has(doc.id)) continue;
                 if (routineData.userId !== uid) {
-                    processedIds.add(doc.id); // Mark as processed
+                    processedIds.add(doc.id);
                     
-                    // Get owner info
-                    const ownerDoc = await db.collection('users').doc(routineData.userId).get();
-                    const ownerData = ownerDoc.exists ? ownerDoc.data() : { username: 'Utente', email: '' };
-                    
-                    allRoutines.push({ 
-                        id: doc.id, 
-                        ...routineData, 
-                        isOwned: false,
-                        ownerInfo: ownerData
-                    });
-                    console.log("Added shared routine:", routineData.name || 'Unnamed');
+                    // Check if owner name is ALREADY in the routine document (one request optimization)
+                    if (routineData.ownerName) {
+                        tempRoutines.push({ 
+                            id: doc.id, 
+                            ...routineData, 
+                            isOwned: false,
+                            ownerInfo: { username: routineData.ownerName }
+                        });
+                        continue;
+                    }
+
+                    // Check Cache for owner info
+                    const cachedOwner = window.CacheManager ? window.CacheManager.getUserInfo(routineData.userId) : null;
+                    if (cachedOwner) {
+                        tempRoutines.push({ 
+                            id: doc.id, 
+                            ...routineData, 
+                            isOwned: false,
+                            ownerInfo: cachedOwner
+                        });
+                    } else {
+                        ownerIdsToFetch.add(routineData.userId);
+                        tempRoutines.push({ id: doc.id, ...routineData, isOwned: false });
+                    }
                 }
             }
+
+            // Fetch all missing owners in one go (max 30 per query in Firestore 'in' operator)
+            const ownersMap = new Map();
+            if (ownerIdsToFetch.size > 0) {
+                const ownerIdsArray = Array.from(ownerIdsToFetch);
+                for (let i = 0; i < ownerIdsArray.length; i += 30) {
+                    const chunk = ownerIdsArray.slice(i, i + 30);
+                    const ownersSnapshot = await db.collection('users')
+                        .where(firebase.firestore.FieldPath.documentId(), 'in', chunk)
+                        .get();
+                    ownersSnapshot.forEach(doc => {
+                        const userData = doc.data();
+                        ownersMap.set(doc.id, userData);
+                        // Save to cache for next time
+                        if (window.CacheManager) window.CacheManager.saveUserInfo(doc.id, userData);
+                    });
+                }
+            }
+
+            allRoutines = tempRoutines.map(routine => {
+                if (routine.ownerInfo) return routine; // Already has info from routine doc or cache
+                return {
+                    ...routine,
+                    ownerInfo: ownersMap.get(routine.userId) || { username: 'Utente', email: '' }
+                };
+            });
 
             console.log("Final shared routines count:", allRoutines.length);
 

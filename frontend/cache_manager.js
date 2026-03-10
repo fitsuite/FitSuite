@@ -2,6 +2,7 @@ const CacheManager = {
     PREFS_KEY_PREFIX: 'userPreferences_',
     ROUTINES_KEY_PREFIX: 'cachedRoutines_',
     SHARED_ROUTINES_KEY_PREFIX: 'cachedSharedRoutines_',
+    USER_INFO_KEY_PREFIX: 'cachedUserInfo_',
 
     GLOBAL_THEME_KEY: 'globalThemePrefs',
     
@@ -530,6 +531,26 @@ const CacheManager = {
         } catch (error) {
             console.warn('Failed to clear old shared routines:', error);
         }
+    },
+
+    // USER INFO CACHE METHODS (for owners in shared routines)
+    saveUserInfo: function(uid, userData) {
+        const key = this.USER_INFO_KEY_PREFIX + uid;
+        const cacheEntry = this._createCacheEntry(userData);
+        return this.safeSetItem(key, JSON.stringify(cacheEntry));
+    },
+
+    getUserInfo: function(uid) {
+        const key = this.USER_INFO_KEY_PREFIX + uid;
+        const cacheEntry = this.safeGetItem(key);
+        if (!cacheEntry || !this._validateCacheEntry(cacheEntry)) {
+            return null;
+        }
+        // User info cache duration is longer (1 hour)
+        if (Date.now() - cacheEntry.timestamp > 60 * 60 * 1000) {
+            return null;
+        }
+        return cacheEntry.data;
     },
     
     // Cross-tab synchronization
