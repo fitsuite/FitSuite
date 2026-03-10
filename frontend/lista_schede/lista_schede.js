@@ -173,6 +173,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Refresh functionality
     if (refreshBtn) {
         refreshBtn.addEventListener('click', async () => {
+            // Check throttle first
+            if (window.CacheManager && !window.CacheManager.shouldRefreshRoutines(auth.currentUser.uid)) {
+                console.log('Refresh button clicked, but throttled (30s)');
+                // Show a quick visual feedback that it's already updated
+                refreshBtn.classList.add('success');
+                setTimeout(() => refreshBtn.classList.remove('success'), 1000);
+                return;
+            }
+
             refreshBtn.classList.add('spinning');
             try {
                 // Force cache refresh
@@ -201,22 +210,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function fetchRoutines(uid, forceRefresh = false) {
-        // 1. Check if we should force refresh
-        const shouldRefresh = forceRefresh || !window.CacheManager || !window.CacheManager.getRoutines(uid);
-
-        // 2. Load from Cache FIRST if valid and not forced refresh
-        if (!shouldRefresh && window.CacheManager) {
+        // 1. Check if we should perform an actual DB fetch based on throttle
+        let shouldFetchFromDB = forceRefresh;
+        
+        if (window.CacheManager) {
             const cachedRoutines = window.CacheManager.getRoutines(uid);
+            const isThrottled = !window.CacheManager.shouldRefreshRoutines(uid);
+            
             if (cachedRoutines !== null) {
-                console.log("Routines loaded from cache, skipping DB");
-                allRoutines = cachedRoutines;
-                renderRoutines(allRoutines);
-                return;
+                // We have cache. Should we use it or fetch from DB?
+                if (isThrottled && !forceRefresh) {
+                    // Cache is fresh (less than 30s old) and not a forced refresh
+                    console.log("Routines loaded from cache (throttled), skipping DB");
+                    allRoutines = cachedRoutines;
+                    renderRoutines(allRoutines);
+                    return;
+                } else {
+                    // Cache is older than 30s or it's a forced refresh (and not throttled)
+                    console.log("Cache expired (>30s) or forced refresh, preparing to fetch from DB");
+                    shouldFetchFromDB = true;
+                    // Render cache immediately for better UX while fetching
+                    allRoutines = cachedRoutines;
+                    renderRoutines(allRoutines);
+                }
+            } else {
+                // No cache at all
+                shouldFetchFromDB = true;
             }
+        } else {
+            shouldFetchFromDB = true;
         }
 
+        if (!shouldFetchFromDB) return;
+
+        // Set loading state in CacheManager to prevent multiple simultaneous requests
+        if (window.CacheManager) window.CacheManager.setLoading(uid, 'owned', true);
+
         try {
-            console.log("Routines not in cache or forced refresh, fetching from DB");
+            console.log("Fetching routines from DB...");
             
             // 3. Fetch ONLY owned routines
             const ownedSnapshot = await db.collection('routines').where('userId', '==', uid).get();
@@ -230,7 +261,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (allRoutines.length === 0) {
                 renderRoutines([]);
-                if (window.CacheManager) window.CacheManager.saveRoutines(uid, []);
+                if (window.CacheManager) {
+                    window.CacheManager.saveRoutines(uid, []);
+                    window.CacheManager.setLoading(uid, 'owned', false);
+                }
                 return;
             }
 
@@ -246,10 +280,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.CacheManager) {
                 // Save top 20 to cache
                 window.CacheManager.saveRoutines(uid, allRoutines.slice(0, 20));
+                window.CacheManager.setLoading(uid, 'owned', false);
             }
 
         } catch (error) {
             console.error("Errore nel recupero delle schede:", error);
+            if (window.CacheManager) window.CacheManager.setLoading(uid, 'owned', false);
+            // ... (rest of error handling)
             // If we have cache, we are fine (already rendered)
             // But if we failed and no cache, show error
             const cachedRoutines = window.CacheManager && window.CacheManager.getRoutines(uid);

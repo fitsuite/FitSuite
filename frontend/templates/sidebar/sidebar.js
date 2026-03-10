@@ -84,6 +84,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Listen for routines updates to refresh sidebar
+    window.addEventListener('routinesUpdated', (event) => {
+        const routines = event.detail;
+        const userRoutineListSidebar = document.getElementById('user-routine-list-sidebar');
+        if (userRoutineListSidebar) {
+            console.log('Sidebar: routinesUpdated event received, re-rendering...');
+            renderUserRoutines(routines, userRoutineListSidebar);
+        }
+    });
+
+    // Listen for cross-tab routines updates
+    window.addEventListener('routinesUpdatedFromOtherTab', () => {
+        if (auth.currentUser) {
+            const userRoutineListSidebar = document.getElementById('user-routine-list-sidebar');
+            if (userRoutineListSidebar) {
+                console.log('Sidebar: routinesUpdatedFromOtherTab event received, fetching...');
+                fetchUserRoutines(auth.currentUser.uid, userRoutineListSidebar);
+            }
+        }
+    });
+
     // Mobile Sidebar Logic
     function initMobileSidebar() {
         const sidebar = document.querySelector('.sidebar');
@@ -300,19 +321,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // Fetch User Routines
-    async function fetchUserRoutines(uid, container) {
-        // 1. Render from Cache FIRST
+    async function fetchUserRoutines(uid, container, forceRefresh = false) {
+        // 1. Check if we should perform an actual DB fetch based on throttle
+        let shouldFetchFromDB = forceRefresh;
+        
         if (window.CacheManager) {
             const cachedRoutines = window.CacheManager.getRoutines(uid);
+            const isThrottled = !window.CacheManager.shouldRefreshRoutines(uid);
+            
             if (cachedRoutines !== null) {
-                console.log("Sidebar routines loaded from cache, skipping DB");
-                renderUserRoutines(cachedRoutines, container);
-                return;
+                // We have cache. Should we use it or fetch from DB?
+                if (isThrottled && !forceRefresh) {
+                    // Cache is fresh (less than 30s old) and not a forced refresh
+                    console.log("Sidebar routines loaded from cache (throttled), skipping DB");
+                    renderUserRoutines(cachedRoutines, container);
+                    return;
+                } else {
+                    // Cache is older than 30s or it's a forced refresh
+                    console.log("Sidebar cache expired (>30s) or forced refresh, preparing to fetch from DB");
+                    shouldFetchFromDB = true;
+                    // Render cache immediately for better UX while fetching
+                    renderUserRoutines(cachedRoutines, container);
+                }
+            } else {
+                // No cache at all
+                shouldFetchFromDB = true;
             }
+        } else {
+            shouldFetchFromDB = true;
         }
 
+        if (!shouldFetchFromDB) return;
+
+        // Set loading state in CacheManager
+        if (window.CacheManager) window.CacheManager.setLoading(uid, 'owned', true);
+
         try {
-            console.log("Sidebar routines not in cache, fetching from DB");
+            console.log("Sidebar routines not in cache or expired, fetching from DB");
             // 2. Network Refresh
             const routinesSnapshot = await db.collection('routines')
                                              .where('userId', '==', uid)
@@ -321,7 +366,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (routinesSnapshot.empty) {
                 // If empty on server, clear cache (or update with empty list)
                 renderUserRoutines([], container);
-                if (window.CacheManager) window.CacheManager.saveRoutines(uid, []);
+                if (window.CacheManager) {
+                    window.CacheManager.saveRoutines(uid, []);
+                    window.CacheManager.setLoading(uid, 'owned', false);
+                }
             } else {
                 let routines = [];
                 routinesSnapshot.forEach(doc => {
@@ -337,10 +385,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // 3. Update UI and Cache
                 renderUserRoutines(routines, container); 
-                if (window.CacheManager) window.CacheManager.saveRoutines(uid, routines.slice(0, 20));
+                if (window.CacheManager) {
+                    window.CacheManager.saveRoutines(uid, routines.slice(0, 20));
+                    window.CacheManager.setLoading(uid, 'owned', false);
+                }
             }
         } catch (error) {
             console.error("Error fetching user routines for sidebar:", error);
+            if (window.CacheManager) window.CacheManager.setLoading(uid, 'owned', false);
+            // ... (rest of error handling)
             const hasCache = window.CacheManager && window.CacheManager.getRoutines(uid);
             if (!hasCache) {
                 const errorItem = document.createElement('li');

@@ -155,6 +155,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Refresh functionality
     if (refreshBtn) {
         refreshBtn.addEventListener('click', async () => {
+            // Check throttle first
+            if (window.CacheManager && !window.CacheManager.shouldRefreshSharedRoutines(auth.currentUser.uid)) {
+                console.log('Refresh button clicked, but throttled (30s)');
+                // Show a quick visual feedback
+                refreshBtn.classList.add('success');
+                setTimeout(() => refreshBtn.classList.remove('success'), 1000);
+                return;
+            }
+
             refreshBtn.classList.add('spinning');
             try {
                 // Force cache refresh
@@ -186,35 +195,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function fetchSharedRoutines(uid, forceRefresh = false) {
-        // 1. Check if we should force refresh or cache is expired
-        const shouldRefresh = forceRefresh || !window.CacheManager || 
-                             window.CacheManager.isSharedRoutinesCacheExpired(uid) ||
-                             !window.CacheManager.getSharedRoutines(uid);
-
-        // 2. Load from Cache FIRST if valid and not expired
-        if (!shouldRefresh && window.CacheManager) {
+        // 1. Check if we should perform an actual DB fetch based on throttle
+        let shouldFetchFromDB = forceRefresh;
+        
+        if (window.CacheManager) {
             const cachedSharedRoutines = window.CacheManager.getSharedRoutines(uid);
+            const isThrottled = !window.CacheManager.shouldRefreshSharedRoutines(uid);
+            
             if (cachedSharedRoutines !== null) {
-                console.log("Shared routines loaded from cache, skipping DB");
-                // Remove duplicates from cache data before using
-                const uniqueRoutines = [];
-                const seenIds = new Set();
-                
-                for (const routine of cachedSharedRoutines) {
-                    if (!seenIds.has(routine.id)) {
-                        seenIds.add(routine.id);
-                        uniqueRoutines.push(routine);
-                    }
+                // We have cache. Should we use it or fetch from DB?
+                if (isThrottled && !forceRefresh) {
+                    // Cache is fresh (less than 30s old) and not a forced refresh
+                    console.log("Shared routines loaded from cache (throttled), skipping DB");
+                    allRoutines = cachedSharedRoutines;
+                    renderRoutines(allRoutines);
+                    return;
+                } else {
+                    // Cache is older than 30s or it's a forced refresh
+                    console.log("Shared cache expired (>30s) or forced refresh, preparing to fetch from DB");
+                    shouldFetchFromDB = true;
+                    // Render cache immediately for better UX while fetching
+                    allRoutines = cachedSharedRoutines;
+                    renderRoutines(allRoutines);
                 }
-                
-                allRoutines = uniqueRoutines;
-                renderRoutines(allRoutines);
-                return;
+            } else {
+                // No cache at all
+                shouldFetchFromDB = true;
             }
+        } else {
+            shouldFetchFromDB = true;
         }
 
+        if (!shouldFetchFromDB) return;
+
+        // Set loading state in CacheManager
+        if (window.CacheManager) window.CacheManager.setLoading(uid, 'shared', true);
+
         try {
-            console.log("Fetching shared routines from DB (forced refresh:", shouldRefresh, ")");
+            console.log("Fetching shared routines from DB...");
             
             // Fetch only shared routines (not owned)
             const sharedSnapshot = await db.collection('routines')
@@ -293,7 +311,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (allRoutines.length === 0) {
                 renderRoutines([]);
-                if (window.CacheManager) window.CacheManager.saveSharedRoutines(uid, []);
+                if (window.CacheManager) {
+                    window.CacheManager.saveSharedRoutines(uid, []);
+                    window.CacheManager.setLoading(uid, 'shared', false);
+                }
                 return;
             }
 
@@ -309,10 +330,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.CacheManager) {
                 // Save top 20 to cache (deduplicated)
                 window.CacheManager.saveSharedRoutines(uid, allRoutines.slice(0, 20));
+                window.CacheManager.setLoading(uid, 'shared', false);
             }
 
         } catch (error) {
             console.error("Errore nel recupero delle schede condivise:", error);
+            if (window.CacheManager) window.CacheManager.setLoading(uid, 'shared', false);
+            // ... (rest of error handling)
             // If we have cache, we are fine (already rendered)
             // But if we failed and no cache, show error
             const cachedSharedRoutines = window.CacheManager && window.CacheManager.getSharedRoutines(uid);

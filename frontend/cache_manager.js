@@ -3,12 +3,15 @@ const CacheManager = {
     ROUTINES_KEY_PREFIX: 'cachedRoutines_',
     SHARED_ROUTINES_KEY_PREFIX: 'cachedSharedRoutines_',
     USER_INFO_KEY_PREFIX: 'cachedUserInfo_',
+    LAST_REFRESH_PREFIX: 'lastRefresh_',
+    LAST_SHARED_REFRESH_PREFIX: 'lastSharedRefresh_',
 
     GLOBAL_THEME_KEY: 'globalThemePrefs',
     
     // Cache configuration
     CACHE_VERSION: '1.0.0',
     CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
+    REFRESH_THROTTLE: 15 * 1000, // 15 seconds throttle
     MAX_CACHE_ITEMS: 50,
     
     // Loading state tracking
@@ -257,6 +260,8 @@ const CacheManager = {
         const success = this.safeSetItem(key, JSON.stringify(cacheEntry));
         
         if (success) {
+            // Update last refresh timestamp when saving fresh data
+            this.updateLastRefreshTimestamp(uid);
             // Dispatch event if needed
             window.dispatchEvent(new CustomEvent('routinesUpdated', { detail: routines }));
         }
@@ -392,14 +397,42 @@ const CacheManager = {
 
     // Forza l'aggiornamento della cache delle schede possedute
     forceRefreshRoutines: function(uid) {
+        if (!this.shouldRefreshRoutines(uid)) {
+            console.log('Refresh routines throttled (last refresh was less than 30s ago)');
+            return false;
+        }
+        
         const key = this.ROUTINES_KEY_PREFIX + uid;
         try {
             localStorage.removeItem(key);
             this._lruTracker.delete(key);
+            // Non aggiorniamo il timestamp qui, lo farà saveRoutines al termine del fetch
         } catch (error) {
             console.error('Failed to remove routines cache:', error);
         }
         console.log('Forced refresh of routines cache for user:', uid);
+        return true;
+    },
+
+    // Check if enough time has passed to refresh routines (30 seconds)
+    shouldRefreshRoutines: function(uid) {
+        // If already loading, don't trigger another refresh
+        if (this._isLoading(this.ROUTINES_KEY_PREFIX + uid)) return false;
+
+        const lastRefreshKey = this.LAST_REFRESH_PREFIX + uid;
+        const lastRefresh = localStorage.getItem(lastRefreshKey);
+        const now = Date.now();
+        
+        if (!lastRefresh) return true;
+        
+        const timePassed = now - parseInt(lastRefresh);
+        return timePassed >= this.REFRESH_THROTTLE;
+    },
+
+    // Update the last refresh timestamp
+    updateLastRefreshTimestamp: function(uid) {
+        const lastRefreshKey = this.LAST_REFRESH_PREFIX + uid;
+        localStorage.setItem(lastRefreshKey, Date.now().toString());
     },
 
     // SHARED ROUTINES CACHE METHODS
@@ -447,6 +480,8 @@ const CacheManager = {
         const success = this.safeSetItem(key, JSON.stringify(cacheEntry));
         
         if (success) {
+            // Update last shared refresh timestamp when saving fresh data
+            this.updateLastSharedRefreshTimestamp(uid);
             console.log('Shared routines cached for user:', uid, 'Count:', uniqueRoutines.length);
         }
         
@@ -499,6 +534,11 @@ const CacheManager = {
 
     // Forza l'aggiornamento della cache delle schede condivise
     forceRefreshSharedRoutines: function(uid) {
+        if (!this.shouldRefreshSharedRoutines(uid)) {
+            console.log('Refresh shared routines throttled (last refresh was less than 30s ago)');
+            return false;
+        }
+        
         const key = this.SHARED_ROUTINES_KEY_PREFIX + uid;
         try {
             localStorage.removeItem(key);
@@ -507,6 +547,34 @@ const CacheManager = {
             console.error('Failed to remove shared routines cache:', error);
         }
         console.log('Forced refresh of shared routines cache for user:', uid);
+        return true;
+    },
+
+    // Check if enough time has passed to refresh shared routines (30 seconds)
+    shouldRefreshSharedRoutines: function(uid) {
+        // If already loading, don't trigger another refresh
+        if (this._isLoading(this.SHARED_ROUTINES_KEY_PREFIX + uid)) return false;
+
+        const lastRefreshKey = this.LAST_SHARED_REFRESH_PREFIX + uid;
+        const lastRefresh = localStorage.getItem(lastRefreshKey);
+        const now = Date.now();
+        
+        if (!lastRefresh) return true;
+        
+        const timePassed = now - parseInt(lastRefresh);
+        return timePassed >= this.REFRESH_THROTTLE;
+    },
+
+    // Set loading state for a specific type
+    setLoading: function(uid, type, isLoading) {
+        const prefix = type === 'shared' ? this.SHARED_ROUTINES_KEY_PREFIX : this.ROUTINES_KEY_PREFIX;
+        this._setLoadingState(prefix + uid, isLoading);
+    },
+
+    // Update the last shared refresh timestamp
+    updateLastSharedRefreshTimestamp: function(uid) {
+        const lastRefreshKey = this.LAST_SHARED_REFRESH_PREFIX + uid;
+        localStorage.setItem(lastRefreshKey, Date.now().toString());
     },
 
     // Rimuovi una scheda condivisa dalla cache (with proper error handling)

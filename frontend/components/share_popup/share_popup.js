@@ -110,10 +110,10 @@ class SharePopup {
                     return;
                 }
                 
-                // Set new timeout for 3 seconds
+                // Set new timeout for 1 second
                 this.searchTimeout = setTimeout(() => {
                     this.handleSearch(query);
-                }, 3000);
+                }, 1000);
             });
             searchInput.addEventListener('focus', () => this.showSearchResults());
         }
@@ -145,20 +145,25 @@ class SharePopup {
             routineNameEl.textContent = routine.name || 'Scheda senza nome';
         }
 
-        // Load current shared users
-        await this.loadSharedUsers();
+        // Show popup immediately
+        this.overlay.classList.add('show');
         
         // Reset search
-        document.getElementById('user-search-input').value = '';
+        const searchInput = document.getElementById('user-search-input');
+        if (searchInput) searchInput.value = '';
         this.hideSearchResults();
         
-        // Show popup
-        this.overlay.classList.add('show');
+        // Render current users immediately if available in routine object
+        this.sharedUsers = [];
+        this.renderSharedUsers(); // Show empty list or owner while loading
+        
+        // Load current shared users (will update UI when done)
+        await this.loadSharedUsers();
     }
 
     async hide(fromBackAction = false) {
-        // Auto-save before closing
-        await this.saveShareChanges();
+        // Remove auto-save from here as it's already saved when adding/removing users
+        // and clicking "Conferma" shows the success message.
         
         this.overlay.classList.remove('show');
         this.currentRoutineId = null;
@@ -173,57 +178,70 @@ class SharePopup {
     }
 
     async loadSharedUsers() {
-        if (!this.currentRoutineId) return;
+        if (!this.currentRoutineId || !this.currentRoutine) return;
 
         try {
             console.log("Loading shared users for routine:", this.currentRoutineId);
-            const doc = await this.db.collection('routines').doc(this.currentRoutineId).get();
-            if (doc.exists) {
-                const routineData = doc.data();
-                this.sharedUsers = [];
+            
+            // Optimization: Use data already in this.currentRoutine if it exists
+            const routineData = this.currentRoutine;
+            this.sharedUsers = [];
+            
+            // 1. Add owner (Check cache or current user first)
+            const ownerId = routineData.userId;
+            if (ownerId) {
+                // Try CacheManager first
+                let ownerData = window.CacheManager ? window.CacheManager.getUserInfo(ownerId) : null;
                 
-                console.log("Routine data:", routineData);
-                
-                // Add owner
-                if (routineData.userId) {
-                    console.log("Loading owner data for:", routineData.userId);
-                    const ownerDoc = await this.db.collection('users').doc(routineData.userId).get();
-                    if (ownerDoc.exists) {
-                        const ownerData = ownerDoc.data();
-                        this.sharedUsers.push({
-                            uid: routineData.userId,
-                            username: ownerData.username || 'Utente',
-                            email: ownerData.email || '',
-                            role: 'owner'
-                        });
-                        console.log("Owner added:", ownerData.username);
+                if (!ownerData) {
+                    // Fetch if not in cache
+                    const ownerDoc = await this.db.collection('users').doc(ownerId).get();
+                    ownerData = ownerDoc.exists ? ownerDoc.data() : null;
+                    if (ownerData && window.CacheManager) {
+                        window.CacheManager.saveUserInfo(ownerId, ownerData);
                     }
                 }
-                
-                // Add shared users
-                if (routineData.condivisioni && Array.isArray(routineData.condivisioni)) {
-                    console.log("Loading shared users:", routineData.condivisioni);
-                    for (const userId of routineData.condivisioni) {
-                        if (userId !== routineData.userId) { // Don't duplicate owner
-                            console.log("Loading user data for:", userId);
-                            const userDoc = await this.db.collection('users').doc(userId).get();
-                            if (userDoc.exists) {
-                                const userData = userDoc.data();
-                                this.sharedUsers.push({
-                                    uid: userId,
-                                    username: userData.username || 'Utente',
-                                    email: userData.email || '',
-                                    role: 'viewer'
-                                });
-                                console.log("Shared user added:", userData.username);
-                            }
+
+                if (ownerData) {
+                    this.sharedUsers.push({
+                        uid: ownerId,
+                        username: ownerData.username || 'Utente',
+                        email: ownerData.email || '',
+                        role: 'owner'
+                    });
+                }
+            }
+            
+            // 2. Add shared users
+            const condivisioni = routineData.condivisioni || [];
+            const sharedUserIds = Array.isArray(condivisioni) ? 
+                                  condivisioni.filter(uid => uid !== ownerId) : 
+                                  Object.keys(condivisioni).filter(uid => uid !== ownerId);
+
+            if (sharedUserIds.length > 0) {
+                // Fetch all shared users in parallel
+                const userPromises = sharedUserIds.map(async (userId) => {
+                    let userData = window.CacheManager ? window.CacheManager.getUserInfo(userId) : null;
+                    if (!userData) {
+                        const userDoc = await this.db.collection('users').doc(userId).get();
+                        userData = userDoc.exists ? userDoc.data() : null;
+                        if (userData && window.CacheManager) {
+                            window.CacheManager.saveUserInfo(userId, userData);
                         }
                     }
-                }
-                
-                console.log("Final shared users list:", this.sharedUsers);
-                this.renderSharedUsers();
+                    return userData ? {
+                        uid: userId,
+                        username: userData.username || 'Utente',
+                        email: userData.email || '',
+                        role: 'viewer'
+                    } : null;
+                });
+
+                const users = await Promise.all(userPromises);
+                this.sharedUsers.push(...users.filter(u => u !== null));
             }
+            
+            this.renderSharedUsers();
         } catch (error) {
             console.error('Error loading shared users:', error);
         }
