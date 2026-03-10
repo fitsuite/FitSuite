@@ -55,7 +55,6 @@
                     <a href="#hero-content">Home</a>
                     <a href="#chi-siamo">Chi siamo?</a>
                     <a href="#esercizi">Esercizi</a>
-                    <a href="#trailer">Trailer</a>
                 </div>
                 <a href="./frontend/auth/auth.html"><button class="login-btn">Accedi</button></a>
             </div>
@@ -70,14 +69,56 @@
 
     <hr>
 
-    <section class="gym-info-section" id="chi-siamo">
-        <div class="section-container">
-            <div class="image-box">
-                <img src="./image/foto1.jpg" alt="Palestre" class="section-image">
+    <section class="features-overview">
+        <div class="features-header">
+            <div class="counter-container">
+                <span id="exercise-counter" class="feature-number">0</span>
+                <span class="feature-suffix">ESERCIZI NEL DATASET</span>
             </div>
-            <div class="text-box">
-                <h2>Per le palestre</h2>
-                <p>Un modo unico per creare schede personalizzate e inviarle via email senza complicazioni.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-small-card">
+                <i class="fas fa-bolt"></i>
+                <h3>CREAZIONE RAPIDA</h3>
+                <p>Crea la tua scheda professionale in pochi secondi.</p>
+            </div>
+            <div class="feature-small-card">
+                <i class="fas fa-share-nodes"></i>
+                <h3>CONDIVISIONE SEMPLICE</h3>
+                <p>Condividi istantaneamente le schede con i tuoi clienti.</p>
+            </div>
+            <div class="feature-small-card">
+                <i class="fas fa-eye"></i>
+                <h3>FACILE VISUALIZZAZIONE</h3>
+                <p>Esercizi con spiegazioni dettagliate e possibilità di inserire appunti personalizzati.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="info-section" id="chi-siamo">
+        <div class="info-row">
+            <div class="info-text">
+                <h2>Creare la tua scheda non è mai stato così semplice</h2>
+                <p>Scegli la libertà totale: costruisci il tuo workout dopo mattone o lascia che la nostra Intelligenza Artificiale generi il piano perfetto basato sui tuoi obiettivi e sulle tue attrezzature.</p>
+            </div>
+            <div class="info-image">
+                <div class="image-placeholder">
+                    <i class="fas fa-desktop"></i>
+                    <span>SPAZIO PER IMMAGINE PC</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-row reverse">
+            <div class="info-text">
+                <h2>Oltre 1300 esercizi a tua disposizione</h2>
+                <p>Non aver paura di sbagliare esecuzione. Ogni esercizio nel nostro database è accompagnato da spiegazioni dettagliate e animazioni 3D che ti mostrano esattamente come muoverti per massimizzare i risultati ed evitare infortuni.</p>
+            </div>
+            <div class="info-image">
+                <div class="image-placeholder">
+                    <i class="fas fa-desktop"></i>
+                    <span>SPAZIO PER IMMAGINE PC</span>
+                </div>
             </div>
         </div>
     </section>
@@ -101,17 +142,6 @@
 
                 <div id="loading" class="loading" style="display: none;">Caricamento in corso...</div>
                 <div id="error" class="error" style="display: none;"></div>
-            </div>
-        </div>
-    </section>
-
-    <hr>
-
-    <section class="trailer-section" id="trailer">
-        <div class="section-container">
-            <h2>Trailer</h2>
-            <div class="video-container">
-                <iframe width="560" height="315" src="https://www.youtube.com/embed/G0DrFY8SnXo" title="YouTube video player" frameborder="0" allowfullscreen></iframe>
             </div>
         </div>
     </section>

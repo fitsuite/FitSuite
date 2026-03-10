@@ -233,8 +233,68 @@ function performSearch() {
     setupPagination();
 }
 
+// Variabile per gestire l'ID dell'animazione corrente
+let counterAnimationId = null;
+
+// Function to animate counter
+function animateCounter(id, target, duration) {
+    const element = document.getElementById(id);
+    if (!element) return;
+
+    // Cancella l'animazione precedente se ancora in corso
+    if (counterAnimationId) {
+        cancelAnimationFrame(counterAnimationId);
+    }
+
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function: easeOutExpo per un effetto più fluido
+        const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+        
+        const currentCount = Math.floor(easeProgress * target);
+        element.textContent = currentCount;
+        
+        if (progress < 1) {
+            counterAnimationId = requestAnimationFrame(update);
+        } else {
+            element.textContent = target;
+            counterAnimationId = null;
+        }
+    }
+    
+    counterAnimationId = requestAnimationFrame(update);
+}
+
+// Observer for the counter animation - riparte ogni volta che entra nel viewport
+const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            // Velocità aumentata: da 2500ms a 1200ms
+            animateCounter('exercise-counter', 1324, 1200);
+        } else {
+            // Resetta il contatore a 0 quando esce dalla visuale per farlo ripartire da zero la prossima volta
+            const element = document.getElementById('exercise-counter');
+            if (element) element.textContent = "0";
+            if (counterAnimationId) {
+                cancelAnimationFrame(counterAnimationId);
+                counterAnimationId = null;
+            }
+        }
+    });
+}, { threshold: 0.1 }); // Soglia ridotta per farlo partire non appena appare un po' del contatore
+
 // Initialize the application
 async function init() {
+    // Start observing the counter if it exists
+    const counterElement = document.getElementById('exercise-counter');
+    if (counterElement) {
+        counterObserver.observe(counterElement);
+    }
+
     try {
         if (loading) {
             loading.style.display = 'block';
