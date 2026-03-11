@@ -61,26 +61,9 @@ body {
 } */
 
 /* Manteniamo solo le regole necessarie per la sidebar mobile senza lo zoom */
-@media (max-width: 992px) {
-    :root {
-        --sidebar-width: 0px !important; 
-    }
-    .main-content {
-        margin-left: 0 !important;
-        width: 100% !important;
-        transition: margin-left 0.3s ease;
-    }
-}
-
 @media (max-width: 768px) {
     .navbar {
         padding: 10px;
-    }
-    
-    .sidebar-toggle-btn {
-        top: 10px;
-        left: 10px;
-        padding: 8px;
     }
 }
 
