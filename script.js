@@ -346,4 +346,43 @@ if (routineList) {
 }
 
 // Avvia l'applicazione quando la pagina è pronta
-window.addEventListener('DOMContentLoaded', init);
+window.addEventListener('DOMContentLoaded', () => {
+    init();
+    
+    // Pricing Toggle Logic
+    const pricingToggle = document.getElementById('pricing-toggle');
+    const prices = document.querySelectorAll('.price');
+    const monthlyLabel = document.querySelector('.toggle-label.monthly');
+    const yearlyLabel = document.querySelector('.toggle-label.yearly');
+
+    if (pricingToggle) {
+        pricingToggle.addEventListener('change', () => {
+            const isYearly = pricingToggle.checked;
+            
+            // Toggle active classes on labels
+            monthlyLabel?.classList.toggle('active', !isYearly);
+            yearlyLabel?.classList.toggle('active', isYearly);
+
+            prices.forEach(price => {
+                const monthlyPrice = price.getAttribute('data-monthly');
+                const yearlyPrice = price.getAttribute('data-yearly');
+                
+                if (isYearly) {
+                    // Update price and suffix
+                    if (monthlyPrice === '€0') {
+                        price.innerHTML = `€0<span>/sempre</span>`;
+                    } else {
+                        price.innerHTML = `${yearlyPrice}<span>/mese*</span>`;
+                    }
+                } else {
+                    // Restore monthly price and suffix
+                    if (monthlyPrice === '€0') {
+                        price.innerHTML = `€0<span>/sempre</span>`;
+                    } else {
+                        price.innerHTML = `${monthlyPrice}<span>/mese</span>`;
+                    }
+                }
+            });
+        });
+    }
+});
