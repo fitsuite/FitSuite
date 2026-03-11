@@ -36,6 +36,13 @@ document.addEventListener('DOMContentLoaded', () => {
         'Rosa': '#f472b6'
     };
 
+    const colorRGBMap = {
+        'Arancione': '255, 102, 0',
+        'Verde': '74, 222, 128',
+        'Blu': '59, 130, 246',
+        'Rosa': '244, 114, 182'
+    };
+
     const gradientMap = {
         'Arancione': 'linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%)',
         'Verde': 'linear-gradient(135deg, #1a2b16 0%, #1a1a1a 100%)',
@@ -43,11 +50,28 @@ document.addEventListener('DOMContentLoaded', () => {
         'Rosa': 'linear-gradient(135deg, #2b1625 0%, #1a1a1a 100%)'
     };
 
+    function updateSliderBackground(slider) {
+        if (!slider) return;
+        const val = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+        const primaryRGB = document.documentElement.style.getPropertyValue('--primary-color-rgb') || '255, 102, 0';
+        slider.style.background = `linear-gradient(to right, rgba(${primaryRGB}, 0.5) ${val}%, #333 ${val}%)`;
+    }
+
     function setPrimaryColor(colorName) {
         const hex = colorMap[colorName] || colorMap['Arancione'];
+        const rgb = colorRGBMap[colorName] || colorRGBMap['Arancione'];
         const gradient = gradientMap[colorName] || gradientMap['Arancione'];
         document.documentElement.style.setProperty('--primary-color', hex);
+        document.documentElement.style.setProperty('--primary-color-rgb', rgb);
         document.documentElement.style.setProperty('--background-gradient', gradient);
+
+        // Update slider backgrounds if they exist
+        const sliders = document.querySelectorAll('input[type="range"]');
+        sliders.forEach(slider => {
+            if (typeof updateSliderBackground === 'function') {
+                updateSliderBackground(slider);
+            }
+        });
     }
 
     // Helper to wait for sidebar
@@ -116,15 +140,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 }
 
-// Prevenire 'e' ed 'E' nei campi numerici
+// Prevenire 'e' ed 'E' nei campi numerici, disabilitare scroll e limitare valori massimi
 const numericInputs = document.querySelectorAll('input[type="number"]');
+const limits = {
+    'eta': 100,
+    'altezza': 300,
+    'peso': 500
+};
+
 numericInputs.forEach(input => {
     input.addEventListener('keydown', (e) => {
         if (e.key === 'e' || e.key === 'E') {
             e.preventDefault();
         }
     });
-});
+    
+    // Disabilita la modifica del valore tramite scroll/trackpad
+    input.addEventListener('wheel', (e) => {
+        e.preventDefault();
+    }, { passive: false });
+
+    // Rafforzamento dei limiti massimi via JS
+     input.addEventListener('input', (e) => {
+         const id = e.target.id;
+         if (limits[id] && e.target.value > limits[id]) {
+             e.target.value = limits[id];
+         }
+     });
+ });
+
+ // Gestione contatore caratteri per limitazioni
+  const limitazioniInput = document.getElementById('limitazioni');
+  const charCounter = document.getElementById('char-counter');
+  if (limitazioniInput && charCounter) {
+      limitazioniInput.addEventListener('input', () => {
+          const remaining = 50 - limitazioniInput.value.length;
+          charCounter.textContent = remaining;
+          if (remaining <= 5) {
+              charCounter.style.color = '#ff4444';
+          } else {
+              charCounter.style.color = 'var(--text-white)';
+          }
+      });
+  }
 
 // Gestione Select Personalizzate
 function initCustomSelects() {
@@ -170,16 +228,148 @@ function initCustomSelects() {
     });
 }
 
-// Inizializza select personalizzate al caricamento
-initCustomSelects();
+// Nuova funzione per popolare le attrezzature e gestire la visualizzazione condizionale
+function populateEquipment() {
+    const equipmentList = [
+        { "name": "stepmill machine", "name_it": "Stair Climber (Scalinata)" },
+        { "name": "elliptical machine", "name_it": "Ellittica" },
+        { "name": "trap bar", "name_it": "Trap Bar" },
+        { "name": "tire", "name_it": "Pneumatico (Tire)" },
+        { "name": "stationary bike", "name_it": "Cyclette" },
+        { "name": "wheel roller", "name_it": "Ab Wheel (Rullo per addominali)" },
+        { "name": "smith machine", "name_it": "Multipower (Smith Machine)" },
+        { "name": "hammer", "name_it": "Martello (Sledgehammer)" },
+        { "name": "skierg machine", "name_it": "SkiErg" },
+        { "name": "roller", "name_it": "Rullo (Foam Roller)" },
+        { "name": "resistance band", "name_it": "Fascia elastica" },
+        { "name": "bosu ball", "name_it": "Bosu" },
+        { "name": "weighted", "name_it": "Con sovraccarico" },
+        { "name": "olympic barbell", "name_it": "Bilanciere olimpico" },
+        { "name": "kettlebell", "name_it": "Kettlebell" },
+        { "name": "upper body ergometer", "name_it": "Ergometro per braccia" },
+        { "name": "sled machine", "name_it": "Slitta (Sled)" },
+        { "name": "ez barbell", "name_it": "Bilanciere EZ (Sagomato)" },
+        { "name": "dumbbell", "name_it": "Manubrio" },
+        { "name": "rope", "name_it": "Corda" },
+        { "name": "barbell", "name_it": "Bilanciere" },
+        { "name": "band", "name_it": "Elastico" },
+        { "name": "stability ball", "name_it": "Palla svizzera (Fitball)" },
+        { "name": "medicine ball", "name_it": "Palla medica" },
+        { "name": "assisted", "name_it": "Assistito" },
+        { "name": "leverage machine", "name_it": "Macchina a leva" },
+        { "name": "cable", "name_it": "Cavo" },
+        { "name": "body weight", "name_it": "A corpo libero" }
+    ];
+
+    const container = document.getElementById('equipment-checkbox-group');
+    if (!container) return;
+
+    container.innerHTML = '';
+    equipmentList.forEach(item => {
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" name="attrezzatura" value="${item.name_it}"> <span>${item.name_it}</span>`;
+        container.appendChild(label);
+    });
+
+    // Gestione visualizzazione condizionale
+    const equipmentRadios = document.querySelectorAll('input[name="equipment_type"]');
+    const customContainer = document.getElementById('custom-equipment-container');
+
+    equipmentRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'personalizzato') {
+                customContainer.style.display = 'block';
+            } else {
+                customContainer.style.display = 'none';
+            }
+        });
+    });
+}
+
+const bodyParts = [
+        { "name": "neck", "name_it": "Collo" },
+        { "name": "lower arms", "name_it": "Braccia inferiori" },
+        { "name": "shoulders", "name_it": "Spalle" },
+        { "name": "cardio", "name_it": "Cardio" },
+        { "name": "upper arms", "name_it": "Braccia superiori" },
+        { "name": "chest", "name_it": "Petto" },
+        { "name": "lower legs", "name_it": "Parte inferiore delle gambe" },
+        { "name": "back", "name_it": "Dorso" },
+        { "name": "upper legs", "name_it": "Gambe superiori" },
+        { "name": "waist", "name_it": "Addominali" }
+    ];
+
+    function populateFocus() {
+        const focusGroup = document.getElementById('focus-checkbox-group');
+        if (!focusGroup) return;
+
+        focusGroup.innerHTML = bodyParts.map(part => `
+            <label>
+                <input type="checkbox" name="focus_muscolare" value="${part.name}">
+                <span>${part.name_it}</span>
+            </label>
+        `).join('');
+    }
+
+    // Toggle custom focus container
+    const focusTypeOptions = document.getElementsByName('focus_type');
+    const customFocusContainer = document.getElementById('custom-focus-container');
+    const focusHint = document.getElementById('focus-hint');
+
+    focusTypeOptions.forEach(option => {
+        option.addEventListener('change', (e) => {
+            if (e.target.value === 'personalizzato') {
+                customFocusContainer.style.display = 'block';
+                focusHint.textContent = "Seleziona i gruppi muscolari su cui vuoi concentrarti.";
+            } else {
+                customFocusContainer.style.display = 'none';
+                if (e.target.value === 'full_body_daily') {
+                    focusHint.textContent = "Allenamento completo del corpo in ogni sessione.";
+                } else {
+                    focusHint.textContent = "Focus bilanciato su tutto il corpo durante la settimana.";
+                }
+            }
+        });
+    });
+
+    // Inizializza select personalizzate al caricamento
+    initCustomSelects();
+    populateEquipment();
+    populateFocus();
 
 // Update range value display
     const daysRange = document.getElementById('giorni');
     const daysVal = document.getElementById('giorni-val');
+    const durationRange = document.getElementById('durata');
+    const durationVal = document.getElementById('durata-val');
     
     if (daysRange && daysVal) {
+        // Initialize background
+        updateSliderBackground(daysRange);
         daysRange.addEventListener('input', (e) => {
             daysVal.textContent = e.target.value;
+            updateSliderBackground(e.target);
+        });
+    }
+
+    function formatDuration(minutes) {
+        if (minutes < 60) return `${minutes} min`;
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+        let hourText = `${hours}h`;
+        if (remainingMinutes > 0) {
+            hourText += ` ${remainingMinutes}m`;
+        }
+        return `${minutes} min (${hourText})`;
+    }
+
+    if (durationRange && durationVal) {
+        // Initialize background
+        updateSliderBackground(durationRange);
+        durationVal.textContent = formatDuration(durationRange.value);
+        durationRange.addEventListener('input', (e) => {
+            durationVal.textContent = formatDuration(e.target.value);
+            updateSliderBackground(e.target);
         });
     }
 
@@ -194,24 +384,37 @@ initCustomSelects();
             
             // Handle checkboxes specifically for arrays
             const equipment = [];
-            const focus = [];
+            const equipmentType = form.querySelector('input[name="equipment_type"]:checked').value;
             
-            // Need to manually collect checkboxes because FormData might not group them as expected if names are same
-            const equipmentCheckboxes = form.querySelectorAll('input[name="attrezzatura"]:checked');
-            equipmentCheckboxes.forEach(cb => equipment.push(cb.value));
+            if (equipmentType === 'personalizzato') {
+                const equipmentCheckboxes = form.querySelectorAll('input[name="attrezzatura"]:checked');
+                equipmentCheckboxes.forEach(cb => equipment.push(cb.value));
+            } else {
+                equipment.push(equipmentType);
+            }
 
-            const focusCheckboxes = form.querySelectorAll('input[name="focus"]:checked');
-            focusCheckboxes.forEach(cb => focus.push(cb.value));
+            const focus = [];
+            const focusType = form.querySelector('input[name="focus_type"]:checked').value;
+            
+            if (focusType === 'personalizzato') {
+                const focusCheckboxes = form.querySelectorAll('input[name="focus_muscolare"]:checked');
+                focusCheckboxes.forEach(cb => focus.push(cb.value));
+            } else {
+                focus.push(focusType);
+            }
+            
+            const workoutType = form.querySelector('input[name="workout_type"]').value;
             
             // Collect other fields
             for (let [key, value] of formData.entries()) {
-                if (key !== 'attrezzatura' && key !== 'focus') {
+                if (key !== 'attrezzatura' && key !== 'focus' && key !== 'focus_muscolare' && key !== 'focus_type' && key !== 'workout_type') {
                     data[key] = value;
                 }
             }
             
             data.attrezzatura = equipment;
             data.focus = focus;
+            data.workout_type = workoutType;
 
             console.log("Form Data Collected:", data);
 
@@ -225,7 +428,7 @@ initCustomSelects();
             
             if (data.attrezzatura.length === 0) {
                 if (window.showErrorToast) {
-                    window.showErrorToast("Seleziona almeno un tipo di attrezzatura.");
+                    window.showErrorToast("Seleziona almeno un tipo di attrezzatura o un'opzione valida.");
                 }
                 return;
             }
@@ -274,39 +477,25 @@ initCustomSelects();
             
             const allExercises = await response.json();
             
-            // Define equipment mapping
-            const equipmentMap = {
-                'manubri': ['Manubrio'],
-                'bilanciere': ['Bilanciere', 'Bilanciere olimpico', 'Bilanciere EZ (Sagomato)', 'Trap Bar'],
-                'macchine': ['Multipower (Smith Machine)', 'SkiErg', 'Ellittica', 'Cyclette', 'Ergometro per braccia', 'Slitta (Sled)', 'Macchina a leva', 'Assistito'],
-                'cavi': ['Cavo'],
-                'corpo_libero': ['A corpo libero'],
-                'elastici': ['Elastico', 'Fascia elastica']
-            };
-
-            // Build allowed list based on selection
-            let allowedEquipment = [];
+            // Logica di filtraggio in base alla selezione
+            let filtered;
+            
             if (selectedEquipment.includes('palestra')) {
-                // If 'palestra' is selected, include everything
-                 return {
-                    names: allExercises.map(ex => ex.name_it),
-                    fullList: allExercises
-                };
+                // Se 'palestra' è selezionato, include tutto
+                filtered = allExercises;
+            } else if (selectedEquipment.includes('corpo_libero')) {
+                // Se 'corpo_libero' è selezionato, filtra per "A corpo libero"
+                filtered = allExercises.filter(ex => {
+                    if (!ex.equipments_it) return false;
+                    return ex.equipments_it.some(eq => eq === 'A corpo libero');
+                });
+            } else {
+                // Caso 'personalizzato': usa la lista di attrezzature selezionate
+                filtered = allExercises.filter(ex => {
+                    if (!ex.equipments_it) return false;
+                    return ex.equipments_it.some(eq => selectedEquipment.includes(eq));
+                });
             }
-
-            selectedEquipment.forEach(type => {
-                if (equipmentMap[type]) {
-                    allowedEquipment = allowedEquipment.concat(equipmentMap[type]);
-                }
-            });
-
-            // Filter exercises
-            const filtered = allExercises.filter(ex => {
-                // Check if exercise equipment matches any allowed equipment
-                // ex.equipments_it is an array of strings
-                if (!ex.equipments_it) return false;
-                return ex.equipments_it.some(eq => allowedEquipment.includes(eq));
-            });
 
             return {
                 names: filtered.map(ex => ex.name_it),

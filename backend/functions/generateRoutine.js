@@ -56,6 +56,7 @@ Dati Utente:
 - Obiettivo: ${userData.obiettivo}
 - Esperienza: ${userData.esperienza}
 - Giorni a settimana: ${userData.giorni}
+- Durata allenamento: ${userData.durata} minuti
 - Focus: ${userData.focus.join(', ')}
 - Limitazioni fisiche: ${userData.limitazioni || 'Nessuna'}
 

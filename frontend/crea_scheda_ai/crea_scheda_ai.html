@@ -9,11 +9,28 @@
         if (viewport) {
           viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
         }
+        
+        // Blocca pinch-to-zoom e zoom multi-touch
+        document.addEventListener('touchstart', function(e) {
+          if (e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+        
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+          }
+          lastTouchEnd = now;
+        }, { passive: false });
       }
     </script>
     <title>Crea Scheda con AI - FitSuite</title>
     <link rel="stylesheet" href="../components/toast/toast.css">
     <link rel="icon" type="image/x-icon" href="image/logo.ico">
+    <link rel="stylesheet" href="../../style.css">
     <link rel="stylesheet" href="./crea_scheda_ai.css">
     <link rel="stylesheet" href="../templates/sidebar/sidebar.css">
     <link rel="stylesheet" href="../components/loading_screen/loading_screen.css">
@@ -49,7 +66,7 @@
     <script src="../../backend/function/logout.js"></script>
     <script src="../cache_manager.js"></script>
 </head>
-<body>
+<body class="list-body">
     <script src="../components/loading_screen/loading_screen.js"></script>
     <div class="app-container">
         <!-- Sidebar -->
@@ -80,11 +97,11 @@
                             </div>
                             <div class="form-group">
                                 <label for="peso">Peso (kg)</label>
-                                <input type="number" id="peso" name="peso" min="30" max="200" step="0.1" required placeholder="Es. 75.5">
+                                <input type="number" id="peso" name="peso" min="30" max="500" step="0.1" required placeholder="Es. 75.5">
                             </div>
                             <div class="form-group">
                                 <label for="altezza">Altezza (cm)</label>
-                                <input type="number" id="altezza" name="altezza" min="100" max="250" required placeholder="Es. 175">
+                                <input type="number" id="altezza" name="altezza" min="100" max="300" required placeholder="Es. 175">
                             </div>
                         </div>
                     </div>
@@ -131,36 +148,66 @@
                     <!-- Preferenze Allenamento -->
                     <div class="form-section">
                         <h3>Preferenze Allenamento</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="giorni">Giorni a settimana: <span id="giorni-val">3</span></label>
+                                <input type="range" id="giorni" name="giorni" min="1" max="7" value="3">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="durata">Durata allenamento: <span id="durata-val">60 min</span></label>
+                                <input type="range" id="durata" name="durata" min="15" max="180" step="5" value="60">
+                            </div>
+                        </div>
+
                         <div class="form-group">
-                            <label for="giorni">Giorni a settimana: <span id="giorni-val">3</span></label>
-                            <input type="range" id="giorni" name="giorni" min="1" max="7" value="3" oninput="document.getElementById('giorni-val').textContent = this.value">
+                            <label>Tipo di Allenamento</label>
+                            <div class="custom-select-container" id="workout-type-container">
+                                <input type="hidden" name="workout_type" required>
+                                <div class="custom-select-trigger placeholder">
+                                    <span>Seleziona tipo allenamento</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                                <div class="custom-options">
+                                    <div class="custom-option" data-value="classico">Classico (Serie x Rip)</div>
+                                    <div class="custom-option" data-value="circuito">Circuito</div>
+                                    <div class="custom-option" data-value="superset">Superset</div>
+                                    <div class="custom-option" data-value="drop_set">Drop Set</div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group">
                             <label>Attrezzatura Disponibile</label>
-                            <div class="checkbox-group">
-                                <label><input type="checkbox" name="attrezzatura" value="palestra" checked> Palestra Completa</label>
-                                <label><input type="checkbox" name="attrezzatura" value="manubri"> Manubri</label>
-                                <label><input type="checkbox" name="attrezzatura" value="bilanciere"> Bilanciere</label>
-                                <label><input type="checkbox" name="attrezzatura" value="macchine"> Macchine Isotoniche</label>
-                                <label><input type="checkbox" name="attrezzatura" value="cavi"> Cavi</label>
-                                <label><input type="checkbox" name="attrezzatura" value="corpo_libero"> Corpo Libero</label>
-                                <label><input type="checkbox" name="attrezzatura" value="elastici"> Elastici</label>
+                            <div class="radio-group" id="equipment-main-options">
+                                <label><input type="radio" name="equipment_type" value="palestra" required> <span>Palestra Completa</span></label>
+                                <label><input type="radio" name="equipment_type" value="corpo_libero" required> <span>A corpo libero</span></label>
+                                <label><input type="radio" name="equipment_type" value="personalizzato" required> <span>Personalizzato</span></label>
+                            </div>
+                            
+                            <div id="custom-equipment-container" style="display: none; margin-top: 20px;">
+                                <label style="margin-bottom: 10px; display: block;">Seleziona Attrezzatura:</label>
+                                <div class="checkbox-group" id="equipment-checkbox-group">
+                                    <!-- Populated dynamically via JS -->
+                                </div>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label>Focus Muscolare</label>
-                            <div class="checkbox-group">
-                                <label><input type="checkbox" name="focus" value="full_body"> Full Body (Ogni giorno)</label>
-                                <label><input type="checkbox" name="focus" value="petto"> Petto</label>
-                                <label><input type="checkbox" name="focus" value="schiena"> Schiena</label>
-                                <label><input type="checkbox" name="focus" value="gambe"> Gambe</label>
-                                <label><input type="checkbox" name="focus" value="spalle"> Spalle</label>
-                                <label><input type="checkbox" name="focus" value="braccia"> Braccia</label>
-                                <label><input type="checkbox" name="focus" value="addome"> Addome</label>
+                            <div class="radio-group" id="focus-type-options">
+                                <label><input type="radio" name="focus_type" value="full_body_daily" required> <span>Full Body ogni giorno</span></label>
+                                <label><input type="radio" name="focus_type" value="full_body" required> <span>Full Body</span></label>
+                                <label><input type="radio" name="focus_type" value="personalizzato" required> <span>Personalizzato</span></label>
                             </div>
-                            <small>Seleziona "Full Body" per allenare tutto il corpo ogni seduta, oppure seleziona i gruppi muscolari specifici su cui vuoi concentrarti.</small>
+                            
+                            <div id="custom-focus-container" style="display: none; margin-top: 20px;">
+                                <label style="margin-bottom: 10px; display: block;">Seleziona Parti del Corpo:</label>
+                                <div class="checkbox-group" id="focus-checkbox-group">
+                                    <!-- Populated dynamically via JS -->
+                                </div>
+                            </div>
+                            <small id="focus-hint">Scegli la modalità di focus per i tuoi allenamenti.</small>
                         </div>
                     </div>
 
@@ -170,11 +217,21 @@
                         <div class="form-group">
                             <label for="limitazioni">Limitazioni (Max 50 caratteri)</label>
                             <input type="text" id="limitazioni" name="limitazioni" maxlength="50" placeholder="Es. Dolore spalla dx">
+                            <div class="char-counter-container">
+                                Caratteri rimanenti: <span id="char-counter">50</span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="generate-btn">Genera Scheda con AI</button>
+                        <div class="submit-container">
+                            <button type="submit" class="generate-btn">Genera Scheda con AI</button>
+                            <p class="ai-disclaimer">
+                                <i class="fas fa-info-circle"></i> 
+                                I dati inseriti non vengono salvati da FitSuite e non saranno associati al tuo profilo. 
+                                L'AI può commettere errori nella generazione della scheda, verifica sempre gli esercizi proposti.
+                            </p>
+                        </div>
                     </div>
                 </form>
             </div>
