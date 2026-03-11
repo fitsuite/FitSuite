@@ -70,8 +70,8 @@
                             <div class="form-group">
                                 <label>Sesso</label>
                                 <div class="radio-group">
-                                    <label><input type="radio" name="sesso" value="maschio" required> Maschio</label>
-                                    <label><input type="radio" name="sesso" value="femmina" required> Femmina</label>
+                                    <label><input type="radio" name="sesso" value="maschio" required> <span>Uomo</span></label>
+                                    <label><input type="radio" name="sesso" value="femmina" required> <span>Donna</span></label>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -95,23 +95,35 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="obiettivo">Obiettivo</label>
-                                <select id="obiettivo" name="obiettivo" required>
-                                    <option value="" disabled selected>Seleziona obiettivo</option>
-                                    <option value="dimagrimento">Perdita Peso</option>
-                                    <option value="ipertrofia">Massa Muscolare (Ipertrofia)</option>
-                                    <option value="forza">Forza</option>
-                                    <option value="mantenimento">Mantenimento</option>
-                                    <option value="resistenza">Resistenza</option>
-                                </select>
+                                <div class="custom-select-container">
+                                    <div class="custom-select-trigger placeholder">
+                                        <span>Seleziona obiettivo</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="custom-options">
+                                        <div class="custom-option" data-value="dimagrimento">Perdita Peso</div>
+                                        <div class="custom-option" data-value="ipertrofia">Massa Muscolare (Ipertrofia)</div>
+                                        <div class="custom-option" data-value="forza">Forza</div>
+                                        <div class="custom-option" data-value="mantenimento">Mantenimento</div>
+                                        <div class="custom-option" data-value="resistenza">Resistenza</div>
+                                    </div>
+                                    <input type="hidden" name="obiettivo" required>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="esperienza">Esperienza</label>
-                                <select id="esperienza" name="esperienza" required>
-                                    <option value="" disabled selected>Seleziona livello</option>
-                                    <option value="principiante">Principiante (0-1 anni)</option>
-                                    <option value="intermedio">Intermedio (1-3 anni)</option>
-                                    <option value="avanzato">Avanzato (>3 anni)</option>
-                                </select>
+                                <div class="custom-select-container">
+                                    <div class="custom-select-trigger placeholder">
+                                        <span>Seleziona livello</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="custom-options">
+                                        <div class="custom-option" data-value="principiante">Principiante (0-1 anni)</div>
+                                        <div class="custom-option" data-value="intermedio">Intermedio (1-3 anni)</div>
+                                        <div class="custom-option" data-value="avanzato">Avanzato (>3 anni)</div>
+                                    </div>
+                                    <input type="hidden" name="esperienza" required>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -156,8 +168,8 @@
                     <div class="form-section">
                         <h3>Limitazioni Fisiche</h3>
                         <div class="form-group">
-                            <label for="limitazioni">Limitazioni (Max 20 caratteri)</label>
-                            <input type="text" id="limitazioni" name="limitazioni" maxlength="20" placeholder="Es. Dolore spalla dx">
+                            <label for="limitazioni">Limitazioni (Max 50 caratteri)</label>
+                            <input type="text" id="limitazioni" name="limitazioni" maxlength="50" placeholder="Es. Dolore spalla dx">
                         </div>
                     </div>
 
@@ -171,7 +183,6 @@
 
     <script src="../templates/sidebar/sidebar.js"></script>
     <script src="../components/toast/toast.js"></script>
-    <script src="../templates/sidebar/sidebar.js"></script>
     <script src="../components/session_control/session_control.js"></script>
     <script src="../components/popup/popup.js"></script>
     <script src="./crea_scheda_ai.js"></script>

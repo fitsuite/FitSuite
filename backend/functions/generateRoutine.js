@@ -73,6 +73,7 @@ Struttura JSON richiesta:
           "serie": 3,
           "ripetizioni": "10-12",
           "recupero": "60s",
+          "peso": "10kg",
           "note": "Note opzionali"
         }
       ]

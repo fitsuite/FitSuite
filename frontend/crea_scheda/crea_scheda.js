@@ -261,7 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             
                             const weightInput = exerciseRow.querySelector('.col-weight input');
-                            if (weightInput) weightInput.value = '';
+                            if (weightInput) {
+                                // Extract weight (e.g., "10kg" -> "10")
+                                const weightVal = ex.peso ? ex.peso.toString().replace(/[a-zA-Z]/g, '').trim() : '';
+                                weightInput.value = weightVal || '';
+                            }
                             
                             const noteInput = exerciseRow.querySelector('.col-note textarea');
                             if (noteInput) noteInput.value = ex.note || '';

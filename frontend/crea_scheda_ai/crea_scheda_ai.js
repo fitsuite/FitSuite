@@ -100,23 +100,80 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // 2. Network Fallback
-        try {
-            const doc = await db.collection('users').doc(uid).get();
-            if (doc.exists) {
-                const data = doc.data();
-                if (data.preferences) {
-                    if (data.preferences.color) {
-                        setPrimaryColor(data.preferences.color);
-                    }
-                    window.CacheManager.savePreferences(uid, data.preferences);
+    try {
+        const doc = await db.collection('users').doc(uid).get();
+        if (doc.exists) {
+            const data = doc.data();
+            if (data.preferences) {
+                if (data.preferences.color) {
+                    setPrimaryColor(data.preferences.color);
                 }
+                window.CacheManager.savePreferences(uid, data.preferences);
             }
-        } catch (error) {
-            console.error("Error loading preferences:", error);
         }
+    } catch (error) {
+        console.error("Error loading preferences:", error);
     }
+}
+
+// Prevenire 'e' ed 'E' nei campi numerici
+const numericInputs = document.querySelectorAll('input[type="number"]');
+numericInputs.forEach(input => {
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'e' || e.key === 'E') {
+            e.preventDefault();
+        }
+    });
+});
+
+// Gestione Select Personalizzate
+function initCustomSelects() {
+    const selects = document.querySelectorAll('.custom-select-container');
     
-    // Update range value display
+    selects.forEach(container => {
+        const trigger = container.querySelector('.custom-select-trigger');
+        const optionsList = container.querySelector('.custom-options');
+        const hiddenInput = container.querySelector('input[type="hidden"]');
+        const options = container.querySelectorAll('.custom-option');
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Chiudi altre select aperte
+            document.querySelectorAll('.custom-options.active').forEach(opt => {
+                if (opt !== optionsList) opt.classList.remove('active');
+            });
+            optionsList.classList.toggle('active');
+            trigger.classList.toggle('active');
+        });
+
+        options.forEach(option => {
+            option.addEventListener('click', () => {
+                const value = option.dataset.value;
+                const text = option.textContent;
+                
+                hiddenInput.value = value;
+                trigger.querySelector('span').textContent = text;
+                trigger.classList.remove('placeholder');
+                
+                options.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                optionsList.classList.remove('active');
+                trigger.classList.remove('active');
+            });
+        });
+    });
+
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.custom-options.active').forEach(opt => opt.classList.remove('active'));
+        document.querySelectorAll('.custom-select-trigger.active').forEach(trig => trig.classList.remove('active'));
+    });
+}
+
+// Inizializza select personalizzate al caricamento
+initCustomSelects();
+
+// Update range value display
     const daysRange = document.getElementById('giorni');
     const daysVal = document.getElementById('giorni-val');
     
@@ -300,8 +357,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Map simplified names back to full objects
         routine.sedute.forEach(seduta => {
             seduta.esercizi = seduta.esercizi.map(ex => {
-                // Find matching exercise in fullList
-                const match = fullList.find(dbEx => dbEx.name_it === ex.nome);
+                // Find matching exercise in fullList (case-insensitive and trimmed)
+                const exName = (ex.nome || '').trim().toLowerCase();
+                const match = fullList.find(dbEx => (dbEx.name_it || '').trim().toLowerCase() === exName);
                 
                 if (match) {
                     return {
@@ -312,6 +370,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             instructions: match.instructions_it
                         }
                     };
+                } else {
+                    console.warn(`Esercizio non trovato nel database: ${ex.nome}`);
                 }
                 return ex; // Return as is if not found
             });
