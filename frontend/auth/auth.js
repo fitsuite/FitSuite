@@ -9,9 +9,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const navLinks = document.getElementById('navLinks');
 
     if (hamburger && navLinks) {
-        hamburger.addEventListener('click', () => {
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation();
             navLinks.classList.toggle('active');
             hamburger.classList.toggle('active');
+        });
+
+        // Chiudi la navbar quando si clicca fuori
+        document.addEventListener('click', (e) => {
+            if (navLinks.classList.contains('active')) {
+                const isClickInsideNav = navLinks.contains(e.target);
+                const isClickOnHamburger = hamburger.contains(e.target);
+                
+                if (!isClickInsideNav && !isClickOnHamburger) {
+                    hamburger.classList.remove('active');
+                    navLinks.classList.remove('active');
+                }
+            }
         });
     }
 

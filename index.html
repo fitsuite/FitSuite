@@ -55,6 +55,7 @@
                     <a href="#hero-content">Home</a>
                     <a href="#chi-siamo">Chi siamo?</a>
                     <a href="#esercizi">Esercizi</a>
+                    <a href="#prezzi">Prezzi</a>
                 </div>
                 <a href="./frontend/auth/auth.html"><button class="login-btn">Accedi</button></a>
             </div>
@@ -145,8 +146,6 @@
             </div>
         </div>
     </section>
-
-    <hr>
 
     <section class="pricing-section" id="prezzi">
         <div class="section-container">
@@ -255,6 +254,36 @@
             </div>
         </div>
     </section>
+
+    <!-- Exercise Detail Popup -->
+    <div id="exercise-detail-popup" class="ex-popup-overlay">
+        <div class="ex-popup-card">
+            <div class="ex-popup-header">
+                <h3 id="popup-exercise-name" class="ex-popup-exercise-name"></h3>
+                <button class="ex-close-popup-btn"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="ex-popup-image-container">
+                <img id="popup-exercise-gif" src="" alt="Esercizio GIF" class="ex-popup-exercise-gif">
+            </div>
+
+            <div class="ex-popup-content">
+                <div class="ex-guide-section">
+                    <div class="ex-guide-separator">
+                        <span>Guida</span>
+                    </div>
+                    <div class="ex-stepper-container">
+                        <button id="prev-step" class="ex-nav-btn"><i class="fas fa-chevron-left"></i></button>
+                        <div id="popup-exercise-description" class="ex-popup-exercise-description">
+                            <!-- Istruzione corrente caricate qui -->
+                        </div>
+                        <button id="next-step" class="ex-nav-btn"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div id="popup-step-counter" class="ex-step-counter">1 / 1</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="./script.js"></script>
     <!-- Script per il footer -->
