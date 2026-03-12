@@ -7,11 +7,25 @@ const navLinks = document.getElementById('navLinks');
 
 // Verifica che gli elementi DOM esistano
 if (hamburger) {
-    hamburger.addEventListener('click', () => {
+    hamburger.addEventListener('click', (e) => {
+        e.stopPropagation(); // Evita che il click si propaghi al document
         hamburger.classList.toggle('active');
         navLinks?.classList.toggle('active');
     });
 }
+
+// Chiudi la navbar quando si clicca fuori
+document.addEventListener('click', (e) => {
+    if (navLinks && navLinks.classList.contains('active')) {
+        const isClickInsideNav = navLinks.contains(e.target);
+        const isClickOnHamburger = hamburger.contains(e.target);
+        
+        if (!isClickInsideNav && !isClickOnHamburger) {
+            hamburger.classList.remove('active');
+            navLinks.classList.remove('active');
+        }
+    }
+});
 
 if (navLinks) {
     navLinks.querySelectorAll('a').forEach(link => {
@@ -34,6 +48,10 @@ let originalExercises = [];
 let currentPage = 1;
 const itemsPerPage = 9; // 3x3 grid per pagina
 let totalResults = 0;
+
+// Popup Stepper State
+let currentInstructions = [];
+let currentStepIndex = 0;
 
 // Function to display exercises
 function displayExercises() {
@@ -65,7 +83,6 @@ function displayExercises() {
     if (grid.parentNode) {
         const resultsInfo = document.createElement('div');
         resultsInfo.className = 'results-info';
-        resultsInfo.style.cssText = 'color: #888; margin-bottom: 20px; font-size: 14px; text-align: center;';
         resultsInfo.textContent = `Trovati ${totalResults} esercizi`;
         grid.parentNode.insertBefore(resultsInfo, grid);
     }
@@ -89,12 +106,138 @@ function displayExercises() {
                     <h4>${ex.name_it}</h4>
                 </div>
             `;
+
+            // Aggiungi event listener per il popup
+            card.addEventListener('click', () => {
+                showExercisePopup(ex);
+            });
+
             grid.appendChild(card);
         });
     }
 
     setupPagination(); // Aggiunto per aggiornare la paginazione dopo aver visualizzato gli esercizi
 }
+
+// Funzione per mostrare il popup dell'esercizio
+function showExercisePopup(ex) {
+    console.log('Mostrando popup per:', ex.name_it);
+    const popup = document.getElementById('exercise-detail-popup');
+    const popupImg = document.getElementById('popup-exercise-gif');
+    const popupName = document.getElementById('popup-exercise-name');
+    const popupDesc = document.getElementById('popup-exercise-description');
+    const stepCounter = document.getElementById('popup-step-counter');
+
+    if (!popup || !popupImg || !popupName || !popupDesc) {
+        console.error('Errore: Elementi del popup non trovati');
+        return;
+    }
+
+    popupName.textContent = ex.name_it || ex.name;
+    popupImg.src = ex.gifUrl;
+    
+    // Gestione Istruzioni con Stepper - Usando instructions_it e pulendo il testo
+    const rawInstructions = ex.instructions_it || ex.instructions || [];
+    currentInstructions = rawInstructions.map(instr => {
+        // Taglia esattamente i primi 6 caratteri (es. "Step:1") e pulisce gli spazi
+        return instr.substring(6).trim();
+    });
+    
+    currentStepIndex = 0;
+    
+    updateStepDisplay();
+
+    popup.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Impedisci lo scroll della pagina
+}
+
+// Funzione per aggiornare la visualizzazione dello step
+function updateStepDisplay() {
+    const popupDesc = document.getElementById('popup-exercise-description');
+    const stepCounter = document.getElementById('popup-step-counter');
+    const prevBtn = document.getElementById('prev-step');
+    const nextBtn = document.getElementById('next-step');
+
+    if (!popupDesc || !stepCounter || !prevBtn || !nextBtn) return;
+
+    if (currentInstructions.length > 0) {
+        popupDesc.textContent = currentInstructions[currentStepIndex];
+        stepCounter.textContent = `${currentStepIndex + 1} / ${currentInstructions.length}`;
+        
+        // Abilita/Disabilita bottoni
+        prevBtn.disabled = currentStepIndex === 0;
+        nextBtn.disabled = currentStepIndex === currentInstructions.length - 1;
+        
+        // Nascondi bottoni se c'è solo uno step
+        if (currentInstructions.length <= 1) {
+            prevBtn.style.visibility = 'hidden';
+            nextBtn.style.visibility = 'hidden';
+        } else {
+            prevBtn.style.visibility = 'visible';
+            nextBtn.style.visibility = 'visible';
+        }
+    } else {
+        popupDesc.textContent = "Istruzioni non disponibili per questo esercizio.";
+        stepCounter.textContent = "0 / 0";
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+    }
+}
+
+// Funzione per chiudere il popup
+function closeExercisePopup() {
+    const popup = document.getElementById('exercise-detail-popup');
+    if (popup) {
+        popup.classList.remove('active');
+        document.body.style.overflow = ''; // Ripristina lo scroll
+    }
+}
+
+// Inizializza i listener del popup
+function initPopupListeners() {
+    const closeBtn = document.querySelector('.ex-close-popup-btn');
+    const popupOverlay = document.querySelector('.ex-popup-overlay');
+    const prevBtn = document.getElementById('prev-step');
+    const nextBtn = document.getElementById('next-step');
+
+    if (closeBtn) {
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            closeExercisePopup();
+        };
+    }
+
+    if (popupOverlay) {
+        popupOverlay.onclick = (e) => {
+            // Chiudi solo se il click è esattamente sull'overlay (lo sfondo oscurato)
+            if (e.target === popupOverlay) {
+                console.log('Click su overlay rilevato, chiusura popup');
+                closeExercisePopup();
+            }
+        };
+    }
+
+    if (prevBtn) {
+        prevBtn.onclick = () => {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateStepDisplay();
+            }
+        };
+    }
+
+    if (nextBtn) {
+        nextBtn.onclick = () => {
+            if (currentStepIndex < currentInstructions.length - 1) {
+                currentStepIndex++;
+                updateStepDisplay();
+            }
+        };
+    }
+}
+
+// Rimosso il vecchio blocco DOMContentLoaded del popup duplicato
+
 
 // Function to setup pagination
 function setupPagination() {
@@ -348,6 +491,7 @@ if (routineList) {
 // Avvia l'applicazione quando la pagina è pronta
 window.addEventListener('DOMContentLoaded', () => {
     init();
+    initPopupListeners(); // Inizializza i listener del popup
     
     // Pricing Toggle Logic
     const pricingToggle = document.getElementById('pricing-toggle');
@@ -407,11 +551,17 @@ window.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const selectedPlan = btn.getAttribute('data-plan');
             
+            // Add click animation
+            btn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                btn.style.transform = '';
+            }, 100);
+
             // Update buttons
             mobilePlanBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
-            // Update cards
+            // Update cards with animation
             pricingCards.forEach(card => {
                 if (card.getAttribute('data-plan') === selectedPlan) {
                     card.classList.add('active');
