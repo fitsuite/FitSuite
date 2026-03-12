@@ -356,6 +356,21 @@ window.addEventListener('DOMContentLoaded', () => {
     const yearlyLabel = document.querySelector('.toggle-label.yearly');
 
     if (pricingToggle) {
+        // Aggiungi click listener alle label per attivare il toggle
+        monthlyLabel?.addEventListener('click', () => {
+            if (pricingToggle.checked) {
+                pricingToggle.checked = false;
+                pricingToggle.dispatchEvent(new Event('change'));
+            }
+        });
+
+        yearlyLabel?.addEventListener('click', () => {
+            if (!pricingToggle.checked) {
+                pricingToggle.checked = true;
+                pricingToggle.dispatchEvent(new Event('change'));
+            }
+        });
+
         pricingToggle.addEventListener('change', () => {
             const isYearly = pricingToggle.checked;
             
@@ -368,21 +383,42 @@ window.addEventListener('DOMContentLoaded', () => {
                 const yearlyPrice = price.getAttribute('data-yearly');
                 
                 if (isYearly) {
-                    // Update price and suffix
-                    if (monthlyPrice === '€0') {
-                        price.innerHTML = `€0<span>/sempre</span>`;
-                    } else {
-                        price.innerHTML = `${yearlyPrice}<span>/mese*</span>`;
-                    }
+                    price.innerHTML = `${yearlyPrice}<span>/mese</span>`;
                 } else {
-                    // Restore monthly price and suffix
-                    if (monthlyPrice === '€0') {
-                        price.innerHTML = `€0<span>/sempre</span>`;
-                    } else {
-                        price.innerHTML = `${monthlyPrice}<span>/mese</span>`;
-                    }
+                    price.innerHTML = `${monthlyPrice}<span>/mese</span>`;
                 }
+            });
+
+            // Update mobile button prices
+            const mobilePrices = document.querySelectorAll('.mobile-plan-btn .plan-price');
+            mobilePrices.forEach(priceSpan => {
+                const monthlyPrice = priceSpan.getAttribute('data-monthly');
+                const yearlyPrice = priceSpan.getAttribute('data-yearly');
+                priceSpan.textContent = isYearly ? yearlyPrice : monthlyPrice;
             });
         });
     }
+
+    // Mobile Plan Selector Logic
+    const mobilePlanBtns = document.querySelectorAll('.mobile-plan-btn');
+    const pricingCards = document.querySelectorAll('.pricing-card');
+
+    mobilePlanBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const selectedPlan = btn.getAttribute('data-plan');
+            
+            // Update buttons
+            mobilePlanBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Update cards
+            pricingCards.forEach(card => {
+                if (card.getAttribute('data-plan') === selectedPlan) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+        });
+    });
 });

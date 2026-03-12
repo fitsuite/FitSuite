@@ -150,52 +150,65 @@
 
     <section class="pricing-section" id="prezzi">
         <div class="section-container">
-            <h2 class="section-title">Piani & Prezzi</h2>
+            <h2 class="section-title">Scegli il piano perfetto per te</h2>
+            <p class="section-subtitle">Sblocca il tuo potenziale e trasforma il tuo modo di lavorare</p>
             
             <div class="pricing-toggle-container">
-                <span class="toggle-label monthly active">Mensile</span>
+                <label for="pricing-toggle" class="toggle-label monthly active">Mensile</label>
                 <label class="switch">
                     <input type="checkbox" id="pricing-toggle">
                     <span class="slider round"></span>
                 </label>
-                <span class="toggle-label yearly">Annuale <span class="discount-badge">-17%</span></span>
+                <label for="pricing-toggle" class="toggle-label yearly">Annuale <span class="discount-badge">Sconto 17%</span></label>
+            </div>
+
+            <!-- Mobile Plan Selector -->
+            <div class="mobile-plan-selector">
+                <button class="mobile-plan-btn" data-plan="free">
+                    <span class="plan-name">FREE</span>
+                    <span class="plan-price" data-monthly="€0" data-yearly="€0">€0</span>
+                </button>
+                <button class="mobile-plan-btn active" data-plan="pro">
+                    <span class="plan-name">PRO</span>
+                    <span class="plan-price" data-monthly="€9.99" data-yearly="€8.33">€9.99</span>
+                </button>
+                <button class="mobile-plan-btn" data-plan="lite">
+                    <span class="plan-name">LITE</span>
+                    <span class="plan-price" data-monthly="€4.99" data-yearly="€4.16">€4.99</span>
+                </button>
             </div>
 
             <div class="pricing-grid">
                 <!-- Card 1: FREE -->
-                <div class="pricing-card">
+                <div class="pricing-card" data-plan="free">
                     <div class="card-header">
                         <h3>FREE</h3>
-                        <p class="price" data-monthly="€0" data-yearly="€0">€0<span>/sempre</span></p>
+                        <p class="card-tagline">Per chi vuole iniziare</p>
+                        <p class="price" data-monthly="€0" data-yearly="€0">€0<span>/mese</span></p>
                     </div>
                     <div class="card-body">
                         <ul class="features">
                             <li><i class="fas fa-check"></i> Creazione schede (manuale)</li>
-                            <li><i class="fas fa-check"></i> Accesso completo database 1.324+ esercizi</li>
+                            <li><i class="fas fa-check"></i> Database 1.300+ esercizi</li>
                             <li><i class="fas fa-check"></i> Ricezione schede condivise</li>
                             <li><i class="fas fa-check"></i> 2 temi base</li>
                             <li class="not-included"><i class="fas fa-xmark"></i> Pubblicità presente</li>
                             <li class="not-included"><i class="fas fa-xmark"></i> Solo 3 schede salvate</li>
                             <li class="not-included"><i class="fas fa-xmark"></i> Condivisione limitata (max 5)</li>
                         </ul>
-                        <div class="limits">
-                            <p><strong>Limiti di Utilizzo:</strong></p>
-                            <ul>
-                                <li>3 schede salvate max</li>
-                                <li>3 generazioni AI/mese</li>
-                                <li>Condivisione max 5 persone</li>
-                                <li>Pubblicità non invasiva</li>
-                            </ul>
+                        <div class="card-footer-info">
+                            <p>Limiti: 3 schede, 3 generazioni AI/mese, 5 destinatari</p>
                         </div>
                     </div>
-                    <button class="pricing-btn">Inizia Ora</button>
+                    <button class="pricing-btn">INIZIA ORA</button>
                 </div>
 
                 <!-- Card 2: PRO (Centrale) -->
-                <div class="pricing-card popular">
+                <div class="pricing-card popular active" data-plan="pro">
                     <div class="popular-badge">PIÙ SCELTO</div>
                     <div class="card-header">
                         <h3>PRO</h3>
+                        <p class="card-tagline">Per veri professionisti</p>
                         <p class="price" data-monthly="€9.99" data-yearly="€8.33">€9.99<span>/mese</span></p>
                     </div>
                     <div class="card-body">
@@ -209,36 +222,35 @@
                             <li><i class="fas fa-check"></i> Supporto prioritario</li>
                             <li><i class="fas fa-check"></i> Analytics dashboard</li>
                         </ul>
+                        <div class="card-footer-info">
+                            <p>Senza limiti: Massima libertà professionale</p>
+                        </div>
                     </div>
-                    <button class="pricing-btn">Abbonati</button>
+                    <button class="pricing-btn">DIVENTA PRO</button>
                 </div>
 
                 <!-- Card 3: LITE (Destra) -->
-                <div class="pricing-card">
+                <div class="pricing-card" data-plan="lite">
                     <div class="card-header">
                         <h3>LITE</h3>
+                        <p class="card-tagline">Per appassionati regolari</p>
                         <p class="price" data-monthly="€4.99" data-yearly="€4.16">€4.99<span>/mese</span></p>
                     </div>
                     <div class="card-body">
                         <ul class="features">
                             <li><i class="fas fa-check"></i> Tutte le funzionalità FREE</li>
                             <li><i class="fas fa-check"></i> 15 schede salvate</li>
-                            <li><i class="fas fa-check"></i> Creazione schede con AI illimitata</li>
-                            <li><i class="fas fa-check"></i> Tutti i temi disponibili (8+)</li>
+                            <li><i class="fas fa-check"></i> Creazione AI illimitata</li>
+                            <li><i class="fas fa-check"></i> Tutti i temi (8+ opzioni)</li>
                             <li><i class="fas fa-check"></i> Condivisione illimitata</li>
                             <li><i class="fas fa-check"></i> Pubblicità rimossa</li>
                             <li class="not-included"><i class="fas fa-xmark"></i> Gestione clienti base (max 10)</li>
                         </ul>
-                        <div class="limits">
-                            <p><strong>Limiti di Utilizzo:</strong></p>
-                            <ul>
-                                <li>15 schede salvate</li>
-                                <li>Gestione max 10 clienti</li>
-                                <li>Nessun limite AI/condivisione</li>
-                            </ul>
+                        <div class="card-footer-info">
+                            <p>Limiti: 15 schede, max 10 clienti</p>
                         </div>
                     </div>
-                    <button class="pricing-btn">Abbonati</button>
+                    <button class="pricing-btn">PASSA A LITE</button>
                 </div>
             </div>
         </div>
