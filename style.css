@@ -983,7 +983,7 @@ input:checked + .slider:before {
     background: #1c1c1c;
     border: 1px solid #2a2a2a;
     border-radius: 24px;
-    padding: clamp(15px, 3vw, 25px) clamp(20px, 3vw, 30px) clamp(25px, 4vw, 35px); /* Ridotto il top padding */
+    padding: clamp(10px, 2vw, 15px) clamp(20px, 3vw, 30px) clamp(25px, 4vw, 35px); /* Ridotto ulteriormente il top padding */
     display: flex;
     flex-direction: column;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1046,13 +1046,13 @@ input:checked + .slider:before {
 
 .card-header {
     text-align: center;
-    margin-bottom: 6px; /* Ridotto da 12px */
+    margin-bottom: 2px; /* Ridotto ulteriormente */
 }
 
 .card-header h3 {
     font-size: clamp(18px, 2.5vw, 24px);
     color: white;
-    margin-bottom: 2px; /* Ridotto da 4px */
+    margin: 0; /* Reset margins */
     font-weight: 700;
     text-transform: uppercase;
 }
@@ -1060,7 +1060,7 @@ input:checked + .slider:before {
 .card-tagline {
     font-size: clamp(12px, 1.5vw, 14px);
     color: #888;
-    margin-bottom: 6px; /* Ridotto da 10px */
+    margin: 0; /* Reset margins */
 }
 
 .price {
@@ -1070,8 +1070,9 @@ input:checked + .slider:before {
     display: flex;
     align-items: baseline;
     justify-content: center;
-    padding-top: 8px; /* Ridotto da 15px */
-    border-top: 1px solid #2a2a2a;
+    margin: 0; /* Reset margins */
+    padding-top: 0; /* Ensure no padding */
+    border-top: none; /* Linea rimossa come richiesto */
 }
 
 .price span {
@@ -1374,7 +1375,8 @@ input:checked + .slider:before {
 
     .price {
         font-size: 32px;
-        padding-top: 10px; /* Ridotto da 15px */
+        padding-top: 0; /* Rimossa padding per avvicinare tagline */
+        margin-top: 0;
     }
 
     .card-header {
