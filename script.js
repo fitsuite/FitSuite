@@ -407,11 +407,17 @@ window.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const selectedPlan = btn.getAttribute('data-plan');
             
+            // Add click animation
+            btn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                btn.style.transform = '';
+            }, 100);
+
             // Update buttons
             mobilePlanBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
-            // Update cards
+            // Update cards with animation
             pricingCards.forEach(card => {
                 if (card.getAttribute('data-plan') === selectedPlan) {
                     card.classList.add('active');
