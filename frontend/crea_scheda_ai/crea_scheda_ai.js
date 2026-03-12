@@ -511,7 +511,8 @@ const bodyParts = [
     async function generateRoutineWithGemini(userData, exercises) {
         try {
             // Chiama la Cloud Function Firebase (SICURA - chiave API nel backend)
-            const cloudFunction = firebase.functions().httpsCallable('generateWorkoutRoutine');
+            // Specifichiamo la regione 'us-central1' per sicurezza
+            const cloudFunction = firebase.app().functions('us-central1').httpsCallable('generateWorkoutRoutine');
             
             console.log("Chiamando Cloud Function...");
             
