@@ -19,6 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     const form = document.getElementById('ai-workout-form');
+    const resetBtn = document.getElementById('reset-button');
+    const resetConfirmModal = document.getElementById('reset-confirm-modal');
+    const confirmResetBtn = document.getElementById('confirm-reset');
+    const cancelResetBtn = document.getElementById('cancel-reset');
+    
     const auth = firebase.auth();
     const db = firebase.firestore();
 
@@ -49,6 +54,127 @@ document.addEventListener('DOMContentLoaded', () => {
         'Blu': 'linear-gradient(135deg, #161d2b 0%, #1a1a1a 100%)',
         'Rosa': 'linear-gradient(135deg, #2b1625 0%, #1a1a1a 100%)'
     };
+
+    let currentUser = null;
+
+    // --- Popup Navigation Management ---
+    function pushPopupState() {
+        if (!history.state || !history.state.popupOpen) {
+            history.pushState({ popupOpen: true }, '');
+        }
+    }
+
+    function isAnyPopupOpen() {
+        return resetConfirmModal && resetConfirmModal.classList.contains('show');
+    }
+
+    window.addEventListener('popstate', (event) => {
+        if (resetConfirmModal && resetConfirmModal.classList.contains('show')) {
+            hideResetModal(true);
+        }
+    });
+
+    function hideResetModal(fromBackAction = false) {
+        if (resetConfirmModal && resetConfirmModal.classList.contains('show')) {
+            resetConfirmModal.classList.remove('show');
+            if (!fromBackAction && history.state && history.state.popupOpen) {
+                history.back();
+            }
+        }
+    }
+
+    // --- Persistence Logic ---
+    function saveDraft() {
+        if (!currentUser) return;
+        
+        const formData = new FormData(form);
+        const data = {};
+        
+        for (let [key, value] of formData.entries()) {
+            if (data[key]) {
+                if (!Array.isArray(data[key])) {
+                    data[key] = [data[key]];
+                }
+                data[key].push(value);
+            } else {
+                data[key] = value;
+            }
+        }
+        
+        localStorage.setItem(`crea_scheda_ai_draft_${currentUser.uid}`, JSON.stringify(data));
+    }
+
+    function loadDraft() {
+        if (!currentUser) return;
+        
+        const draftJSON = localStorage.getItem(`crea_scheda_ai_draft_${currentUser.uid}`);
+        if (!draftJSON) return;
+
+        const draft = JSON.parse(draftJSON);
+        
+        for (let key in draft) {
+            const val = draft[key];
+            const inputs = form.querySelectorAll(`[name="${key}"]`);
+            
+            if (inputs.length === 0) continue;
+            
+            if (inputs[0].type === 'radio') {
+                inputs.forEach(input => {
+                    if (input.value === val) input.checked = true;
+                });
+                inputs[0].dispatchEvent(new Event('change'));
+            } else if (inputs[0].type === 'checkbox') {
+                const values = Array.isArray(val) ? val : [val];
+                inputs.forEach(input => {
+                    if (values.includes(input.value)) input.checked = true;
+                });
+            } else if (inputs[0].type === 'hidden') {
+                inputs[0].value = val;
+                const container = inputs[0].closest('.custom-select-container');
+                if (container) {
+                    const trigger = container.querySelector('.custom-select-trigger');
+                    const option = container.querySelector(`.custom-option[data-value="${val}"]`);
+                    if (trigger && option) {
+                        trigger.querySelector('span').textContent = option.textContent;
+                        trigger.classList.remove('placeholder');
+                        container.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+                        option.classList.add('selected');
+                    }
+                }
+            } else {
+                inputs[0].value = val;
+                inputs[0].dispatchEvent(new Event('input'));
+            }
+        }
+    }
+
+    function clearDraft() {
+        if (currentUser) {
+            localStorage.removeItem(`crea_scheda_ai_draft_${currentUser.uid}`);
+        }
+    }
+
+    form.addEventListener('input', () => {
+        saveDraft();
+    });
+    
+    form.addEventListener('change', () => {
+        saveDraft();
+    });
+
+    resetBtn.addEventListener('click', () => {
+        pushPopupState();
+        resetConfirmModal.classList.add('show');
+    });
+
+    confirmResetBtn.addEventListener('click', () => {
+        clearDraft();
+        location.reload();
+    });
+
+    cancelResetBtn.addEventListener('click', () => {
+        hideResetModal(false);
+    });
 
     function updateSliderBackground(slider) {
         if (!slider) return;
@@ -96,12 +222,14 @@ document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             try {
+                currentUser = user;
                 window.LoadingManager.nextStep('Caricamento preferenze utente...');
                 await Promise.all([
                     loadUserPreferences(user.uid),
                     waitForSidebar()
                 ]);
                 
+                loadDraft();
                 window.LoadingManager.nextStep('Preparazione interfaccia completata');
             } catch (error) {
                 console.error("Error during initialization:", error);
@@ -218,6 +346,7 @@ function initCustomSelects() {
                 
                 optionsList.classList.remove('active');
                 trigger.classList.remove('active');
+                saveDraft();
             });
         });
     });

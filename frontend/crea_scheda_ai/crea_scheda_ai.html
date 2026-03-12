@@ -77,6 +77,7 @@
         <main class="main-content">
             <header class="content-header">
                 <h1>Crea Scheda con AI</h1>
+                <button class="reset-btn" id="reset-button">Ripristina</button>
             </header>
             
             <div class="ai-form-container">
@@ -237,6 +238,18 @@
                 </form>
             </div>
         </main>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div id="reset-confirm-modal" class="popup-overlay">
+        <div class="custom-popup-content">
+            <h3 class="custom-popup-title">Ripristina Modulo AI</h3>
+            <p class="custom-popup-message">Sei sicuro di voler ripristinare il modulo? Tutti i dati inseriti verranno cancellati e l'azione non può essere annullata.</p>
+            <div class="custom-popup-actions">
+                <button id="cancel-reset" class="custom-popup-btn secondary">Annulla</button>
+                <button id="confirm-reset" class="custom-popup-btn primary" style="background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);">Ripristina</button>
+            </div>
+        </div>
     </div>
 
     <script src="../templates/sidebar/sidebar.js"></script>

@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ]);
 
     const saveBtn = document.getElementById('save-button');
+    const resetBtn = document.getElementById('reset-button');
     const nomeSchedaInput = document.getElementById('nome-scheda');
 
     const datePickerTrigger = document.getElementById('date-picker-trigger');
@@ -52,6 +53,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Calendar elements
     const calendarModal = document.getElementById('calendar-modal');
+    const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+    const confirmDeleteBtn = document.getElementById('confirm-delete');
+    const cancelDeleteBtn = document.getElementById('cancel-delete');
+    const resetConfirmModal = document.getElementById('reset-confirm-modal');
+    const confirmResetBtn = document.getElementById('confirm-reset');
+    const cancelResetBtn = document.getElementById('cancel-reset');
+    
     const calendarGrid = document.getElementById('calendar-grid');
     const currentMonthYear = document.getElementById('current-month-year');
     const prevMonthBtn = document.getElementById('prev-month');
@@ -66,6 +74,160 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentCalendarDate = new Date();
     let seduteCount = 1;
     let editingRoutineId = null;
+
+    // --- Persistence Logic ---
+    function saveDraft() {
+        if (!currentUser) return;
+        
+        const seduteData = [];
+        const sedutaCards = document.querySelectorAll('.seduta-card');
+
+        sedutaCards.forEach((card, index) => {
+            const sedutaLabel = card.querySelector('.section-label').textContent.trim();
+            const exercises = [];
+            const exerciseRows = card.querySelectorAll('.exercise-row');
+
+            exerciseRows.forEach(row => {
+                exercises.push({
+                    exerciseId: row.dataset.exerciseId,
+                    name: row.querySelector('.col-name input').value,
+                    reps: row.querySelector('.col-rep input').value,
+                    sets: row.querySelector('.col-set input').value,
+                    rest: row.querySelector('.col-rest input').value,
+                    weight: row.querySelector('.col-weight input').value,
+                    note: row.querySelector('.col-note textarea').value,
+                    photo: row.querySelector('.col-photo img').src
+                });
+            });
+
+            seduteData.push({
+                name: sedutaLabel,
+                exercises: exercises
+            });
+        });
+
+        const draftData = {
+            name: nomeSchedaInput.value.trim(),
+            startDate: selectedStartDate ? selectedStartDate.getTime() : null,
+            endDate: selectedEndDate ? selectedEndDate.getTime() : null,
+            seduteData: seduteData,
+            editingRoutineId: editingRoutineId
+        };
+
+        localStorage.setItem(`crea_scheda_draft_${currentUser.uid}`, JSON.stringify(draftData));
+    }
+
+    async function loadDraft() {
+        if (!currentUser) return;
+        
+        const draftJSON = localStorage.getItem(`crea_scheda_draft_${currentUser.uid}`);
+        if (!draftJSON) return false;
+
+        const draft = JSON.parse(draftJSON);
+        
+        const params = new URLSearchParams(window.location.search);
+        const routineId = params.get('id');
+        if (routineId && draft.editingRoutineId !== routineId) return false;
+        if (!routineId && draft.editingRoutineId) return false;
+
+        nomeSchedaInput.value = draft.name || '';
+        
+        if (draft.startDate) {
+            selectedStartDate = new Date(draft.startDate);
+            if (draft.endDate) selectedEndDate = new Date(draft.endDate);
+            
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+            if (selectedEndDate) {
+                dateRangeDisplay.textContent = `${selectedStartDate.toLocaleDateString('it-IT', options)} - ${selectedEndDate.toLocaleDateString('it-IT', options)}`;
+            } else {
+                dateRangeDisplay.textContent = selectedStartDate.toLocaleDateString('it-IT', options);
+            }
+            dateRangeDisplay.classList.add('date-set');
+        }
+
+        if (draft.seduteData && draft.seduteData.length > 0) {
+            seduteContainer.innerHTML = '';
+            seduteCount = 0;
+
+            draft.seduteData.forEach(seduta => {
+                seduteCount++;
+                const sedutaCard = document.createElement('div');
+                sedutaCard.className = 'card-section seduta-card';
+                sedutaCard.dataset.sedutaId = seduteCount;
+                sedutaCard.innerHTML = createSedutaHTML(seduteCount);
+                
+                const label = sedutaCard.querySelector('.section-label');
+                label.textContent = seduta.name;
+                if (seduta.name !== `Seduta ${seduteCount}`) {
+                    label.dataset.customName = "true";
+                }
+
+                seduteContainer.appendChild(sedutaCard);
+                initSedutaEvents(sedutaCard);
+
+                const exercisesList = sedutaCard.querySelector('.exercises-list');
+                if (seduta.exercises && seduta.exercises.length > 0) {
+                    seduta.exercises.forEach(ex => {
+                        const exerciseRow = document.createElement('div');
+                        exerciseRow.className = 'exercise-row';
+                        exerciseRow.dataset.exerciseId = ex.exerciseId || '';
+                        
+                        const mockEx = {
+                            name: ex.name,
+                            gifUrl: ex.photo || 'https://via.placeholder.com/90'
+                        };
+                        
+                        exerciseRow.innerHTML = createExerciseRowHTML(mockEx);
+                        
+                        exerciseRow.querySelector('.col-rep input').value = ex.reps || '';
+                        exerciseRow.querySelector('.col-set input').value = ex.sets || '';
+                        exerciseRow.querySelector('.col-rest input').value = ex.rest || '';
+                        exerciseRow.querySelector('.col-weight input').value = ex.weight || '';
+                        exerciseRow.querySelector('.col-note textarea').value = ex.note || '';
+
+                        exercisesList.appendChild(exerciseRow);
+                        initExerciseRowEvents(exerciseRow, mockEx);
+                    });
+                }
+                updateSedutaSummary(sedutaCard);
+            });
+            return true;
+        }
+        return false;
+    }
+
+    function clearDraft() {
+        if (currentUser) {
+            localStorage.removeItem(`crea_scheda_draft_${currentUser.uid}`);
+        }
+    }
+
+    // Trigger saveDraft on any input change
+    const creaSchedaWrapper = document.querySelector('.crea-scheda-wrapper');
+    if (creaSchedaWrapper) {
+        creaSchedaWrapper.addEventListener('input', (e) => {
+            if (e.target.closest('.exercise-input') || e.target.id === 'nome-scheda') {
+                saveDraft();
+            }
+        });
+        creaSchedaWrapper.addEventListener('change', () => {
+            saveDraft();
+        });
+    }
+
+    resetBtn.addEventListener('click', () => {
+         pushPopupState();
+         resetConfirmModal.classList.add('show');
+     });
+
+     confirmResetBtn.addEventListener('click', () => {
+         clearDraft();
+         location.reload();
+     });
+
+     cancelResetBtn.addEventListener('click', () => {
+         hideResetModal(false);
+     });
 
     const colorMap = {
         'Arancione': '#ff6600',
@@ -89,26 +251,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function isAnyPopupOpen() {
-        const calendarModal = document.getElementById('calendar-modal');
-        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
         const addExerciseModal = document.getElementById('add-exercise-modal');
 
         return (calendarModal && calendarModal.classList.contains('active')) ||
                (deleteConfirmModal && deleteConfirmModal.classList.contains('active')) ||
+               (resetConfirmModal && resetConfirmModal.classList.contains('show')) ||
                (addExerciseModal && addExerciseModal.style.display === 'flex');
     }
 
     window.addEventListener('popstate', (event) => {
         // Calendar Modal
-        const calendarModal = document.getElementById('calendar-modal');
         if (calendarModal && calendarModal.classList.contains('active')) {
             hideCalendarModal(true);
         }
 
         // Delete Seduta Modal
-        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
         if (deleteConfirmModal && deleteConfirmModal.classList.contains('active')) {
             hideDeleteModal(true);
+        }
+
+        // Reset Modal
+        if (resetConfirmModal && resetConfirmModal.classList.contains('show')) {
+            hideResetModal(true);
         }
 
         // Add Exercise Modal (handles its own popstate if AddExerciseModal object is used)
@@ -116,7 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function hideCalendarModal(fromBackAction = false) {
-        const calendarModal = document.getElementById('calendar-modal');
         if (calendarModal && calendarModal.classList.contains('active')) {
             calendarModal.classList.remove('active');
             if (!fromBackAction && history.state && history.state.popupOpen) {
@@ -126,10 +289,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function hideDeleteModal(fromBackAction = false) {
-        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
         if (deleteConfirmModal && deleteConfirmModal.classList.contains('active')) {
             deleteConfirmModal.classList.remove('active');
             sedutaToDelete = null;
+            if (!fromBackAction && history.state && history.state.popupOpen) {
+                history.back();
+            }
+        }
+    }
+
+    function hideResetModal(fromBackAction = false) {
+        if (resetConfirmModal && resetConfirmModal.classList.contains('show')) {
+            resetConfirmModal.classList.remove('show');
             if (!fromBackAction && history.state && history.state.popupOpen) {
                 history.back();
             }
@@ -180,20 +351,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 ]);
 
                 window.LoadingManager.nextStep('Verifica dati scheda...');
-                // Check for AI generated routine in sessionStorage  
+                // 1. Check for AI generated routine in sessionStorage  
                 const aiRoutineJSON = sessionStorage.getItem('aiGeneratedRoutine');
+                
+                // 2. Check for routine ID in URL
+                const params = new URLSearchParams(window.location.search);
+                const routineId = params.get('id');
+
                 if (aiRoutineJSON) {
                     window.LoadingManager.nextStep('Caricamento scheda generata...');
                     const aiRoutine = JSON.parse(aiRoutineJSON);
                     sessionStorage.removeItem('aiGeneratedRoutine'); // Clean up
                     await loadAIGeneratedRoutine(aiRoutine);
-                } else {
-                    // Check for routine ID in URL
-                    const params = new URLSearchParams(window.location.search);
-                    const routineId = params.get('id');
-                    if (routineId) {
-                        window.LoadingManager.nextStep('Caricamento scheda esistente...');
+                    saveDraft(); // Save the initial AI routine to draft
+                } else if (routineId) {
+                    window.LoadingManager.nextStep('Caricamento scheda esistente...');
+                    // First try to load from draft if it's the same routine
+                    const loadedFromDraft = await loadDraft();
+                    if (!loadedFromDraft) {
                         await loadRoutineForEdit(routineId);
+                    }
+                } else {
+                    // Try to load generic draft
+                    const loadedFromDraft = await loadDraft();
+                    if (!loadedFromDraft) {
+                        // Default empty session
+                        seduteCount = 1;
+                        const sedutaCard = document.createElement('div');
+                        sedutaCard.className = 'card-section seduta-card';
+                        sedutaCard.dataset.sedutaId = seduteCount;
+                        sedutaCard.innerHTML = createSedutaHTML(seduteCount);
+                        seduteContainer.appendChild(sedutaCard);
+                        initSedutaEvents(sedutaCard);
                     }
                 }
                 
@@ -550,16 +739,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             dateRangeDisplay.classList.add('date-set');
             hideCalendarModal(false);
+            saveDraft();
         }
     });
 
     // --- Sessions Logic ---
     let sedutaToDelete = null;
     let exerciseToReplace = null; // Global variable to track exercise replacement
-
-    const deleteConfirmModal = document.getElementById('delete-confirm-modal');
-    const confirmDeleteBtn = document.getElementById('confirm-delete');
-    const cancelDeleteBtn = document.getElementById('cancel-delete');
 
     function createExerciseRowHTML(exercise) {
         const rawName = exercise.name_it || exercise.name;
@@ -746,6 +932,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     wrapper.remove();
                 }
             }
+            saveDraft();
         });
 
         duplicateBtn.addEventListener('click', () => {
@@ -761,6 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
              
              // Re-initialize events for clone
              initExerciseRowEvents(clone, null);
+             saveDraft();
         });
 
         createSupersetBtn.addEventListener('click', () => {
@@ -786,6 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  
                  dropdown.classList.remove('active');
                  initExerciseRowEvents(clone, null);
+                 saveDraft();
             } else {
                  // Not in superset: Create wrapper
                  const wrapper = document.createElement('div');
@@ -833,6 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  
                  dropdown.classList.remove('active');
                  initExerciseRowEvents(clone, null);
+                 saveDraft();
             }
         });
 
@@ -842,6 +1032,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 exerciseRow.parentNode.insertBefore(exerciseRow, prev);
             }
             dropdown.classList.remove('active');
+            saveDraft();
         });
 
         moveDownBtn.addEventListener('click', () => {
@@ -850,6 +1041,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 exerciseRow.parentNode.insertBefore(next, exerciseRow);
             }
             dropdown.classList.remove('active');
+            saveDraft();
         });
     }
 
@@ -981,6 +1173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         label.dataset.customName = "true";
                     }
                 }
+                saveDraft();
             };
 
             label.addEventListener('blur', handleBlur, { once: true });
@@ -1082,6 +1275,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.dataset.sedutaId = index + 1;
         });
         seduteCount = cards.length;
+        saveDraft();
     }
 
     // Initialize events for existing sessions
@@ -1095,6 +1289,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sedutaCard.innerHTML = createSedutaHTML(seduteCount);
         seduteContainer.appendChild(sedutaCard);
         initSedutaEvents(sedutaCard);
+        saveDraft();
     });
 
     confirmDeleteBtn.addEventListener('click', () => {
@@ -1208,6 +1403,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.showSuccessToast) {
                 window.showSuccessToast('Scheda salvata con successo!');
             }
+            clearDraft();
             window.location.href = '../lista_schede/lista_scheda.html';
         } catch (error) {
             console.error("Error saving routine:", error);
@@ -1278,6 +1474,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Initialize events
         initExerciseRowEvents(exerciseRow, exercise);
+        saveDraft();
     });
 
     // Delegate click for Add Exercise buttons

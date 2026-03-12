@@ -61,6 +61,84 @@
     transform: none;
 }
 
+.reset-btn {
+    background-color: transparent;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+    padding: 12px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 120px;
+}
+
+.reset-btn:hover {
+    background-color: rgba(255, 68, 68, 0.1);
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Specific style for Reset Confirmation Modal */
+#reset-confirm-modal .custom-popup-content {
+    border: 2px solid var(--primary-color);
+    border-radius: 30px;
+    background: #1a1a1a;
+    padding: 40px;
+    gap: 30px;
+}
+
+#reset-confirm-modal .custom-popup-title {
+    color: var(--primary-color);
+    font-size: 28px;
+    font-weight: 700;
+}
+
+#reset-confirm-modal .custom-popup-message {
+    color: #a0a0a0;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+#reset-confirm-modal .custom-popup-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+#reset-confirm-modal .custom-popup-btn {
+    border-radius: 50px; /* Pill shape */
+    padding: 15px 40px;
+    font-size: 16px;
+    min-width: 150px;
+    text-transform: none; /* No uppercase as in image */
+    letter-spacing: normal;
+}
+
+#reset-confirm-modal .custom-popup-btn.secondary {
+    background: transparent;
+    border: 1px solid #444;
+    color: #fff;
+}
+
+#reset-confirm-modal .custom-popup-btn.secondary:hover {
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#reset-confirm-modal .custom-popup-btn.primary {
+    background: #ff4444; /* Solid red as in image */
+    color: white;
+    box-shadow: none;
+    border: none;
+}
+
+#reset-confirm-modal .custom-popup-btn.primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
+
 .form-section {
     background: var(--bg-card);
     padding: 20px;
