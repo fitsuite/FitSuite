@@ -83,7 +83,7 @@ Struttura JSON richiesta:
 }
 `;
 
-        // Chiama Gemini API
+        // Chiama Gemini API - Aggiornato a Gemini 2.5 Flash (Marzo 2026)
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
         
         const response = await axios.post(url, {
@@ -104,18 +104,97 @@ Struttura JSON richiesta:
         };
 
     } catch (error) {
-        console.error('Errore nella generazione della scheda:', error);
+        // Log dettagliato sul server (visibile nella console Firebase)
+        const status = error.response?.status;
+        const errorData = error.response?.data;
+        const message = error.message;
+
+        console.error('ERRORE DETTAGLIATO GEMINI:', {
+            status,
+            message,
+            data: JSON.stringify(errorData),
+            stack: error.stack
+        });
         
-        if (error.response?.status === 429) {
+        if (status === 429) {
             throw new functions.https.HttpsError(
                 'resource-exhausted',
-                'Quota API Gemini esaurita. Attendi il reset giornaliero o attiva un piano a pagamento.'
+                'Hai raggiunto il limite di richieste (Quota Exceeded). ' +
+                'Controlla su Google AI Studio se hai superato i limiti RPM (Richieste al Minuto) o RPD (Richieste al Giorno).'
+            );
+        }
+
+        if (status === 403) {
+            throw new functions.https.HttpsError(
+                'permission-denied',
+                'Chiave API non valida o permessi insufficienti. Verifica la tua GEMINI_API_KEY.'
+            );
+        }
+
+        if (status === 404) {
+            throw new functions.https.HttpsError(
+                'not-found',
+                'Modello non trovato. Il nome "gemini-2.5-flash" potrebbe non essere ancora attivo nel tuo account o regione.'
             );
         }
 
         throw new functions.https.HttpsError(
             'internal',
-            `Errore nella generazione: ${error.message}`
+            `Errore Gemini (${status || 'unknown'}): ${message}. Controlla i log di Firebase per i dettagli.`
         );
+    }
+});
+
+/**
+ * Cloud Function: testGeminiConnection
+ * 
+ * Funzione di TEST rapido per verificare se la chiave API e il modello rispondono.
+ */
+exports.testGeminiConnection = functions
+    .runWith({
+        secrets: [geminiApiKey],
+    })
+    .https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Devi essere autenticato');
+    }
+
+    try {
+        const apiKey = geminiApiKey.value();
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        
+        console.log('Avvio test connettività Gemini...');
+        
+        const response = await axios.post(url, {
+            contents: [{
+                role: "user",
+                parts: [{ text: "Ciao, rispondi solo con la parola 'OK' se mi senti." }]
+            }]
+        });
+
+        const reply = response.data.candidates[0].content.parts[0].text;
+        
+        return {
+            success: true,
+            message: "Connessione a Gemini riuscita!",
+            apiResponse: reply,
+            modelUsed: "gemini-2.5-flash"
+        };
+
+    } catch (error) {
+        const status = error.response?.status;
+        const errorData = error.response?.data;
+        
+        console.error('TEST FALLITO:', {
+            status,
+            data: errorData
+        });
+
+        return {
+            success: false,
+            error: error.message,
+            statusCode: status,
+            details: errorData?.error?.message || "Nessun dettaglio aggiuntivo dall'API"
+        };
     }
 });

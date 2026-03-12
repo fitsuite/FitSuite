@@ -309,26 +309,51 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Fetch User Data from Firestore
-    async function fetchUserData(uid) {
-        // 1. Try Cache FIRST
-        const cachedProfile = localStorage.getItem(`userProfile_${uid}`);
-        let cachedData = null;
+    async function fetchUserData(uid, forceRefresh = false) {
+        // 1. Check if we should perform an actual DB fetch based on throttle
+        let shouldFetchFromDB = forceRefresh;
+        
+        const cacheKey = `userProfile_${uid}`;
+        const lastRefreshKey = `lastProfileRefresh_${uid}`;
+        const cachedProfile = localStorage.getItem(cacheKey);
+        
+        // Throttle check (30 seconds)
+        const lastRefresh = localStorage.getItem(lastRefreshKey);
+        const now = Date.now();
+        const REFRESH_THROTTLE = 30 * 1000; // 30 seconds
+        const isThrottled = lastRefresh && (now - parseInt(lastRefresh) < REFRESH_THROTTLE);
+
         if (cachedProfile) {
             try {
-                cachedData = JSON.parse(cachedProfile);
+                const cachedData = JSON.parse(cachedProfile);
                 updateUIWithUserData(cachedData);
                 console.log("User data loaded from cache, updating UI optimistically");
+                
+                if (isThrottled && !forceRefresh) {
+                    console.log("Profile fetch throttled (30s), skipping DB");
+                    return;
+                }
+                
+                // If not throttled or forced, we'll fetch from DB but we already showed cache
+                shouldFetchFromDB = true;
             } catch (e) {
                 console.error("Error parsing cached profile", e);
+                shouldFetchFromDB = true;
             }
+        } else {
+            // No cache at all
+            shouldFetchFromDB = true;
         }
 
+        if (!shouldFetchFromDB) return;
+
         try {
-            // Se abbiamo dati in cache, facciamo il fetch ma senza bloccare eccessivamente l'UI
-            // o se i dati sono molto recenti (es. meno di 5 minuti) potremmo anche saltare, 
-            // ma per ora facciamo un aggiornamento silenzioso.
             console.log("Fetching fresh user data from DB");
             const doc = await db.collection('users').doc(uid).get();
+            
+            // Update last refresh timestamp
+            localStorage.setItem(lastRefreshKey, Date.now().toString());
+
             if (doc.exists) {
                 const data = doc.data();
                 
@@ -336,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dataString = JSON.stringify(data);
                 if (dataString !== cachedProfile) {
                     console.log("Profile data changed, updating cache and UI");
-                    localStorage.setItem(`userProfile_${uid}`, dataString);
+                    localStorage.setItem(cacheKey, dataString);
                     updateUIWithUserData(data);
                     
                     if (data.preferences && window.CacheManager) {
@@ -373,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('users').doc(uid).set(newData);
                 
                 // Cache the new data
-                localStorage.setItem(`userProfile_${uid}`, JSON.stringify(newData));
+                localStorage.setItem(cacheKey, JSON.stringify(newData));
                 updateUIWithUserData(newData);
             }
         } catch (error) {
@@ -640,6 +665,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         phoneNumber: newPhone
                     });
                     
+                    // Update last refresh timestamp to allow immediate fetch if needed (though we update local cache)
+                    localStorage.setItem(`lastProfileRefresh_${currentUser.uid}`, Date.now().toString());
+
                     // Update Cache
                     updateLocalUserProfile(currentUser.uid, { phoneNumber: newPhone });
                     
@@ -688,6 +716,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     'preferences.language': newLanguage
                 });
                 
+                // Update last refresh timestamp
+                localStorage.setItem(`lastProfileRefresh_${currentUser.uid}`, Date.now().toString());
+
                 // Update cache
                 savePreferencesToCache(currentUser.uid, { language: newLanguage });
                 updateLocalUserProfile(currentUser.uid, { 'preferences.language': newLanguage });
@@ -726,6 +757,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('users').doc(currentUser.uid).update({
                     'preferences.color': color
                 });
+                
+                // Update last refresh timestamp
+                localStorage.setItem(`lastProfileRefresh_${currentUser.uid}`, Date.now().toString());
             } catch (error) {
                 console.error("Error updating color:", error);
                 // Optional: Revert UI if needed, but for color it's minor
@@ -771,6 +805,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     'preferences.notifications': selectedNotification
                 });
                 
+                // Update last refresh timestamp
+                localStorage.setItem(`lastProfileRefresh_${currentUser.uid}`, Date.now().toString());
+
                 // Update cache
                 savePreferencesToCache(currentUser.uid, { notifications: selectedNotification });
                 updateLocalUserProfile(currentUser.uid, { 'preferences.notifications': selectedNotification });
@@ -939,6 +976,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 username: username
             });
             
+            // Update last refresh timestamp
+            localStorage.setItem(`lastProfileRefresh_${userId}`, Date.now().toString());
+
             // Update local cache after successful update
             try {
                 // Update CacheManager if available
@@ -1301,6 +1341,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 await db.collection('users').doc(currentUser.uid).update(subscriptionUpdates);
                 
+                // Update last refresh timestamp
+                localStorage.setItem(`lastProfileRefresh_${currentUser.uid}`, Date.now().toString());
+
                 // Update Cache with strings
                 const cacheUpdates = { ...subscriptionUpdates };
                 // Convert timestamps to strings for cache

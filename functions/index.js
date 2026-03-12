@@ -23,11 +23,12 @@ const logger = require("firebase-functions/logger");
 // this will be the maximum concurrent request count.
 setGlobalOptions({ maxInstances: 10 });
 
-// Importa la funzione di generazione routine
-const { generateWorkoutRoutine } = require("./generateRoutine");
+// Importa le funzioni di generazione routine
+const { generateWorkoutRoutine, testGeminiConnection } = require("./generateRoutine");
 
-// Esporta la funzione
+// Esporta le funzioni
 exports.generateWorkoutRoutine = generateWorkoutRoutine;
+exports.testGeminiConnection = testGeminiConnection;
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
