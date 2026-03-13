@@ -45,27 +45,19 @@ exports.generateWorkoutRoutine = functions
 
         // Crea il prompt ottimizzato per velocità e precisione
         const systemPrompt = `
-Sei un Personal Trainer d'élite con competenze in fisiologia e biomeccanica.
-Il tuo compito è creare una scheda di allenamento professionale e REALISTICA in formato JSON.
+Sei un esperto personal trainer. Crea una scheda di allenamento professionale in formato JSON.
+IMPORTANTE: Devi rispettare RIGOROSAMENTE ogni punto della richiesta.
 
-Analisi Biometrica Preliminare:
-Prima di generare la scheda, analizza i dati dell'utente per definire carichi e volume:
-- Calcola il BMI e valuta lo stato fisico attuale (sottopeso, normopeso, sovrappeso).
-- Considera l'età per evitare sovraccarichi eccessivi se l'utente è molto giovane o anziano.
-- Adatta l'intensità (peso e ripetizioni) in base all'esperienza:
-    * Principiante: Focus su tecnica, carichi leggeri/medi (RPE 6-7), recuperi completi.
-    * Intermedio: Carichi progressivi, volume moderato (RPE 7-8).
-    * Avanzato: Intensità elevata, tecniche di intensità (RPE 8-9).
+Esercizi Disponibili:
+Usa SOLO gli esercizi presenti nella seguente lista: ${JSON.stringify(exerciseNames)}.
+- NON inventare esercizi.
+- NON aggiungere parentesi, numeri, o note al nome dell'esercizio (es. se nella lista c'è "Panca Piana", NON scrivere "Panca Piana (3x10)").
 
 Regole per i Campi Esercizio:
 - "ripetizioni": Per esercizi a tempo, scrivi "n min" o "n sec" (es. "1 min", "30 sec"). Per esercizi unilaterali scrivi "n sec per lato".
 - "recupero": Se non c'è recupero, lascia il campo VUOTO (stringa vuota "").
 - "peso": Deve contenere solo il numero seguito da "kg" (es. "10kg", "15.5kg"). NON usare trattini, slash o altri simboli strani. L'unica eccezione è "Corpo libero" se non si usano pesi.
-- "nome": Usa il nome esatto dalla lista, senza aggiungere nulla (niente parentesi o note nel nome).
-
-Esercizi Disponibili:
-Usa SOLO gli esercizi presenti nella seguente lista: ${JSON.stringify(exerciseNames)}.
-- NON inventare esercizi.
+- "nome": Usa il nome esatto dalla lista, senza aggiungere nulla.
 
 Dati Utente:
 - Sesso: ${userData.sesso}, Età: ${userData.eta}, Peso: ${userData.peso}kg, Altezza: ${userData.altezza}cm
@@ -75,18 +67,18 @@ Dati Utente:
 - Limitazioni: ${userData.limitazioni || 'Nessuna'}
 
 Genera ${userData.giorni} sedute distinte.
-IMPORTANTE: Devi rispettare RIGOROSAMENTE ogni punto della richiesta. Rispondi SOLO con un JSON valido.
+Rispondi SOLO con il JSON valido.
 
 Struttura JSON:
 {
   "nome_scheda": "Nome",
-  "descrizione": "Analisi rapida (BMI, stato) e breve descrizione della strategia adottata",
+  "descrizione": "Breve",
   "sedute": [
     {
       "giorno": 1,
       "nome_seduta": "Esempio: Spinta",
       "esercizi": [
-        { "nome": "Nome esatto dalla lista", "serie": 3, "ripetizioni": "10", "recupero": "60s", "peso": "10kg", "note": "Note specifiche per l'utente" }
+        { "nome": "Nome esatto dalla lista", "serie": 3, "ripetizioni": "10", "recupero": "60s", "peso": "10kg", "note": "" }
       ]
     }
   ]

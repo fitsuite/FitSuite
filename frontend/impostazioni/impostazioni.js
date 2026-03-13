@@ -176,6 +176,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // State
     let currentUser = null;
+    let userDocListener = null;
+
+    // Funzione principale per inizializzare il listener real-time sui dati utente
+    function startUserDocListener(uid) {
+        if (userDocListener) {
+            userDocListener(); // Cancella listener precedente se esiste
+        }
+
+        console.log("Starting real-time listener for user:", uid);
+        
+        userDocListener = db.collection('users').doc(uid).onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                const cachedProfile = localStorage.getItem(`userProfile_${uid}`);
+                const dataString = JSON.stringify(data);
+                
+                // Aggiorna cache e UI solo se i dati sono effettivamente cambiati
+                if (dataString !== cachedProfile) {
+                    console.log("Real-time update: user data changed, updating UI");
+                    localStorage.setItem(`userProfile_${uid}`, dataString);
+                    updateUIWithUserData(data);
+                    
+                    if (data.preferences && window.CacheManager) {
+                        window.CacheManager.savePreferences(uid, data.preferences);
+                    }
+                }
+
+                // Carica le sessioni se non è già stato fatto o se sono cambiate
+                // Le sessioni sono ora parte dello stesso documento
+                if (sessionsList) {
+                    renderSessions(data.sessions || {}, uid);
+                }
+            } else {
+                console.log("No user document found, creating one...");
+                initializeUserDoc(uid);
+            }
+        }, (error) => {
+            console.error("Error in real-time listener:", error);
+        });
+    }
+
+    async function initializeUserDoc(uid) {
+        const newData = {
+            email: auth.currentUser.email,
+            username: null,
+            phoneNumber: "",
+            preferences: {
+                color: "Arancione",
+                language: "Italiano",
+                notifications: "Consenti tutti"
+            },
+            subscription: {
+                type: "Nessuno",
+                startDate: null,
+                endDate: null,
+                status: "inactive",
+                autoRenew: false,
+                lastPaymentDate: null,
+                nextPaymentDate: null,
+                paymentMethod: "Non impostato"
+            },
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        try {
+            await db.collection('users').doc(uid).set(newData);
+        } catch (e) {
+            console.error("Error creating user document:", e);
+        }
+    }
 
     // Optimistic Load: Render immediately if we have a known user
     const lastUid = localStorage.getItem('lastUserId');
@@ -191,7 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Error optimistic profile load:", e);
             }
         }
-        fetchUserData(lastUid);
+        // Avvia il listener real-time immediatamente se abbiamo l'UID
+        startUserDocListener(lastUid);
     }
 
     // Check Auth State
@@ -202,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update lastUserId
             if (user.uid !== lastUid) {
                 localStorage.setItem('lastUserId', user.uid);
+                startUserDocListener(user.uid);
             }
 
             console.log('User is signed in:', user.email);
@@ -212,34 +283,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Load user avatar with Google profile picture fallback to initial
             loadUserAvatar(user.email, null, userInitialMain, 90);
             
-            // Apply cached theme and profile immediately
-            applyThemeFromCache(user.uid);
-            const cachedProfile = localStorage.getItem(`userProfile_${user.uid}`);
-            if (cachedProfile) {
-                try {
-                    updateUIWithUserData(JSON.parse(cachedProfile));
-                } catch (e) {}
-            }
-
-            // Load Sessions
+            // Sincronizza la sessione (ora molto più leggero grazie alla persistenza e onSnapshot)
             if (window.SessionManager) {
-                loadSessions(user.uid);
+                window.SessionManager.syncSession(user.uid);
             }
 
             try {
                 window.LoadingManager.nextStep('Caricamento dati profilo...');
-                // Fetch additional data from Firestore and wait for sidebar in parallel
-                // Non aspettiamo il completamento di fetchUserData per nascondere la loading screen
-                // se abbiamo già i dati in cache
-                const sidebarTask = waitForSidebar();
-                const dbTask = fetchUserData(user.uid);
-                
-                if (cachedProfile) {
-                    await sidebarTask;
-                } else {
-                    await Promise.all([dbTask, sidebarTask]);
-                }
-                
+                // Aspetta solo il caricamento della sidebar, i dati arrivano dal listener
+                await waitForSidebar();
                 window.LoadingManager.nextStep('Preparazione interfaccia completata');
             } catch (error) {
                 console.error("Error during initialization:", error);
@@ -248,29 +300,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             console.log('No user signed in, redirecting to login...');
+            if (userDocListener) {
+                userDocListener();
+                userDocListener = null;
+            }
             window.location.href = '../auth/auth.html';
         }
     });
-
-    
-        function savePreferencesToCache(uid, newPrefs) {
-        if (window.CacheManager) {
-            const currentCache = window.CacheManager.getPreferences(uid) || {};
-            const updatedCache = { ...currentCache, ...newPrefs };
-            window.CacheManager.savePreferences(uid, updatedCache);
-        } else {
-            const cacheKey = `userPreferences_${uid}`;
-            let currentCache = {};
-            try {
-                const stored = localStorage.getItem(cacheKey);
-                if (stored) currentCache = JSON.parse(stored);
-            } catch (e) {
-                console.error("Error parsing cached preferences", e);
-            }
-            const updatedCache = { ...currentCache, ...newPrefs };
-            localStorage.setItem(cacheKey, JSON.stringify(updatedCache));
-        }
-    }
 
     // Apply Theme from Cache
     function applyThemeFromCache(uid) {
@@ -306,104 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('user-notifications').textContent = prefs.notifications;
                 }
             }
-        }
-    }
-
-    // Fetch User Data from Firestore
-    async function fetchUserData(uid, forceRefresh = false) {
-        // 1. Check if we should perform an actual DB fetch based on throttle
-        let shouldFetchFromDB = forceRefresh;
-        
-        const cacheKey = `userProfile_${uid}`;
-        const lastRefreshKey = `lastProfileRefresh_${uid}`;
-        const cachedProfile = localStorage.getItem(cacheKey);
-        
-        // Throttle check (30 seconds)
-        const lastRefresh = localStorage.getItem(lastRefreshKey);
-        const now = Date.now();
-        const REFRESH_THROTTLE = 30 * 1000; // 30 seconds
-        const isThrottled = lastRefresh && (now - parseInt(lastRefresh) < REFRESH_THROTTLE);
-
-        if (cachedProfile) {
-            try {
-                const cachedData = JSON.parse(cachedProfile);
-                updateUIWithUserData(cachedData);
-                console.log("User data loaded from cache, updating UI optimistically");
-                
-                if (isThrottled && !forceRefresh) {
-                    console.log("Profile fetch throttled (30s), skipping DB");
-                    return;
-                }
-                
-                // If not throttled or forced, we'll fetch from DB but we already showed cache
-                shouldFetchFromDB = true;
-            } catch (e) {
-                console.error("Error parsing cached profile", e);
-                shouldFetchFromDB = true;
-            }
-        } else {
-            // No cache at all
-            shouldFetchFromDB = true;
-        }
-
-        if (!shouldFetchFromDB) return;
-
-        try {
-            console.log("Fetching fresh user data from DB");
-            const doc = await db.collection('users').doc(uid).get();
-            
-            // Update last refresh timestamp
-            localStorage.setItem(lastRefreshKey, Date.now().toString());
-
-            if (doc.exists) {
-                const data = doc.data();
-                
-                // Verifica se i dati sono effettivamente cambiati prima di aggiornare l'UI e la cache
-                const dataString = JSON.stringify(data);
-                if (dataString !== cachedProfile) {
-                    console.log("Profile data changed, updating cache and UI");
-                    localStorage.setItem(cacheKey, dataString);
-                    updateUIWithUserData(data);
-                    
-                    if (data.preferences && window.CacheManager) {
-                        window.CacheManager.savePreferences(uid, data.preferences);
-                    }
-                } else {
-                    console.log("Profile data unchanged, skipping UI update");
-                }
-            } else {
-                console.log("No such document! Creating one...");
-                // If doc doesn't exist for some reason, create it
-                const newData = {
-                        email: auth.currentUser.email,
-                        username: null, // Sarà richiesto dal popup
-                        phoneNumber: "",
-                        preferences: {
-                            color: "Arancione",
-                            language: "Italiano",
-                            notifications: "Consenti tutti"
-                        },
-                        subscription: {
-                            type: "Nessuno",
-                            startDate: null,
-                            endDate: null,
-                            status: "inactive",
-                            autoRenew: false,
-                            lastPaymentDate: null,
-                            nextPaymentDate: null,
-                            paymentMethod: "Non impostato"
-                        },
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-                
-                await db.collection('users').doc(uid).set(newData);
-                
-                // Cache the new data
-                localStorage.setItem(cacheKey, JSON.stringify(newData));
-                updateUIWithUserData(newData);
-            }
-        } catch (error) {
-            console.error("Error fetching user data:", error);
         }
     }
 
@@ -1292,7 +1230,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.showSuccessToast("Dati abbonamento aggiornati con successo!");
                 }
                 subscriptionEditModal.classList.remove('active');
-                fetchUserData(currentUser.uid); // Refresh displayed data
+                // Non serve più fetchUserData, il listener onSnapshot aggiornerà l'UI automaticamente
             } catch (error) {
                 console.error("Error updating subscription data:", error);
                 if (window.showErrorToast) {
@@ -1351,89 +1289,78 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Sessions Logic
-    async function loadSessions(uid) {
+    function renderSessions(sessions, uid) {
         if (!sessionsList) return;
 
         const currentSessionId = localStorage.getItem('fitsuite_sessionId');
         
-        // Listener per il documento utente (contiene il map 'sessions')
-        db.collection('users').doc(uid)
-            .onSnapshot((doc) => {
-                sessionsList.innerHTML = '';
-                
-                if (!doc.exists) return;
-                
-                const userData = doc.data();
-                const sessions = userData.sessions || {};
-                const sessionIds = Object.keys(sessions);
-                
-                if (sessionIds.length === 0) {
-                    sessionsList.innerHTML = '<div class="no-sessions">Nessuna sessione attiva trovata.</div>';
-                    return;
-                }
+        sessionsList.innerHTML = '';
+        
+        const sessionIds = Object.keys(sessions);
+        
+        if (sessionIds.length === 0) {
+            sessionsList.innerHTML = '<div class="no-sessions">Nessuna sessione attiva trovata.</div>';
+            return;
+        }
 
-                // Ordina le sessioni per lastActive decrescente
-                const sortedSessionIds = sessionIds.sort((a, b) => {
-                    const timeA = sessions[a].lastActive ? (sessions[a].lastActive.toDate ? sessions[a].lastActive.toDate() : new Date(sessions[a].lastActive)) : 0;
-                    const timeB = sessions[b].lastActive ? (sessions[b].lastActive.toDate ? sessions[b].lastActive.toDate() : new Date(sessions[b].lastActive)) : 0;
-                    return timeB - timeA;
-                });
+        // Ordina le sessioni per lastActive decrescente
+        const sortedSessionIds = sessionIds.sort((a, b) => {
+            const timeA = sessions[a].lastActive ? (sessions[a].lastActive.toDate ? sessions[a].lastActive.toDate() : new Date(sessions[a].lastActive)) : 0;
+            const timeB = sessions[b].lastActive ? (sessions[b].lastActive.toDate ? sessions[b].lastActive.toDate() : new Date(sessions[b].lastActive)) : 0;
+            return timeB - timeA;
+        });
 
-                sortedSessionIds.forEach(sessionId => {
-                    const session = sessions[sessionId];
-                    const isCurrent = sessionId === currentSessionId;
-                    
-                    const sessionElement = document.createElement('div');
-                    sessionElement.className = `session-item ${isCurrent ? 'current' : ''}`;
-                    
-                    const lastActive = session.lastActive ? (session.lastActive.toDate ? session.lastActive.toDate() : new Date(session.lastActive)) : new Date();
-                    const timeStr = lastActive.toLocaleString('it-IT', { 
-                        day: '2-digit', month: '2-digit', year: '2-digit', 
-                        hour: '2-digit', minute: '2-digit' 
-                    });
-
-                    const isMobile = /Android|iPhone|iPad|iPod/i.test(session.userAgent || '');
-                    const iconClass = isMobile ? 'fas fa-mobile-alt' : 'fas fa-desktop';
-
-                    sessionElement.innerHTML = `
-                        <div class="session-info">
-                            <i class="${iconClass} session-icon"></i>
-                            <div class="session-details">
-                                <div class="session-name">${session.deviceName || 'Dispositivo Sconosciuto'} ${isCurrent ? '<span class="current-label">(Questo dispositivo)</span>' : ''}</div>
-                                <div class="session-meta">Ultima attività: ${timeStr} • ${session.browser || 'Browser'}</div>
-                            </div>
-                        </div>
-                        <button class="session-logout-btn ${isCurrent ? 'current-device-logout' : ''}" data-id="${sessionId}" data-current="${isCurrent}">
-                            ${isCurrent ? 'Esci' : 'Logout'}
-                        </button>
-                    `;
-                    
-                    sessionsList.appendChild(sessionElement);
-                });
-
-                // Aggiungi event listener ai bottoni di logout
-                document.querySelectorAll('.session-logout-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const targetId = e.currentTarget.dataset.id;
-                        const isCurrent = e.currentTarget.dataset.current === 'true';
-                        
-                        if (isCurrent) {
-                            if (await window.showConfirm('Vuoi uscire da questo dispositivo?', 'Conferma Logout', 'Esci', 'Annulla')) {
-                                await window.SessionManager.logoutLocal();
-                            }
-                        } else {
-                            if (await window.showConfirm('Vuoi disconnettere questo dispositivo?', 'Logout Remoto', 'Logout', 'Annulla')) {
-                                await window.SessionManager.removeRemoteSession(uid, targetId);
-                                if (window.showSuccessToast) {
-                                    window.showSuccessToast('Dispositivo disconnesso con successo.');
-                                }
-                            }
-                        }
-                    });
-                });
-            }, (error) => {
-                console.error('Errore nel caricamento delle sessioni dal documento utente:', error);
-                sessionsList.innerHTML = '<div class="error-message">Errore nel caricamento delle sessioni.</div>';
+        sortedSessionIds.forEach(sessionId => {
+            const session = sessions[sessionId];
+            const isCurrent = sessionId === currentSessionId;
+            
+            const sessionElement = document.createElement('div');
+            sessionElement.className = `session-item ${isCurrent ? 'current' : ''}`;
+            
+            const lastActive = session.lastActive ? (session.lastActive.toDate ? session.lastActive.toDate() : new Date(session.lastActive)) : new Date();
+            const timeStr = lastActive.toLocaleString('it-IT', { 
+                day: '2-digit', month: '2-digit', year: '2-digit', 
+                hour: '2-digit', minute: '2-digit' 
             });
+
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(session.userAgent || '');
+            const iconClass = isMobile ? 'fas fa-mobile-alt' : 'fas fa-desktop';
+
+            sessionElement.innerHTML = `
+                <div class="session-info">
+                    <i class="${iconClass} session-icon"></i>
+                    <div class="session-details">
+                        <div class="session-name">${session.deviceName || 'Dispositivo Sconosciuto'} ${isCurrent ? '<span class="current-label">(Questo dispositivo)</span>' : ''}</div>
+                        <div class="session-meta">Ultima attività: ${timeStr} • ${session.browser || 'Browser'}</div>
+                    </div>
+                </div>
+                <button class="session-logout-btn ${isCurrent ? 'current-device-logout' : ''}" data-id="${sessionId}" data-current="${isCurrent}">
+                    ${isCurrent ? 'Esci' : 'Logout'}
+                </button>
+            `;
+            
+            sessionsList.appendChild(sessionElement);
+        });
+
+        // Aggiungi event listener ai bottoni di logout
+        document.querySelectorAll('.session-logout-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const targetId = e.currentTarget.dataset.id;
+                const isCurrent = e.currentTarget.dataset.current === 'true';
+                
+                if (isCurrent) {
+                    if (await window.showConfirm('Vuoi uscire da questo dispositivo?', 'Conferma Logout', 'Esci', 'Annulla')) {
+                        await window.SessionManager.logoutLocal();
+                    }
+                } else {
+                    if (await window.showConfirm('Vuoi disconnettere questo dispositivo?', 'Logout Remoto', 'Logout', 'Annulla')) {
+                        await window.SessionManager.removeRemoteSession(uid, targetId);
+                        if (window.showSuccessToast) {
+                            window.showSuccessToast('Dispositivo disconnesso con successo.');
+                        }
+                    }
+                }
+            });
+        });
     }
 });

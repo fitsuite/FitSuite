@@ -244,38 +244,47 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function loadUserPreferences(uid) {
-        if (!window.CacheManager) return;
-
+        let shouldFetchFromDB = true;
+        
         // 1. Try Cache
-        const prefs = window.CacheManager.getPreferences(uid);
-        if (prefs && prefs.color) {
-            // Apply primary color if function exists
-            if (typeof setPrimaryColor === 'function') {
+        if (window.CacheManager) {
+            const prefs = window.CacheManager.getPreferences(uid);
+            if (prefs && prefs.color) {
                 setPrimaryColor(prefs.color);
+                
+                // Check if we should perform an actual DB fetch based on throttle
+                if (!window.CacheManager.shouldFetch('preferences', uid)) {
+                    console.log("Preferences loaded from cache (throttled), skipping DB");
+                    shouldFetchFromDB = false;
+                }
             }
-            return;
         }
 
-        // 2. Network Fallback
+        if (!shouldFetchFromDB) return;
+
+        // 2. Network Fallback (if CacheManager didn't have it or it's time to refresh)
         try {
+            console.log("Fetching preferences from DB...");
             const doc = await db.collection('users').doc(uid).get();
             if (doc.exists) {
                 const data = doc.data();
                 if (data.preferences) {
                     if (data.preferences.color) {
-                        // Apply primary color if function exists
-                        if (typeof setPrimaryColor === 'function') {
-                            setPrimaryColor(data.preferences.color);
-                        }
+                        setPrimaryColor(data.preferences.color);
+                    }
+                    if (window.CacheManager) {
+                        window.CacheManager.savePreferences(uid, data.preferences);
                     }
                 }
             }
         } catch (error) {
-            console.error('Error loading user preferences:', error);
+            console.error("Error loading preferences:", error);
         }
     }
 
     async function loadRoutineData(routineId, uid) {
+        let shouldFetchFromDB = true;
+
         // 1. Try Cache
         if (window.CacheManager) {
             const cachedRoutines = window.CacheManager.getRoutines(uid);
@@ -284,20 +293,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (cachedRoutine) {
                     console.log("Routine loaded from cache:", routineId);
                     renderRoutine(cachedRoutine);
-                    // Non aspettiamo le immagini per nascondere la loading screen
-                    return;
+                    
+                    // Check if we should perform an actual DB fetch based on throttle
+                    if (!window.CacheManager.shouldFetch('routine_detail', routineId)) {
+                        console.log("Routine fetch throttled (30s), skipping DB");
+                        shouldFetchFromDB = false;
+                    }
                 }
             }
         }
 
+        if (!shouldFetchFromDB) return;
+
         try {
-            console.log("Routine not in cache, fetching from DB:", routineId);
+            console.log("Routine not in cache or expired, fetching from DB:", routineId);
             const routineDoc = await db.collection('routines').doc(routineId).get();
             if (routineDoc.exists) {
                 const routine = { id: routineDoc.id, ...routineDoc.data() };
                 renderRoutine(routine);
-                updateSingleRoutineInCache(uid, routine);
-                // Non aspettiamo le immagini per nascondere la loading screen
+                if (window.CacheManager) {
+                    window.CacheManager.updateSingleRoutineInCache(uid, routine);
+                    window.CacheManager.markFetched('routine_detail', routineId);
+                }
             } else {
                 console.error("Routine not found.");
             }

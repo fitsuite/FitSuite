@@ -486,12 +486,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadRoutineForEdit(routineId) {
         try {
+            // Check cache first for editing routine
+            if (window.CacheManager) {
+                const cachedRoutines = window.CacheManager.getRoutines(currentUser.uid);
+                if (cachedRoutines) {
+                    const cachedRoutine = cachedRoutines.find(r => r.id === routineId);
+                    if (cachedRoutine && !window.CacheManager.shouldFetch('routine_detail', routineId)) {
+                        console.log("CreaScheda: Routine loaded from cache (throttled):", routineId);
+                        renderLoadedRoutine(cachedRoutine);
+                        return;
+                    }
+                }
+            }
+
+            console.log("CreaScheda: Fetching routine from DB for edit:", routineId);
             const doc = await db.collection('routines').doc(routineId).get();
             if (!doc.exists) {
                 console.error("Routine not found");
                 return;
             }
-            const routine = doc.data();
+            const routine = { id: doc.id, ...doc.data() };
             
             if (routine.userId !== currentUser.uid) {
                 if (window.showErrorToast) {
@@ -501,125 +515,159 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            editingRoutineId = routineId;
-            document.querySelector('.content-header h1').textContent = "Modifica Scheda";
-            nomeSchedaInput.value = routine.name || '';
-            
-            if (routine.startDate) {
-                 selectedStartDate = routine.startDate.toDate();
-                 if (routine.endDate) selectedEndDate = routine.endDate.toDate();
-                 
-                 const options = { day: 'numeric', month: 'short', year: 'numeric' };
-                 if (selectedEndDate) {
-                    dateRangeDisplay.textContent = `${selectedStartDate.toLocaleDateString('it-IT', options)} - ${selectedEndDate.toLocaleDateString('it-IT', options)}`;
-                 } else {
-                    dateRangeDisplay.textContent = selectedStartDate.toLocaleDateString('it-IT', options);
-                 }
-                 dateRangeDisplay.classList.add('date-set');
+            // Update cache
+            if (window.CacheManager) {
+                window.CacheManager.updateSingleRoutineInCache(currentUser.uid, routine);
+                window.CacheManager.markFetched('routine_detail', routineId);
             }
 
-            seduteContainer.innerHTML = '';
-            seduteCount = 0;
-
-            if (routine.seduteData && routine.seduteData.length > 0) {
-                routine.seduteData.forEach(seduta => {
-                    seduteCount++;
-                    const sedutaCard = document.createElement('div');
-                    sedutaCard.className = 'card-section seduta-card';
-                    sedutaCard.dataset.sedutaId = seduteCount;
-                    sedutaCard.innerHTML = createSedutaHTML(seduteCount);
-                    
-                    const label = sedutaCard.querySelector('.section-label');
-                    label.textContent = seduta.name;
-                    if (seduta.name !== `Seduta ${seduteCount}`) {
-                        label.dataset.customName = "true";
-                    }
-
-                    seduteContainer.appendChild(sedutaCard);
-                    initSedutaEvents(sedutaCard);
-
-                    const exercisesList = sedutaCard.querySelector('.exercises-list');
-                    if (seduta.exercises && seduta.exercises.length > 0) {
-                        seduta.exercises.forEach(ex => {
-                            const exerciseRow = document.createElement('div');
-                            exerciseRow.className = 'exercise-row';
-                            exerciseRow.dataset.exerciseId = ex.exerciseId || '';
-                            
-                            const mockEx = {
-                                name: ex.name,
-                                gifUrl: ex.photo || 'https://via.placeholder.com/90'
-                            };
-                            
-                            exerciseRow.innerHTML = createExerciseRowHTML(mockEx);
-                            
-                            const repInput = exerciseRow.querySelector('.col-rep input');
-                            if (repInput) repInput.value = ex.reps || '';
-                            
-                            const setInput = exerciseRow.querySelector('.col-set input');
-                            if (setInput) setInput.value = ex.sets || '';
-                            
-                            const restInput = exerciseRow.querySelector('.col-rest input');
-                            if (restInput) restInput.value = ex.rest || '';
-                            
-                            const weightInput = exerciseRow.querySelector('.col-weight input');
-                            if (weightInput) weightInput.value = ex.weight || '';
-                            
-                            const noteInput = exerciseRow.querySelector('.col-note textarea');
-                            if (noteInput) noteInput.value = ex.note || '';
-
-                            exercisesList.appendChild(exerciseRow);
-                            initExerciseRowEvents(exerciseRow, mockEx);
-                        });
-                    }
-                    updateSedutaSummary(sedutaCard);
-                });
-            } else {
-                seduteCount++;
-                const sedutaCard = document.createElement('div');
-                sedutaCard.className = 'card-section seduta-card';
-                sedutaCard.dataset.sedutaId = seduteCount;
-                sedutaCard.innerHTML = createSedutaHTML(seduteCount);
-                seduteContainer.appendChild(sedutaCard);
-                initSedutaEvents(sedutaCard);
-            }
+            renderLoadedRoutine(routine);
         } catch (e) {
             console.error("Error loading routine:", e);
         }
     }
 
+    function renderLoadedRoutine(routine) {
+        editingRoutineId = routine.id;
+        document.querySelector('.content-header h1').textContent = "Modifica Scheda";
+        nomeSchedaInput.value = routine.name || '';
+        
+        if (routine.startDate) {
+             // Handle Firestore timestamp vs string from cache
+             selectedStartDate = routine.startDate.toDate ? routine.startDate.toDate() : new Date(routine.startDate);
+             if (routine.endDate) {
+                 selectedEndDate = routine.endDate.toDate ? routine.endDate.toDate() : new Date(routine.endDate);
+             }
+             
+             const options = { day: 'numeric', month: 'short', year: 'numeric' };
+             if (selectedEndDate) {
+                dateRangeDisplay.textContent = `${selectedStartDate.toLocaleDateString('it-IT', options)} - ${selectedEndDate.toLocaleDateString('it-IT', options)}`;
+             } else {
+                dateRangeDisplay.textContent = selectedStartDate.toLocaleDateString('it-IT', options);
+             }
+             dateRangeDisplay.classList.add('date-set');
+        }
+
+        seduteContainer.innerHTML = '';
+        seduteCount = 0;
+
+        if (routine.seduteData && routine.seduteData.length > 0) {
+            routine.seduteData.forEach(seduta => {
+                seduteCount++;
+                const sedutaCard = document.createElement('div');
+                sedutaCard.className = 'card-section seduta-card';
+                sedutaCard.dataset.sedutaId = seduteCount;
+                sedutaCard.innerHTML = createSedutaHTML(seduteCount);
+                
+                const label = sedutaCard.querySelector('.section-label');
+                label.textContent = seduta.name;
+                if (seduta.name !== `Seduta ${seduteCount}`) {
+                    label.dataset.customName = "true";
+                }
+
+                seduteContainer.appendChild(sedutaCard);
+                initSedutaEvents(sedutaCard);
+
+                const exercisesList = sedutaCard.querySelector('.exercises-list');
+                if (seduta.exercises && seduta.exercises.length > 0) {
+                    seduta.exercises.forEach(ex => {
+                        const exerciseRow = document.createElement('div');
+                        exerciseRow.className = 'exercise-row';
+                        exerciseRow.dataset.exerciseId = ex.exerciseId || '';
+                        
+                        const mockEx = {
+                            name: ex.name,
+                            gifUrl: ex.photo || 'https://via.placeholder.com/90'
+                        };
+                        
+                        exerciseRow.innerHTML = createExerciseRowHTML(mockEx);
+                        
+                        const repInput = exerciseRow.querySelector('.col-rep input');
+                        if (repInput) repInput.value = ex.reps || '';
+                        
+                        const setInput = exerciseRow.querySelector('.col-set input');
+                        if (setInput) setInput.value = ex.sets || '';
+                        
+                        const restInput = exerciseRow.querySelector('.col-rest input');
+                        if (restInput) restInput.value = ex.rest || '';
+                        
+                        const weightInput = exerciseRow.querySelector('.col-weight input');
+                        if (weightInput) weightInput.value = ex.weight || '';
+                        
+                        const noteInput = exerciseRow.querySelector('.col-note textarea');
+                        if (noteInput) noteInput.value = ex.note || '';
+
+                        exercisesList.appendChild(exerciseRow);
+                        initExerciseRowEvents(exerciseRow, mockEx);
+                    });
+                }
+                updateSedutaSummary(sedutaCard);
+            });
+        } else {
+            seduteCount++;
+            const sedutaCard = document.createElement('div');
+            sedutaCard.className = 'card-section seduta-card';
+            sedutaCard.dataset.sedutaId = seduteCount;
+            sedutaCard.innerHTML = createSedutaHTML(seduteCount);
+            seduteContainer.appendChild(sedutaCard);
+            initSedutaEvents(sedutaCard);
+        }
+    }
+
     async function loadUserPreferences(uid) {
+        let shouldFetchFromDB = true;
+        
         // Try to get username from profile cache first
         const cachedProfile = localStorage.getItem(`userProfile_${uid}`);
         if (cachedProfile) {
             try {
                 const profile = JSON.parse(cachedProfile);
-                if (profile.username) currentUsername = profile.username;
+                if (profile.username) {
+                    currentUsername = profile.username;
+                    // Check throttle for profile
+                    if (window.CacheManager && !window.CacheManager.shouldFetch('profile', uid)) {
+                        shouldFetchFromDB = false;
+                    }
+                }
             } catch (e) {}
         }
 
-        if (!window.CacheManager) return;
-        
         // 1. Try Cache for preferences
-        const prefs = window.CacheManager.getPreferences(uid);
-        if (prefs && prefs.color) {
-            setPrimaryColor(prefs.color);
-            if (currentUsername) return; // If we already have username, we're good
+        if (window.CacheManager) {
+            const prefs = window.CacheManager.getPreferences(uid);
+            if (prefs && prefs.color) {
+                setPrimaryColor(prefs.color);
+                // Check throttle for preferences
+                if (!window.CacheManager.shouldFetch('preferences', uid)) {
+                    // We only stop if we already have username or profile fetch is throttled
+                    if (!shouldFetchFromDB) {
+                        console.log("CreaScheda: Preferences/Profile loaded from cache (throttled), skipping DB");
+                        return;
+                    }
+                }
+            }
         }
+
+        if (!shouldFetchFromDB) return;
 
         // 2. Network Fallback
         try {
+            console.log("CreaScheda: Fetching preferences/profile from DB...");
             const doc = await db.collection('users').doc(uid).get();
             if (doc.exists) {
                 const data = doc.data();
                 currentUsername = data.username;
                 // Cache it for next time
                 localStorage.setItem(`userProfile_${uid}`, JSON.stringify(data));
+                if (window.CacheManager) window.CacheManager.markFetched('profile', uid);
                 
                 if (data.preferences) {
                     if (data.preferences.color) {
                         setPrimaryColor(data.preferences.color);
                     }
-                    window.CacheManager.savePreferences(uid, data.preferences);
+                    if (window.CacheManager) {
+                        window.CacheManager.savePreferences(uid, data.preferences);
+                    }
                 }
             }
         } catch (error) {

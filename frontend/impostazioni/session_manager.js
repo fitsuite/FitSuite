@@ -87,31 +87,22 @@ const SessionManager = {
             return await this.createSession(uid);
         }
 
-        // Verifica se la sessione esiste nel documento utente
+        // Tenta di aggiornare lastActive direttamente. Se fallisce (perché la sessione non esiste o permessi negati),
+        // allora creiamo una nuova sessione. Questo risparmia una lettura (get()).
         try {
-            const doc = await firebase.firestore()
-                .collection('users')
-                .doc(uid)
-                .get();
+            const db = firebase.firestore();
+            const userRef = db.collection('users').doc(uid);
             
-            if (doc.exists) {
-                const data = doc.data();
-                if (!data.sessions || !data.sessions[sessionId] || data.sessions[sessionId].valid === false) {
-                    console.log('Sessione scaduta o eliminata remotamente, creazione nuova...');
-                    return await this.createSession(uid);
-                } else {
-                    // Aggiorna lastActive
-                    await doc.ref.update({
-                        [`sessions.${sessionId}.lastActive`]: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    return sessionId;
-                }
-            } else {
-                return await this.createSession(uid);
-            }
+            await userRef.update({
+                [`sessions.${sessionId}.lastActive`]: firebase.firestore.FieldValue.serverTimestamp(),
+                [`sessions.${sessionId}.valid`]: true // Assicuriamoci che sia valida
+            });
+            
+            console.log('Sessione sincronizzata con successo (lastActive aggiornato)');
+            return sessionId;
         } catch (error) {
-            console.error('Errore durante la sincronizzazione della sessione:', error);
-            return null;
+            console.warn('Impossibile aggiornare lastActive, la sessione potrebbe non esistere o essere non valida. Creazione nuova...');
+            return await this.createSession(uid);
         }
     },
 

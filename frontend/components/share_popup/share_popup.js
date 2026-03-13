@@ -194,11 +194,17 @@ class SharePopup {
                 let ownerData = window.CacheManager ? window.CacheManager.getUserInfo(ownerId) : null;
                 
                 if (!ownerData) {
-                    // Fetch if not in cache
-                    const ownerDoc = await this.db.collection('users').doc(ownerId).get();
-                    ownerData = ownerDoc.exists ? ownerDoc.data() : null;
-                    if (ownerData && window.CacheManager) {
-                        window.CacheManager.saveUserInfo(ownerId, ownerData);
+                    // Check throttle before fetching
+                    if (window.CacheManager && !window.CacheManager.shouldFetch('user_info', ownerId)) {
+                        console.log("SharePopup: Owner info fetch throttled (30s), skipping DB");
+                    } else {
+                        // Fetch if not in cache
+                        const ownerDoc = await this.db.collection('users').doc(ownerId).get();
+                        ownerData = ownerDoc.exists ? ownerDoc.data() : null;
+                        if (ownerData && window.CacheManager) {
+                            window.CacheManager.saveUserInfo(ownerId, ownerData);
+                            window.CacheManager.markFetched('user_info', ownerId);
+                        }
                     }
                 }
 

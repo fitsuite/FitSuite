@@ -5,13 +5,14 @@ const CacheManager = {
     USER_INFO_KEY_PREFIX: 'cachedUserInfo_',
     LAST_REFRESH_PREFIX: 'lastRefresh_',
     LAST_SHARED_REFRESH_PREFIX: 'lastSharedRefresh_',
+    LAST_FETCH_PREFIX: 'lastFetch_',
 
     GLOBAL_THEME_KEY: 'globalThemePrefs',
     
     // Cache configuration
     CACHE_VERSION: '1.0.0',
     CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
-    REFRESH_THROTTLE: 15 * 1000, // 15 seconds throttle
+    REFRESH_THROTTLE: 30 * 1000, // 30 seconds throttle
     MAX_CACHE_ITEMS: 50,
     
     // Loading state tracking
@@ -219,6 +220,7 @@ const CacheManager = {
         const key = this.PREFS_KEY_PREFIX + uid;
         const success = this.safeSetItem(key, JSON.stringify(prefs));
         if (success) {
+            this.markFetched('preferences', uid); // Mark as fetched
             this.saveGlobalTheme(prefs); // Also save globally
             window.dispatchEvent(new CustomEvent('preferencesUpdated', { detail: prefs }));
         }
@@ -318,8 +320,10 @@ const CacheManager = {
         const db = firebase.firestore();
         
         // 1. Preferences
-        if (force || !this.getPreferences(uid)) {
+        const shouldFetchPrefs = force || (!this.getPreferences(uid) && this.shouldFetch('preferences', uid));
+        if (shouldFetchPrefs) {
             try {
+                console.log('CacheManager: Initializing preferences from DB');
                 const userDoc = await db.collection('users').doc(uid).get();
                 if (userDoc.exists) {
                     const data = userDoc.data();
@@ -332,12 +336,14 @@ const CacheManager = {
                 console.error("Error caching preferences:", e);
             }
         } else {
-            console.log('Preferences loaded from cache');
+            console.log('Preferences already cached or throttled');
         }
 
         // 2. Routines (Top 20)
-        if (force || !this.getRoutines(uid)) {
+        const shouldFetchRoutines = force || (!this.getRoutines(uid) && this.shouldFetch('routines', uid));
+        if (shouldFetchRoutines) {
             try {
+                console.log('CacheManager: Initializing routines from DB');
                 const routinesSnapshot = await db.collection('routines')
                     .where('userId', '==', uid)
                     .orderBy('createdAt', 'desc')
@@ -355,7 +361,7 @@ const CacheManager = {
                 console.error("Error caching routines:", e);
             }
         } else {
-            console.log('Routines loaded from cache');
+            console.log('Routines already cached or throttled');
         }
     },
 
@@ -418,19 +424,12 @@ const CacheManager = {
     shouldRefreshRoutines: function(uid) {
         // If already loading, don't trigger another refresh
         if (this._isLoading(this.ROUTINES_KEY_PREFIX + uid)) return false;
-
-        const lastRefreshKey = this.LAST_REFRESH_PREFIX + uid;
-        const lastRefresh = localStorage.getItem(lastRefreshKey);
-        const now = Date.now();
-        
-        if (!lastRefresh) return true;
-        
-        const timePassed = now - parseInt(lastRefresh);
-        return timePassed >= this.REFRESH_THROTTLE;
+        return this.shouldFetch('routines', uid);
     },
 
     // Update the last refresh timestamp
     updateLastRefreshTimestamp: function(uid) {
+        this.markFetched('routines', uid);
         const lastRefreshKey = this.LAST_REFRESH_PREFIX + uid;
         localStorage.setItem(lastRefreshKey, Date.now().toString());
     },
@@ -554,15 +553,7 @@ const CacheManager = {
     shouldRefreshSharedRoutines: function(uid) {
         // If already loading, don't trigger another refresh
         if (this._isLoading(this.SHARED_ROUTINES_KEY_PREFIX + uid)) return false;
-
-        const lastRefreshKey = this.LAST_SHARED_REFRESH_PREFIX + uid;
-        const lastRefresh = localStorage.getItem(lastRefreshKey);
-        const now = Date.now();
-        
-        if (!lastRefresh) return true;
-        
-        const timePassed = now - parseInt(lastRefresh);
-        return timePassed >= this.REFRESH_THROTTLE;
+        return this.shouldFetch('shared', uid);
     },
 
     // Set loading state for a specific type
@@ -573,6 +564,7 @@ const CacheManager = {
 
     // Update the last shared refresh timestamp
     updateLastSharedRefreshTimestamp: function(uid) {
+        this.markFetched('shared', uid);
         const lastRefreshKey = this.LAST_SHARED_REFRESH_PREFIX + uid;
         localStorage.setItem(lastRefreshKey, Date.now().toString());
     },
@@ -621,6 +613,42 @@ const CacheManager = {
         return cacheEntry.data;
     },
     
+    // GENERIC CACHE METHODS for any DB read
+    shouldFetch: function(type, id = 'global') {
+        const key = this.LAST_FETCH_PREFIX + type + '_' + id;
+        const lastFetch = localStorage.getItem(key);
+        if (!lastFetch) return true;
+        
+        const now = Date.now();
+        const timePassed = now - parseInt(lastFetch);
+        return timePassed >= this.REFRESH_THROTTLE;
+    },
+
+    markFetched: function(type, id = 'global') {
+        const key = this.LAST_FETCH_PREFIX + type + '_' + id;
+        localStorage.setItem(key, Date.now().toString());
+    },
+
+    // Get/Set generic data with 30s throttle check
+    saveData: function(type, id, data) {
+        const key = 'cached_' + type + '_' + id;
+        const cacheEntry = this._createCacheEntry(data);
+        const success = this.safeSetItem(key, JSON.stringify(cacheEntry));
+        if (success) {
+            this.markFetched(type, id);
+        }
+        return success;
+    },
+
+    getData: function(type, id) {
+        const key = 'cached_' + type + '_' + id;
+        const cacheEntry = this.safeGetItem(key);
+        if (!cacheEntry || !this._validateCacheEntry(cacheEntry)) {
+            return null;
+        }
+        return cacheEntry.data;
+    },
+
     // Cross-tab synchronization
     setupCrossTabSync: function() {
         window.addEventListener('storage', (e) => {

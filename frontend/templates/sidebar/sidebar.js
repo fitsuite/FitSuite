@@ -264,22 +264,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Fetch user preferences and apply theme
-            if (window.CacheManager) {
-                const prefs = window.CacheManager.getPreferences(user.uid);
-                if (prefs && prefs.color) {
-                    setPrimaryColor(prefs.color);
-                } else {
-                     // Try to fetch if not in cache (fallback)
-                     // Or just rely on CacheManager.initCache() if it was called elsewhere
-                     // But sidebar might be standalone
-                     // Let's keep of fallback logic but use CacheManager to save
-                     try {
+            const fetchPreferences = async () => {
+                let shouldFetchFromDB = true;
+                if (window.CacheManager) {
+                    const prefs = window.CacheManager.getPreferences(user.uid);
+                    if (prefs && prefs.color) {
+                        setPrimaryColor(prefs.color);
+                        if (!window.CacheManager.shouldFetch('preferences', user.uid)) {
+                            console.log("Sidebar: Preferences loaded from cache (throttled), skipping DB");
+                            shouldFetchFromDB = false;
+                        }
+                    }
+                }
+
+                if (shouldFetchFromDB) {
+                    try {
+                        console.log("Sidebar: Fetching preferences from DB...");
                         const userDoc = await db.collection('users').doc(user.uid).get();
-                        if (userDoc.exists) {
-                            const data = userDoc.data();
-                            if (data.preferences) {
+                         if (userDoc.exists) {
+                             const data = userDoc.data();
+                             if (data.preferences) {
                                 if (data.preferences.color) setPrimaryColor(data.preferences.color);
-                                window.CacheManager.savePreferences(user.uid, data.preferences);
+                                if (window.CacheManager) window.CacheManager.savePreferences(user.uid, data.preferences);
                             } else {
                                 setPrimaryColor('Arancione');
                             }
@@ -291,10 +297,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         setPrimaryColor('Arancione');
                     }
                 }
-            } else {
-                // Fallback if CacheManager not loaded (should not happen if setup correctly)
-                setPrimaryColor('Arancione');
-            }
+            };
+
+            fetchPreferences();
 
             // Function to update sidebar elements
             const updateSidebar = async () => {
@@ -306,22 +311,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Load and display username from database
                 if (userUsernameSidebar) {
-                    try {
-                        const userDoc = await db.collection('users').doc(user.uid).get();
-                        if (userDoc.exists) {
-                            const userData = userDoc.data();
-                            if (userData.username) {
-                                username = userData.username;
-                                userUsernameSidebar.textContent = `@${userData.username}`;
+                    let shouldFetchUsernameFromDB = true;
+                    
+                    // Try cache first
+                    if (window.CacheManager) {
+                        const cachedProfile = localStorage.getItem(`userProfile_${user.uid}`);
+                        if (cachedProfile) {
+                            try {
+                                const userData = JSON.parse(cachedProfile);
+                                if (userData.username) {
+                                    username = userData.username;
+                                    userUsernameSidebar.textContent = `@${userData.username}`;
+                                    
+                                    if (!window.CacheManager.shouldFetch('profile', user.uid)) {
+                                        console.log("Sidebar: Username loaded from cache (throttled), skipping DB");
+                                        shouldFetchUsernameFromDB = false;
+                                    }
+                                }
+                            } catch (e) {
+                                console.error("Error parsing cached profile in sidebar:", e);
+                            }
+                        }
+                    }
+
+                    if (shouldFetchUsernameFromDB) {
+                        try {
+                            console.log("Sidebar: Fetching user profile from DB...");
+                            const userDoc = await db.collection('users').doc(user.uid).get();
+                            if (userDoc.exists) {
+                                const userData = userDoc.data();
+                                if (userData.username) {
+                                    username = userData.username;
+                                    userUsernameSidebar.textContent = `@${userData.username}`;
+                                } else {
+                                    userUsernameSidebar.textContent = '@utente';
+                                }
+                                // Save to generic profile cache
+                                localStorage.setItem(`userProfile_${user.uid}`, JSON.stringify(userData));
+                                if (window.CacheManager) window.CacheManager.markFetched('profile', user.uid);
                             } else {
                                 userUsernameSidebar.textContent = '@utente';
                             }
-                        } else {
+                        } catch (error) {
+                            console.error('Error loading username:', error);
                             userUsernameSidebar.textContent = '@utente';
                         }
-                    } catch (error) {
-                        console.error('Error loading username:', error);
-                        userUsernameSidebar.textContent = '@utente';
                     }
                 }
                 

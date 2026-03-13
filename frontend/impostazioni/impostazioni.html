@@ -58,6 +58,16 @@
         measurementId: "G-W4ME455MH5"
       };
       firebase.initializeApp(firebaseConfig);
+      
+      // Abilita persistenza offline per Firestore
+      firebase.firestore().enablePersistence()
+        .catch((err) => {
+          if (err.code == 'failed-precondition') {
+            console.warn('Persistenza fallita: troppe schede aperte');
+          } else if (err.code == 'unimplemented') {
+            console.warn('Persistenza non supportata dal browser');
+          }
+        });
     </script>
     <script src="../cache_manager.js"></script>
 </head>
@@ -413,11 +423,21 @@
     <script src="../components/session_control/session_control.js"></script>
     <script src="../components/popup/popup.js"></script>
     <script>
-        // Load sidebar.html into the sidebar-placeholder div
+        // Load sidebar with local caching
+        const sidebarPlaceholder = document.getElementById('sidebar-placeholder');
+        const cachedSidebar = localStorage.getItem('cachedSidebarHTML');
+        
+        if (cachedSidebar) {
+            sidebarPlaceholder.innerHTML = cachedSidebar;
+        }
+
         fetch('../templates/sidebar/sidebar.html')
             .then(response => response.text())
             .then(html => {
-                document.getElementById('sidebar-placeholder').innerHTML = html;
+                if (html !== cachedSidebar) {
+                    sidebarPlaceholder.innerHTML = html;
+                    localStorage.setItem('cachedSidebarHTML', html);
+                }
             })
             .catch(error => console.error('Error loading sidebar:', error));
     </script>

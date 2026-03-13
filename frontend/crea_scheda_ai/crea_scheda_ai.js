@@ -242,31 +242,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function loadUserPreferences(uid) {
-        if (!window.CacheManager) return;
-
-        // 1. Try Cache
-        const prefs = window.CacheManager.getPreferences(uid);
-        if (prefs && prefs.color) {
-            setPrimaryColor(prefs.color);
-            return;
-        }
+        let shouldFetchFromDB = true;
         
-        // 2. Network Fallback
-    try {
-        const doc = await db.collection('users').doc(uid).get();
-        if (doc.exists) {
-            const data = doc.data();
-            if (data.preferences) {
-                if (data.preferences.color) {
-                    setPrimaryColor(data.preferences.color);
+        // 1. Try Cache
+        if (window.CacheManager) {
+            const prefs = window.CacheManager.getPreferences(uid);
+            if (prefs && prefs.color) {
+                setPrimaryColor(prefs.color);
+                
+                // Check if we should perform an actual DB fetch based on throttle
+                if (!window.CacheManager.shouldFetch('preferences', uid)) {
+                    console.log("CreaSchedaAI: Preferences loaded from cache (throttled), skipping DB");
+                    shouldFetchFromDB = false;
                 }
-                window.CacheManager.savePreferences(uid, data.preferences);
             }
         }
-    } catch (error) {
-        console.error("Error loading preferences:", error);
+
+        if (!shouldFetchFromDB) return;
+        
+        // 2. Network Fallback
+        try {
+            console.log("CreaSchedaAI: Fetching preferences from DB...");
+            const doc = await db.collection('users').doc(uid).get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.preferences) {
+                    if (data.preferences.color) {
+                        setPrimaryColor(data.preferences.color);
+                    }
+                    if (window.CacheManager) {
+                        window.CacheManager.savePreferences(uid, data.preferences);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error loading preferences:", error);
+        }
     }
-}
 
 // Prevenire 'e' ed 'E' nei campi numerici, disabilitare scroll e limitare valori massimi
 const numericInputs = document.querySelectorAll('input[type="number"]');

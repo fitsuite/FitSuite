@@ -103,8 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         console.log(`🔥 Fetching routine: ${routineId}`);
+        let shouldFetchFromDB = true;
         
-        // PRIORITÀ ASSOLUTA ALLA CACHE
+        // 1. Try Cache
         if (window.CacheManager) {
             try {
                 const cachedRoutines = window.CacheManager.getRoutines(currentUser.uid);
@@ -113,7 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (routineData) {
                         console.log("🔥 Routine LOADED FROM CACHE:", routineData.name);
                         processRoutineData();
-                        return; 
+                        
+                        // Check if we should perform an actual DB fetch based on throttle
+                        if (!window.CacheManager.shouldFetch('routine_detail', routineId)) {
+                            console.log("🔥 Routine fetch throttled (30s), skipping DB");
+                            shouldFetchFromDB = false;
+                        }
                     }
                 }
             } catch (e) {
@@ -121,8 +127,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Se non è in cache (raro se veniamo da visualizza_scheda), allora fetch dal DB
-        console.log("🔥 Routine not in cache, fetching from DB as fallback");
+        if (!shouldFetchFromDB) return;
+
+        // Se non è in cache o è scaduta, allora fetch dal DB
+        console.log("🔥 Routine not in cache or expired, fetching from DB");
         try {
             const doc = await db.collection('routines').doc(routineId).get();
             if (doc.exists) {
@@ -131,11 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Salva in cache per la prossima volta
                 if (window.CacheManager) {
-                    const cachedRoutines = window.CacheManager.getRoutines(currentUser.uid) || [];
-                    const index = cachedRoutines.findIndex(r => String(r.id) === String(routineId));
-                    if (index !== -1) cachedRoutines[index] = routineData;
-                    else cachedRoutines.push(routineData);
-                    window.CacheManager.saveRoutines(currentUser.uid, cachedRoutines);
+                    window.CacheManager.updateSingleRoutineInCache(currentUser.uid, routineData);
+                    window.CacheManager.markFetched('routine_detail', routineId);
                 }
                 processRoutineData();
             } else {
@@ -187,17 +192,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadUserPreferences() {
+        let shouldFetchFromDB = true;
+        
+        // 1. Try Cache
         if (window.CacheManager) {
             const prefs = window.CacheManager.getPreferences(currentUser.uid);
             if (prefs && prefs.color) {
                 if (typeof setPrimaryColor === 'function') setPrimaryColor(prefs.color);
-                return;
+                
+                // Check if we should perform an actual DB fetch based on throttle
+                if (!window.CacheManager.shouldFetch('preferences', currentUser.uid)) {
+                    console.log("🔥 Preferences loaded from cache (throttled), skipping DB");
+                    shouldFetchFromDB = false;
+                }
             }
         }
 
-        const doc = await db.collection('users').doc(currentUser.uid).get();
-        if (doc.exists && doc.data().preferences?.color) {
-            if (typeof setPrimaryColor === 'function') setPrimaryColor(doc.data().preferences.color);
+        if (!shouldFetchFromDB) return;
+
+        // 2. Network Fallback (if CacheManager didn't have it or it's time to refresh)
+        try {
+            console.log("🔥 Fetching preferences from DB...");
+            const doc = await db.collection('users').doc(currentUser.uid).get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.preferences) {
+                    if (data.preferences.color && typeof setPrimaryColor === 'function') {
+                        setPrimaryColor(data.preferences.color);
+                    }
+                    if (window.CacheManager) {
+                        window.CacheManager.savePreferences(currentUser.uid, data.preferences);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("🔥 Error loading preferences:", error);
         }
     }
 
