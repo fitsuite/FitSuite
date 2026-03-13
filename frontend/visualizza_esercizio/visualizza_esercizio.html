@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizza Esercizio</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../templates/sidebar/sidebar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../components/loading_screen/loading_screen.css">
+    <link rel="stylesheet" href="../components/toast/toast.css">
+    <link rel="stylesheet" href="./visualizza_esercizio.css">
+    <link rel="icon" type="image/x-icon" href="../visualizza_scheda/image/logo.ico">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCEgbB9rBBKOov3aDma0DMn-EuU0bGMMYo",
+        authDomain: "fitsuite-a7b6c.firebaseapp.com",
+        projectId: "fitsuite-a7b6c",
+        storageBucket: "fitsuite-a7b6c.firebasestorage.app",
+        messagingSenderId: "721614273457",
+        appId: "1:721614273457:web:195f48279fafd01a1f5b90",
+        measurementId: "G-W4ME455MH5"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
+    <script src="../../backend/function/logout.js"></script>
+    <script src="../impostazioni/session_manager.js"></script>
+    <script src="../cache_manager.js"></script>
+</head>
+<body>
+    <script src="../components/loading_screen/loading_screen.js"></script>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div id="sidebar-placeholder"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-left">
+                    <button id="back-to-scheda" class="back-btn">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="workout-info">
+                        <h1 id="seduta-name-title">Nome Seduta</h1>
+                        <span id="exercise-progress" class="exercise-progress">Esercizio 0 di 0</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="exercise-view-container">
+                <div class="exercise-card">
+                    <div class="exercise-header">
+                        <h2 id="exercise-name" class="exercise-name">Nome Esercizio</h2>
+                    </div>
+                    
+                    <div class="exercise-gif-container">
+                        <img id="exercise-gif" src="" alt="Esercizio GIF" class="exercise-gif">
+                    </div>
+
+                    <div class="exercise-details-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Serie</span>
+                            <span id="exercise-sets" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Rep</span>
+                            <span id="exercise-reps" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Recupero</span>
+                            <span id="exercise-rest" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Peso</span>
+                            <span id="exercise-weight" class="detail-value">-</span>
+                        </div>
+                    </div>
+
+                    <div id="exercise-routine-notes" class="exercise-routine-notes" style="display: none;">
+                        <span class="detail-label">Note</span>
+                        <span id="exercise-routine-notes-text" class="detail-value"></span>
+                    </div>
+
+                    <div class="guide-section">
+                        <div class="guide-separator">
+                            <span>Guida</span>
+                        </div>
+
+                        <div id="exercise-description" class="exercise-description">
+                            <!-- Istruzioni caricate qui -->
+                        </div>
+
+                        <div class="stepper-navigation">
+                            <button id="prev-step" class="step-nav-btn">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div id="step-dots" class="step-dots"></div>
+                            <button id="next-step" class="step-nav-btn">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="notes-section">
+                        <div class="notes-header">
+                            <i class="fas fa-sticky-note"></i>
+                            <span>Appunti Personali</span>
+                        </div>
+                        <textarea 
+                            id="exercise-notes-textarea" 
+                            class="exercise-notes-textarea" 
+                            placeholder="Aggiungi note personali su questo esercizio..."
+                            maxlength="500"
+                        ></textarea>
+                        <div class="notes-footer">
+                            <span class="notes-char-count">0/500</span>
+                            <button id="save-notes-btn" class="save-notes-btn">
+                                <i class="fas fa-save"></i>
+                                Salva
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation between exercises -->
+                <div class="workout-navigation">
+                    <button id="prev-exercise" class="nav-exercise-btn prev">
+                        <i class="fas fa-step-backward"></i>
+                        <span>Precedente</span>
+                    </button>
+                    <button id="next-exercise" class="nav-exercise-btn next">
+                        <span>Successivo</span>
+                        <i class="fas fa-step-forward"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../templates/sidebar/sidebar.js"></script>
+    <script>
+        // Load sidebar.html into the sidebar-placeholder div
+        fetch('../templates/sidebar/sidebar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('sidebar-placeholder').innerHTML = data;
+                // After loading the sidebar, initialize its functionality
+                if (typeof initSidebar === 'function') {
+                    initSidebar();
+                }
+            });
+    </script>
+    <script src="../components/toast/toast.js"></script>
+    <script src="./visualizza_esercizio.js"></script>
+</body>
+</html>

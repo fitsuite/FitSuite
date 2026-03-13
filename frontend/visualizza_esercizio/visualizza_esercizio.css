@@ -1,0 +1,531 @@
+:root {
+    --primary-color: #ff6600;
+    --bg-dark: #1a1a1a;
+    --bg-card: #262626;
+    --text-white: #ffffff;
+    --text-gray: #a0a0a0;
+    --sidebar-width: 280px;
+    --background-gradient: linear-gradient(135deg, #262626 0%, #1a1a1a 100%);
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 20px 0 80px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--background-gradient);
+    min-height: 100vh;
+    width: calc(100% - var(--sidebar-width)); /* Take remaining width on desktop */
+}
+
+.content-header {
+    width: 100%;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    padding: 0 5%;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.back-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-white);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--primary-color);
+}
+
+.workout-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.workout-info h1 {
+    font-size: 1.2rem;
+    color: var(--text-white);
+    margin: 0;
+}
+
+.exercise-progress {
+    font-size: 0.85rem;
+    color: var(--text-gray);
+}
+
+.exercise-view-container {
+    width: 100%;
+    max-width: 800px;
+    padding: 0 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.exercise-card {
+    background: var(--bg-card);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.exercise-header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.exercise-name {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.exercise-gif-container {
+    width: 90%;
+    max-width: 280px; /* Reduced further to ensure sharpness on all screens */
+    margin: 15px auto;
+    aspect-ratio: 1/1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+    overflow: hidden;
+    position: relative;
+    border-radius: 20px; /* Added rounded corners for better aesthetics */
+    border: 4px solid rgba(255, 255, 255, 0.05); /* Subtle border */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); /* Stronger shadow for depth */
+}
+
+.exercise-gif {
+    width: 92%; /* Small internal padding to avoid edges */
+    height: 92%;
+    object-fit: contain;
+    display: block;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+.exercise-details-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 20px;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    color: var(--text-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 1.1rem;
+    color: var(--text-white);
+    font-weight: 600;
+}
+
+.exercise-routine-notes {
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.2); /* Matching the grid's background */
+    border-top: 1px solid rgba(255, 255, 255, 0.05); /* Separator from grid above */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.exercise-routine-notes .detail-label {
+    text-align: center; /* Center the "Note" title */
+    display: block;
+    width: 100%;
+}
+
+.exercise-routine-notes .detail-value {
+    text-align: center; /* Center text content as well */
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-white);
+}
+
+.guide-section {
+    padding: 10px 20px; /* Reduced top/bottom padding */
+}
+
+.guide-separator {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px; /* Reduced margin */
+}
+
+.guide-separator span {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.85rem; /* Slightly smaller label */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.guide-separator::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 102, 0, 0.3);
+    margin-left: 15px;
+}
+
+.exercise-description {
+    min-height: 80px; /* Reduced min-height */
+    margin-bottom: 15px; /* Reduced margin */
+}
+
+.step-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 12px 15px; /* Reduced padding */
+    display: flex;
+    flex-direction: column; /* Changed to column to center items vertically */
+    align-items: center; /* Center horizontally */
+    text-align: center; /* Center text */
+    gap: 8px; /* Reduced gap */
+}
+
+.step-number {
+    background: var(--primary-color);
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.step-text {
+    color: #eee; /* Brighter for better readability */
+    font-size: 1.1rem; /* Increased font size */
+    line-height: 1.4;
+    margin: 0;
+    font-weight: 500;
+}
+
+.stepper-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.step-nav-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-gray);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px 10px;
+    transition: color 0.2s;
+}
+
+.step-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.step-nav-btn:not(:disabled):hover {
+    color: var(--primary-color);
+}
+
+.step-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.dot.active {
+    background: var(--primary-color);
+    transform: scale(1.2);
+}
+
+.notes-section {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.notes-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: var(--text-white);
+    font-size: 0.95rem;
+}
+
+.notes-header i {
+    color: var(--primary-color);
+}
+
+.exercise-notes-textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    color: white;
+    font-family: inherit;
+    font-size: 0.9rem;
+    resize: none;
+    min-height: 100px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+}
+
+.exercise-notes-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.notes-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notes-char-count {
+    font-size: 0.8rem;
+    color: var(--text-gray);
+}
+
+.save-notes-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.save-notes-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.save-notes-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.workout-navigation {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.nav-exercise-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px;
+    border-radius: 15px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+.nav-exercise-btn.prev {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-white);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-exercise-btn.next {
+    background: var(--primary-color);
+    color: white;
+}
+
+.nav-exercise-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.nav-exercise-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    /* Hide sidebar and ANY sidebar-related toggle completely on this page in mobile */
+    #sidebar-placeholder, 
+    .sidebar, 
+    .sidebar-overlay, 
+    .mobile-toggle,
+    .sidebar-toggle,
+    [class*="toggle"] { /* Catch-all for other possible toggle classes */
+        display: none !important;
+    }
+
+    .app-container {
+        display: block; 
+    }
+
+    .main-content {
+        padding-top: 15px;
+        padding-left: 0;
+        padding-right: 0;
+        padding-bottom: 100px; /* Increased to ensure content is not hidden by fixed navigation */
+        width: 100% !important;
+        margin: 0;
+    }
+
+    .content-header {
+        padding: 0 15px;
+        margin-bottom: 20px;
+        justify-content: flex-start;
+    }
+
+    .header-left {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .back-btn {
+        width: 42px;
+        height: 42px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 50%;
+        color: white;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    .workout-info h1 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .exercise-view-container {
+        padding: 0 10px;
+    }
+
+    .exercise-card {
+        border-radius: 28px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .exercise-header {
+        padding: 20px 15px;
+    }
+
+    .exercise-name {
+        font-size: 1.3rem;
+        font-weight: 800;
+        text-transform: capitalize;
+    }
+
+    .exercise-gif-container {
+        max-width: 260px; /* Even smaller for mobile */
+        margin: 10px auto;
+        border-width: 3px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .exercise-details-grid {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 15px;
+        gap: 15px;
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .detail-item {
+        background: rgba(255, 255, 255, 0.03);
+        padding: 10px;
+        border-radius: 12px;
+    }
+
+    .detail-value {
+        font-size: 1.1rem;
+    }
+
+    .workout-navigation {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #121212;
+        padding: 15px;
+        margin: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        z-index: 1000;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+        display: flex;
+        gap: 10px;
+    }
+
+    .nav-exercise-btn {
+        padding: 16px;
+        font-size: 0.9rem;
+        border-radius: 16px;
+        flex: 1;
+    }
+}

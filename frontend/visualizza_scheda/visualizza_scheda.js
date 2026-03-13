@@ -138,12 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Popup Navigation Management ---
     function isAnyPopupOpen() {
         const editModal = document.getElementById('edit-confirm-modal');
-        const exercisePopup = document.getElementById('exercise-detail-popup');
         const sharePopup = document.getElementById('share-popup-overlay');
         const customPopup = document.getElementById('customPopup');
 
         return (editModal && editModal.classList.contains('active')) ||
-               (exercisePopup && exercisePopup.classList.contains('active')) ||
                (sharePopup && sharePopup.classList.contains('show')) ||
                (customPopup && customPopup.classList.contains('show'));
     }
@@ -166,13 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const editModal = document.getElementById('edit-confirm-modal');
         if (editModal && editModal.classList.contains('active')) {
             hideEditModal(isBackAction);
-            closedAny = true;
-        }
-
-        // Exercise Popup
-        const exercisePopup = document.getElementById('exercise-detail-popup');
-        if (exercisePopup && exercisePopup.classList.contains('active')) {
-            hideExerciseDetailPopup(isBackAction);
             closedAny = true;
         }
 
@@ -212,7 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('popstate', (event) => {
         // Handle visualizza_scheda specific popups
         hideEditModal(true);
-        hideExerciseDetailPopup(true);
         
         // Other components (SharePopup, customPopup) handle their own popstate
     });
@@ -501,6 +491,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="collapse-seduta-btn"><i class="fas fa-chevron-down"></i></button>
                     <h3 class="section-label">${seduta.name}</h3>
                 </div>
+                <div class="seduta-actions">
+                    <button class="view-exercises-btn" data-seduta-id="${seduta.id}">
+                        Visualizza Esercizi <i class="fas fa-play"></i>
+                    </button>
+                </div>
             </div>
             <div class="seduta-body">
                 <div class="seduta-exercises-header">
@@ -550,11 +545,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const exerciseGifThumbnail = exerciseRow.querySelector('.exercise-gif-thumbnail');
                 if (exerciseGifThumbnail) {
                     exerciseGifThumbnail.addEventListener('click', () => {
-                        showExerciseDetailPopup(
-                            exerciseGifThumbnail.dataset.exerciseName, 
-                            exercise, 
-                            globalRoutineData
-                        );
+                        const routineId = globalRoutineData.id;
+                        const sedutaId = seduta.id;
+                        const exerciseIndex = seduta.exercises.indexOf(exercise);
+                        
+                        window.location.href = `../visualizza_esercizio/visualizza_esercizio.html?routineId=${routineId}&sedutaId=${sedutaId}&exerciseIndex=${exerciseIndex}`;
                     });
                 }
                 fragment.appendChild(exerciseRow);
@@ -573,549 +568,19 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Aggiungi listener per il pulsante "Visualizza Esercizi"
+        const viewExercisesBtn = sedutaCard.querySelector('.view-exercises-btn');
+        if (viewExercisesBtn) {
+            viewExercisesBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const routineId = globalRoutineData.id;
+                const sedutaId = seduta.id;
+                // Reindirizza al primo esercizio della seduta (indice 0)
+                window.location.href = `../visualizza_esercizio/visualizza_esercizio.html?routineId=${routineId}&sedutaId=${sedutaId}&exerciseIndex=0`;
+            });
+        }
+
         return sedutaCard;
     }
 
-    // Funzioni per la gestione del popup
-    const exerciseDetailPopup = document.getElementById('exercise-detail-popup');
-    const popupExerciseGif = document.getElementById('popup-exercise-gif');
-    const popupExerciseName = document.getElementById('popup-exercise-name');
-    const popupExerciseDescription = document.getElementById('popup-exercise-description');
-    const closePopupBtn = document.querySelector('.close-popup-btn');
-    
-    // Notes functionality
-    const exerciseNotesTextarea = document.getElementById('exercise-notes-textarea');
-    const saveNotesBtn = document.getElementById('save-notes-btn');
-    const notesCharCount = document.querySelector('.notes-char-count');
-    
-    let currentExerciseData = null;
-    let currentRoutineData = null;
-    let isSavingNotes = false;
-
-    function hideExerciseDetailPopup(fromBackAction = false) {
-        const exerciseDetailPopup = document.getElementById('exercise-detail-popup');
-        if (exerciseDetailPopup) {
-            exerciseDetailPopup.classList.remove('active');
-        }
-        // Clear current exercise data
-        currentExerciseData = null;
-        currentRoutineData = null;
-
-        // If we closed it manually (not from back action), pop the state
-        if (!fromBackAction && history.state && history.state.popupOpen) {
-            history.back();
-        }
-    }
-
-    // Notes functionality
-    function updateCharCount() {
-        const currentLength = exerciseNotesTextarea.value.length;
-        notesCharCount.textContent = `${currentLength}/500`;
-        
-        if (currentLength >= 450) {
-            notesCharCount.style.color = '#ff6600';
-        } else if (currentLength >= 400) {
-            notesCharCount.style.color = '#ffaa00';
-        } else {
-            notesCharCount.style.color = 'var(--text-gray)';
-        }
-    }
-
-    async function loadExerciseNotes(exerciseId, routineData) {
-        if (!currentUser || !exerciseId) return;
-
-        try {
-            let notes = '';
-            
-            // Check if routine is owned by current user
-            const isOwner = routineData.userId === currentUser.uid;
-            
-            console.log('🔥 Loading notes - Is owner:', isOwner);
-            console.log('🔥 Loading notes - Exercise ID:', exerciseId);
-            
-            if (isOwner) {
-                // For owned routines, get notes from exercise object
-                console.log('🔥 Loading notes for owned routine');
-                const routineRef = db.collection('routines').doc(routineData.id);
-                const routineDoc = await routineRef.get();
-                
-                if (routineDoc.exists) {
-                    const routine = routineDoc.data();
-                    console.log('🔥 Loading notes - routine seduteData:', routine.seduteData);
-                    
-                    // Find exercise in all sedute
-                    if (routine.seduteData) {
-                        for (const seduta of routine.seduteData) {
-                            if (seduta.exercises) {
-                                const exercise = seduta.exercises.find(ex => {
-                                    // Check both possible ID fields
-                                    return (ex.exerciseId === exerciseId || ex.id === exerciseId);
-                                });
-                                if (exercise) {
-                                    console.log('🔥 Found exercise:', exercise.name);
-                                    console.log('🔥 Exercise notes field:', exercise.notes);
-                                    notes = exercise.notes || ''; // Get notes field, default to empty string
-                                    console.log('🔥 Loaded notes:', notes);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                // For shared routines, get notes from condivisioni
-                console.log('🔥 Loading notes for shared routine');
-                const routineRef = db.collection('routines').doc(routineData.id);
-                const routineDoc = await routineRef.get();
-                
-                if (routineDoc.exists) {
-                    const routine = routineDoc.data();
-                    const condivisioni = routine.condivisioni || {};
-                    
-                    console.log('🔥 Loading notes - condivisioni type:', typeof condivisioni);
-                    console.log('🔥 Loading notes - condivisioni:', condivisioni);
-                    console.log('🔥 Loading notes - is array?', Array.isArray(condivisioni));
-                    
-                    if (Array.isArray(condivisioni)) {
-                        // Old array structure - no notes supported
-                        console.log('🔥 Condivisioni is array (old structure), no notes to load');
-                        notes = '';
-                    } else {
-                        // New object structure
-                        console.log('🔥 Condivisioni is object (new structure)');
-                        
-                        // Get user-specific notes from condivisioni
-                        // Structure: condivisioni[userId][exerciseId] = { id: exerciseId, notes: notes }
-                        if (condivisioni[currentUser.uid] && condivisioni[currentUser.uid][exerciseId]) {
-                            const exerciseData = condivisioni[currentUser.uid][exerciseId];
-                            console.log('🔥 Found exercise data:', exerciseData);
-                            notes = exerciseData.notes || ''; // Get notes from the exercise object
-                            console.log('🔥 Found notes for user:', notes);
-                        } else {
-                            console.log('🔥 No notes found for user and exercise');
-                        }
-                    }
-                }
-            }
-            
-            exerciseNotesTextarea.value = notes;
-            updateCharCount();
-            
-        } catch (error) {
-            console.error('🔥❌ Error loading exercise notes:', error);
-            exerciseNotesTextarea.value = '';
-            updateCharCount();
-        }
-    }
-
-    async function saveExerciseNotes() {
-        if (!currentUser || !currentExerciseData || !currentRoutineData || isSavingNotes) return;
-        
-        console.log('🔥 Starting saveExerciseNotes');
-        console.log('🔥 Current user:', currentUser.uid);
-        console.log('🔥 Exercise ID:', currentExerciseData.id);
-        console.log('🔥 Exercise name:', currentExerciseData.name);
-        console.log('🔥 Routine ID:', currentRoutineData.id);
-        console.log('🔥 Notes to save:', exerciseNotesTextarea.value.trim());
-        
-        isSavingNotes = true;
-        saveNotesBtn.disabled = true;
-        saveNotesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvataggio...';
-        
-        try {
-            const notes = exerciseNotesTextarea.value.trim();
-            // Use exerciseId instead of id - this is the correct field name
-            const exerciseId = currentExerciseData.exerciseId || currentExerciseData.id;
-            const isOwner = currentRoutineData.userId === currentUser.uid;
-            
-            console.log('🔥 Exercise ID (corrected):', exerciseId);
-            console.log('🔥 Exercise data fields:', Object.keys(currentExerciseData));
-            console.log('🔥 Full exercise data:', currentExerciseData);
-            
-            console.log('🔥 Is owner:', isOwner);
-            
-            if (isOwner) {
-                // For owned routines, save notes directly in the specific exercise object
-                console.log('🔥 Saving notes for owned routine - SPECIFIC EXERCISE');
-                const routineRef = db.collection('routines').doc(currentRoutineData.id);
-                const routineDoc = await routineRef.get();
-                
-                console.log('🔥 Routine doc exists:', routineDoc.exists);
-                
-                if (routineDoc.exists) {
-                    const routine = routineDoc.data();
-                    console.log('🔥 Current routine seduteData:', routine.seduteData);
-                    
-                    // Find and update ONLY the specific exercise in all sedute
-                    if (routine.seduteData) {
-                        let exerciseFound = false;
-                        let exerciseUpdated = false;
-                        
-                        // Create deep copy of seduteData to avoid mutation issues
-                        const updatedSeduteData = JSON.parse(JSON.stringify(routine.seduteData));
-                        
-                        for (let sedutaIndex = 0; sedutaIndex < updatedSeduteData.length; sedutaIndex++) {
-                            const seduta = updatedSeduteData[sedutaIndex];
-                            
-                            if (seduta.exercises) {
-                                for (let exerciseIndex = 0; exerciseIndex < seduta.exercises.length; exerciseIndex++) {
-                                    const exercise = seduta.exercises[exerciseIndex];
-                                    
-                                    // Check both possible ID fields (exerciseId or id)
-                                    const currentExerciseId = exercise.exerciseId || exercise.id;
-                                    console.log(`🔥 Checking exercise ${exerciseIndex}: ${exercise.name} (ID: ${currentExerciseId})`);
-                                    
-                                    if (currentExerciseId === exerciseId) {
-                                        console.log('🔥 ✅ FOUND TARGET EXERCISE:', exercise.name);
-                                        console.log('🔥 Current notes:', exercise.notes);
-                                        console.log('🔥 New notes:', notes);
-                                        
-                                        // Update ONLY this specific exercise
-                                        seduta.exercises[exerciseIndex].notes = notes;
-                                        exerciseFound = true;
-                                        exerciseUpdated = true;
-                                        
-                                        console.log('🔥 ✅ UPDATED EXERCISE NOTES');
-                                        break; // Exit exercise loop
-                                    }
-                                }
-                                
-                                if (exerciseUpdated) {
-                                    break; // Exit seduta loop
-                                }
-                            }
-                        }
-                        
-                        console.log('🔥 Exercise found:', exerciseFound);
-                        console.log('🔥 Exercise updated:', exerciseUpdated);
-                        
-                        if (exerciseFound && exerciseUpdated) {
-                            console.log('🔥 Writing SPECIFIC exercise to database...');
-                            await routineRef.update({
-                                seduteData: updatedSeduteData
-                            });
-                            console.log('🔥 ✅ Database write completed successfully!');
-                            
-                            // Update cache
-                            if (window.CacheManager) {
-                                const updatedRoutine = { ...currentRoutineData, seduteData: updatedSeduteData };
-                                updateSingleRoutineInCache(currentUser.uid, updatedRoutine);
-                            }
-                        } else {
-                            console.error('🔥❌ Exercise not found in routine!');
-                            console.error('🔥❌ Looking for exercise ID:', exerciseId);
-                        }
-                    } else {
-                        console.error('🔥❌ No seduteData found in routine!');
-                    }
-                } else {
-                    console.error('🔥❌ Routine document does not exist!');
-                }
-            } else {
-                // For shared routines, save notes in condivisioni with exerciseId as key
-                console.log('🔥 Saving notes for shared routine - SPECIFIC EXERCISE');
-                const routineRef = db.collection('routines').doc(currentRoutineData.id);
-                const routineDoc = await routineRef.get();
-                
-                console.log('🔥 Routine doc exists:', routineDoc.exists);
-                
-                if (routineDoc.exists) {
-                    const routine = routineDoc.data();
-                    console.log('🔥 Current condivisioni type:', typeof routine.condivisioni);
-                    console.log('🔥 Current condivisioni:', routine.condivisioni);
-                    console.log('🔥 Is condivisioni array?', Array.isArray(routine.condivisioni));
-                    
-                    let condivisioni = routine.condivisioni || {};
-                    
-                    // If condivisioni is an array, convert to object structure
-                    if (Array.isArray(condivisioni)) {
-                        console.log('🔥 Condivisioni is array, converting to object structure');
-                        const newCondivisioni = {};
-                        
-                        // Convert array to object with exercise notes structure
-                        condivisioni.forEach(userId => {
-                            newCondivisioni[userId] = {}; // Each user gets their own notes object
-                        });
-                        
-                        // Add current user if not exists
-                        if (!newCondivisioni[currentUser.uid]) {
-                            newCondivisioni[currentUser.uid] = {};
-                        }
-                        
-                        // Add the note for SPECIFIC exerciseId with proper structure
-                        newCondivisioni[currentUser.uid][exerciseId] = {
-                            id: exerciseId,
-                            notes: notes
-                        };
-                        
-                        console.log('🔥 New condivisioni structure:', newCondivisioni);
-                        console.log('🔥 Added note for exercise:', exerciseId);
-                        
-                        console.log('🔥 Writing to database...');
-                        await routineRef.update({
-                            condivisioni: newCondivisioni
-                        });
-                        console.log('🔥 ✅ Database write completed successfully!');
-                        
-                    } else {
-                        // Condivisioni is already an object
-                        console.log('🔥 Condivisioni is object, using existing structure');
-                        
-                        // Initialize user's condivisioni data if not exists
-                        if (!condivisioni[currentUser.uid]) {
-                            condivisioni[currentUser.uid] = {};
-                            console.log('🔥 Created user section in condivisioni');
-                        }
-                        
-                        // Save note for SPECIFIC exerciseId with proper structure
-                        // Structure: condivisioni[userId][exerciseId] = { id: exerciseId, notes: notes }
-                        console.log('🔥 Adding note for exercise:', exerciseId);
-                        condivisioni[currentUser.uid][exerciseId] = {
-                            id: exerciseId,
-                            notes: notes
-                        };
-                        console.log('🔥 Updated condivisioni structure:', condivisioni);
-                        
-                        console.log('🔥 Writing to database...');
-                        await routineRef.update({
-                            condivisioni: condivisioni
-                        });
-                        console.log('🔥 ✅ Database write completed successfully!');
-                    }
-                    
-                    // Update cache
-                    if (window.CacheManager) {
-                        const updatedRoutine = { ...currentRoutineData, condivisioni };
-                        updateSingleRoutineInCache(currentUser.uid, updatedRoutine);
-                    }
-                } else {
-                    console.error('🔥❌ Routine document does not exist!');
-                }
-            }
-            
-            // Show success message
-            if (window.showSuccessToast) {
-                window.showSuccessToast('Appunti salvati con successo!', 'Salvataggio completato');
-            }
-            
-        } catch (error) {
-            console.error('🔥❌ Error saving exercise notes:', error);
-            console.error('🔥❌ Full error details:', error.code, error.message);
-            if (window.showErrorToast) {
-                window.showErrorToast('Errore durante il salvataggio degli appunti: ' + error.message, 'Errore');
-            }
-        } finally {
-            isSavingNotes = false;
-            saveNotesBtn.disabled = false;
-            saveNotesBtn.innerHTML = '<i class="fas fa-save"></i> Salva';
-        }
-    }
-
-    function updateSingleRoutineInCache(uid, routine) {
-        if (!window.CacheManager) return;
-        
-        try {
-            const cachedRoutines = window.CacheManager.getRoutines(uid);
-            if (cachedRoutines) {
-                const updatedRoutines = cachedRoutines.map(r => 
-                    r.id === routine.id ? routine : r
-                );
-                window.CacheManager.saveRoutines(uid, updatedRoutines);
-            }
-        } catch (error) {
-            console.error('Error updating routine in cache:', error);
-        }
-    }
-
-    // Test function to verify database connection and permissions
-    window.testDatabaseWrite = async function() {
-        if (!currentUser) {
-            console.error('🔥❌ No user logged in!');
-            return;
-        }
-        
-        console.log('🔥 Testing database write permissions...');
-        
-        try {
-            const routineRef = db.collection('routines').doc(currentRoutineData.id);
-            const routineDoc = await routineRef.get();
-            
-            if (routineDoc.exists) {
-                const routine = routineDoc.data();
-                console.log('🔥 Current routine data:', routine);
-                
-                // Test write with a simple field
-                await routineRef.update({
-                    'testField': 'test_' + Date.now()
-                });
-                
-                console.log('🔥 ✅ Database write test successful!');
-                
-                // Clean up test field
-                const updatedData = { ...routine };
-                delete updatedData.testField;
-                await routineRef.set(updatedData);
-                
-                console.log('🔥 ✅ Database cleanup successful!');
-            } else {
-                console.error('🔥❌ Routine document not found!');
-            }
-        } catch (error) {
-            console.error('🔥❌ Database write test failed:', error);
-        }
-    };
-
-    // Test function to verify notes loading
-    window.testNotesLoading = async function() {
-        if (!currentUser || !currentExerciseData || !currentRoutineData) {
-            console.error('🔥❌ Missing data for test!');
-            return;
-        }
-        
-        console.log('🔥 Testing notes loading...');
-        await loadExerciseNotes(currentExerciseData.id, currentRoutineData);
-    };
-
-    // Listener per chiudere il popup
-    if (closePopupBtn) {
-        closePopupBtn.addEventListener('click', hideExerciseDetailPopup);
-    }
-
-    if (exerciseDetailPopup) {
-        exerciseDetailPopup.addEventListener('click', (event) => {
-            if (event.target === exerciseDetailPopup) {
-                hideExerciseDetailPopup();
-            }
-        });
-    }
-
-    // Notes event listeners
-    if (exerciseNotesTextarea) {
-        exerciseNotesTextarea.addEventListener('input', updateCharCount);
-    }
-
-    if (saveNotesBtn) {
-        saveNotesBtn.addEventListener('click', saveExerciseNotes);
-    }
-
-    // Stepper Logic
-    const prevBtn = document.querySelector('.popup-nav-btn.prev');
-    const nextBtn = document.querySelector('.popup-nav-btn.next');
-    const dotsContainer = document.querySelector('.popup-dots');
-    let currentStep = 0;
-    let totalSteps = 0;
-
-    function updateStepper() {
-        const steps = document.querySelectorAll('.popup-step');
-        const dots = document.querySelectorAll('.dot');
-        
-        console.log(`Updating stepper: currentStep=${currentStep}, totalSteps=${totalSteps}`);
-        
-        // Hide all steps and show only the current step
-        steps.forEach((step, index) => {
-            step.style.display = index === currentStep ? 'block' : 'none';
-        });
-
-        // Update dots active state
-        dots.forEach((dot, index) => {
-            dot.classList.toggle('active', index === currentStep);
-        });
-
-        // Update button states
-        prevBtn.disabled = currentStep === 0;
-        nextBtn.disabled = currentStep === totalSteps - 1;
-        
-        console.log(`Step ${currentStep} displayed, Prev disabled: ${prevBtn.disabled}, Next disabled: ${nextBtn.disabled}`);
-    }
-
-    prevBtn.addEventListener('click', () => {
-        console.log(`Prev button clicked. Current step: ${currentStep}`);
-        if (currentStep > 0) {
-            currentStep--;
-            console.log(`Moving to step: ${currentStep}`);
-            updateStepper();
-        } else {
-            console.log('Already at first step, cannot go back');
-        }
-    });
-
-    nextBtn.addEventListener('click', () => {
-        console.log(`Next button clicked. Current step: ${currentStep}, Total steps: ${totalSteps - 1}`);
-        if (currentStep < totalSteps - 1) {
-            currentStep++;
-            console.log(`Moving to step: ${currentStep}`);
-            updateStepper();
-        } else {
-            console.log('Already at last step, cannot go forward');
-        }
-    });
-
-    function showExerciseDetailPopup(exerciseName, exerciseData = null, routineData = null) {
-        console.log("Tentativo di mostrare popup per esercizio:", exerciseName);
-        pushPopupState();
-
-        const languagePreference = localStorage.getItem('languagePreference') || 'it';
-        const exerciseDataFromList = allExercisesData.find(ex => (languagePreference === 'it' ? ex.name_it : ex.name) === exerciseName);
-
-        if (exerciseDataFromList) {
-            console.log("Dati esercizio trovati:", exerciseDataFromList);
-            popupExerciseGif.src = exerciseDataFromList.gifUrl;
-            popupExerciseName.textContent = languagePreference === 'it' ? exerciseDataFromList.name_it : exerciseDataFromList.name;
-
-            // Set current data for notes functionality
-            currentExerciseData = exerciseData || exerciseDataFromList;
-            currentRoutineData = routineData;
-
-            // Usa sempre instructions_it per avere le istruzioni in italiano
-            const instructions = exerciseDataFromList.instructions_it || exerciseDataFromList.instructions;
-            totalSteps = instructions.length;
-            currentStep = 0;
-            
-            console.log(`Caricate ${totalSteps} istruzioni:`, instructions);
-
-            popupExerciseDescription.innerHTML = instructions.map((instruction, index) => {
-                // Rimuovi i primi 6 caratteri ('Step:X:')
-                let cleanedInstruction = instruction.substring(6).trim();
-                console.log(`Istruzione originale ${index}:`, instruction);
-                console.log(`Istruzione pulita ${index}:`, cleanedInstruction);
-                
-                return `<div class="popup-step" data-step="${index}">
-                            <div class="step-card">
-                                <span class="step-number">${index + 1}</span>
-                                <p class="step-text">${cleanedInstruction}</p>
-                            </div>
-                        </div>`;
-            }).join('');
-
-            dotsContainer.innerHTML = instructions.map((_, index) => 
-                `<span class="dot ${index === 0 ? 'active' : ''}" data-step="${index}"></span>`
-            ).join('');
-
-            // Aggiungi event listeners ai pallini
-            const dots = dotsContainer.querySelectorAll('.dot');
-            dots.forEach((dot, index) => {
-                dot.addEventListener('click', () => {
-                    currentStep = index;
-                    updateStepper();
-                });
-            });
-
-            // Load exercise notes if we have routine data
-            if (routineData && currentExerciseData) {
-                // Use exerciseId from the exercise data
-                const exerciseId = currentExerciseData.exerciseId || currentExerciseData.id;
-                console.log('🔥 Loading notes for exercise ID:', exerciseId);
-                loadExerciseNotes(exerciseId, routineData);
-            } else {
-                // Reset notes section if no routine data
-                exerciseNotesTextarea.value = '';
-                updateCharCount();
-            }
-
-            updateStepper();
-            exerciseDetailPopup.classList.add('active');
-        } else {
-            console.warn(`Dati per l'esercizio "${exerciseName}" non trovati.`);
-        }
-    }
 });

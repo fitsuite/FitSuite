@@ -205,11 +205,45 @@
 
 .seduta-header {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between; /* Change to space-between to push actions to the right */
     align-items: center;
     margin-bottom: 10px;
     position: relative;
     width: 100%;
+}
+
+.view-exercises-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.view-exercises-btn:hover {
+    filter: brightness(1.1);
+    transform: scale(1.05);
+}
+
+.view-exercises-btn i {
+    font-size: 10px;
+}
+
+@media (max-width: 480px) {
+    .view-exercises-btn span {
+        display: none; /* Only icon on very small screens if needed, but text is short enough */
+    }
+    .view-exercises-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
 }
 
 .seduta-title-container {

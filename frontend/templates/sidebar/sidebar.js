@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make functions globally available
     window.getGoogleProfilePictureUrl = getGoogleProfilePictureUrl;
     window.loadUserAvatar = loadUserAvatar;
+    window.setPrimaryColor = setPrimaryColor;
 
     // Listen for username updates
     window.addEventListener('usernameUpdated', (event) => {
