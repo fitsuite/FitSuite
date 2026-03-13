@@ -457,7 +457,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             
                             const noteInput = exerciseRow.querySelector('.col-note textarea');
-                            if (noteInput) noteInput.value = ex.note || '';
+                            if (noteInput) {
+                                let finalNote = ex.note || '';
+                                if (ex.rpe) finalNote += `\n[RPE: ${ex.rpe}]`;
+                                if (ex.tempo) finalNote += `\n[Tempo: ${ex.tempo}]`;
+                                noteInput.value = finalNote.trim();
+                            }
 
                             exercisesList.appendChild(exerciseRow);
                             initExerciseRowEvents(exerciseRow, mockEx);
@@ -1081,7 +1086,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="seduta-body">
                 <div class="seduta-exercises-header">
-                    <span class="header-col col-drag-spacer"></span>
                     <span class="header-col col-name">Esercizio</span>
                     <span class="header-col col-rep">Rep</span>
                     <span class="header-col col-set">Serie</span>

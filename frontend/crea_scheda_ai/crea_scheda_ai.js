@@ -568,7 +568,7 @@ const bodyParts = [
                 
                 // 1. Load and Filter Database
                 window.LoadingManager.nextStep('Caricamento database esercizi...');
-                const exercises = await loadAndFilterExercises(data.attrezzatura);
+                const exercises = await loadAndFilterExercises(data.attrezzatura, data);
                 
                 if (exercises.names.length === 0) {
                     throw new Error("Nessun esercizio trovato con l'attrezzatura selezionata.");
@@ -599,7 +599,7 @@ const bodyParts = [
 
     // --- Helper Functions ---
 
-    async function loadAndFilterExercises(selectedEquipment) {
+    async function loadAndFilterExercises(selectedEquipment, userData) {
         try {
             const response = await fetch('../../backend/data_it/esercizi_DATABASE_TOTALE.json');
             if (!response.ok) throw new Error("Impossibile caricare il database esercizi.");
@@ -626,6 +626,23 @@ const bodyParts = [
                 });
             }
 
+            // --- MIGLIORAMENTO SCIENTIFICO ---
+            // Se l'obiettivo è dimagrimento, assicuriamoci che ci siano esercizi cardio 
+            // anche se l'attrezzatura selezionata non li includerebbe esplicitamente
+            if (userData.obiettivo === 'dimagrimento') {
+                const cardioExercises = allExercises.filter(ex => 
+                    ex.bodyParts_it && ex.bodyParts_it.some(bp => bp.toLowerCase().includes('cardio'))
+                );
+                
+                // Aggiungi un set di esercizi cardio (limitati a 10 per non appesantire)
+                const extraCardio = cardioExercises.slice(0, 10);
+                extraCardio.forEach(ce => {
+                    if (!filtered.find(f => f.exerciseId === ce.exerciseId)) {
+                        filtered.push(ce);
+                    }
+                });
+            }
+
             return {
                 names: filtered.map(ex => ex.name_it),
                 fullList: filtered
@@ -640,8 +657,8 @@ const bodyParts = [
     async function generateRoutineWithGemini(userData, exercises) {
         try {
             // Chiama la Cloud Function Firebase (SICURA - chiave API nel backend)
-            // Specifichiamo la regione 'us-central1' per sicurezza
-            const cloudFunction = firebase.app().functions('us-central1').httpsCallable('generateWorkoutRoutine');
+            // Specifichiamo la regione 'us-central1' per sicurezza e un timeout maggiore (3 minuti)
+            const cloudFunction = firebase.app().functions('us-central1').httpsCallable('generateWorkoutRoutine', { timeout: 180000 });
             
             console.log("Chiamando Cloud Function...");
             
@@ -679,12 +696,32 @@ const bodyParts = [
         routine.sedute.forEach(seduta => {
             seduta.esercizi = seduta.esercizi.map(ex => {
                 // Find matching exercise in fullList (case-insensitive and trimmed)
-                const exName = (ex.nome || '').trim().toLowerCase();
-                const match = fullList.find(dbEx => (dbEx.name_it || '').trim().toLowerCase() === exName);
+                let exName = (ex.nome || '').trim().toLowerCase();
+                
+                // Cleanup AI name: remove common patterns like "(...)", " - ...", " 3x10" etc.
+                const cleanName = exName.replace(/\(.*\)/g, '')
+                                       .replace(/\d+x\d+/g, '')
+                                       .replace(/\d+\s*serie/g, '')
+                                       .replace(/\d+\s*ripetizioni/g, '')
+                                       .trim();
+
+                let match = fullList.find(dbEx => {
+                    const dbName = (dbEx.name_it || '').trim().toLowerCase();
+                    return dbName === exName || dbName === cleanName;
+                });
+                
+                // If still no match, try partial matching
+                if (!match) {
+                    match = fullList.find(dbEx => {
+                        const dbName = (dbEx.name_it || '').trim().toLowerCase();
+                        return exName.includes(dbName) || dbName.includes(exName);
+                    });
+                }
                 
                 if (match) {
                     return {
                         ...ex,
+                        nome: match.name_it, // Use exact name from DB
                         originalData: {
                             id: match.exerciseId,
                             gifUrl: match.gifUrl,
