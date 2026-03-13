@@ -108,6 +108,23 @@
                         </div>
                         <button class="card-btn" id="change-email-btn">Cambia Email</button>
                     </div>
+
+                    <!-- Session Management Section -->
+                    <div class="card-section-divider"></div>
+                    <div class="card-row-vertical">
+                        <div class="row-info">
+                            <i class="fas fa-shield-alt row-icon"></i>
+                            <div>
+                                <span class="row-label">Dispositivi e Sessioni</span>
+                                <span class="row-value-hint">Gestisci i dispositivi in cui hai effettuato l'accesso</span>
+                            </div>
+                        </div>
+                        <div class="sessions-list-container" id="sessions-list">
+                            <!-- Sessions will be loaded here -->
+                            <div class="session-loading">Caricamento sessioni...</div>
+                        </div>
+                    </div>
+
                     <div class="card-footer-action">
                         <p class="action-hint">Se procedi con l'eliminazione dell'account, perderai tutti i tuoi dati</p>
                         <button class="delete-account-btn-styled" id="delete-account-trigger">Elimina Account</button>
@@ -391,6 +408,7 @@
     </div>
 
     <script src="../templates/sidebar/sidebar.js"></script>
+    <script src="./session_manager.js"></script>
     <script src="../components/toast/toast.js"></script>
     <script src="../components/session_control/session_control.js"></script>
     <script src="../components/popup/popup.js"></script>

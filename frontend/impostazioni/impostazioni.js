@@ -101,7 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInitialMain = document.getElementById('user-initial-main');
     const userUsernameMain = document.getElementById('user-username-main');
     const userEmailMain = document.getElementById('user-email-main');
-    const userPhone = document.getElementById('user-phone');
     const editUsernameBtn = document.getElementById('edit-username-btn');
 
     // DOM Elements - Subscription
@@ -117,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // DOM Elements - Actions
     const changePasswordBtn = document.getElementById('change-password-btn');
-    const changePhoneBtn = document.getElementById('change-phone-btn');
     const deleteModal = document.getElementById('delete-confirm-modal');
     const confirmDeleteBtn = document.getElementById('confirm-delete');
     const cancelDeleteBtn = document.getElementById('cancel-delete');
@@ -126,6 +124,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelLogoutBtn = document.getElementById('cancel-logout');
     const confirmLogoutBtn = document.getElementById('confirm-logout');
     const deleteAccountTrigger = document.getElementById('delete-account-trigger');
+
+    // Sessions DOM
+    const sessionsList = document.getElementById('sessions-list');
 
     // DOM Elements - New Modals and Buttons
     const changeLanguageBtn = document.getElementById('change-language-btn');
@@ -137,11 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const changePasswordModal = document.getElementById('change-password-modal');
     const cancelPasswordChangeBtn = document.getElementById('cancel-password-change');
     const sendPasswordResetEmailBtn = document.getElementById('send-password-reset-email');
-
-    const changePhoneModal = document.getElementById('change-phone-modal');
-    const newPhoneInput = document.getElementById('new-phone-input');
-    const cancelPhoneChangeBtn = document.getElementById('cancel-phone-change');
-    const confirmPhoneChangeBtn = document.getElementById('confirm-phone-change');
 
     const changeLanguageModal = document.getElementById('change-language-modal');
     const languageOptions = document.querySelectorAll('.lang-option');
@@ -223,6 +219,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     updateUIWithUserData(JSON.parse(cachedProfile));
                 } catch (e) {}
+            }
+
+            // Load Sessions
+            if (window.SessionManager) {
+                loadSessions(user.uid);
             }
 
             try {
@@ -426,13 +427,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (!userInitialMain) {
             console.warn('Elemento con ID "user-initial-main" non trovato nell\'HTML');
         }
-        
-        // Update Phone
-        if (userPhone) {
-            userPhone.textContent = data.phoneNumber || "Non impostato";
-        } else {
-            console.warn('Elemento con ID "user-phone" non trovato nell\'HTML');
-        }
 
         // Update Subscription Info
         if (data.subscription) {
@@ -625,70 +619,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     } else {
         console.warn('Elemento con ID "send-password-reset-email" non trovato nell\'HTML');
-    }
-
-    // Change Phone
-    if (changePhoneBtn) {
-        changePhoneBtn.addEventListener('click', () => {
-            newPhoneInput.value = userPhone.textContent === "Non impostato" ? "" : userPhone.textContent; // Pre-fill with current phone if available
-            changePhoneModal.classList.add('active');
-        });
-    } else {
-        console.warn('Elemento con ID "change-phone-btn" non trovato nell\'HTML');
-    }
-
-    if (cancelPhoneChangeBtn) {
-        cancelPhoneChangeBtn.addEventListener('click', () => {
-            changePhoneModal.classList.remove('active');
-        });
-    } else {
-        console.warn('Elemento con ID "cancel-phone-change" non trovato nell\'HTML');
-    }
-
-    if (confirmPhoneChangeBtn) {
-        confirmPhoneChangeBtn.addEventListener('click', async () => {
-            const newPhone = newPhoneInput.value.trim();
-            
-            // Regola di validazione: almeno 10 cifre, opzionale + all'inizio
-            const phoneRegex = /^\+?[0-9]{10,15}$/;
-
-            if (newPhone) {
-                if (!phoneRegex.test(newPhone.replace(/\s/g, ''))) {
-                    if (window.showErrorToast) {
-                        window.showErrorToast("Per favore inserisci un numero di telefono valido (es. +39 333 1234567 o 3331234567). Deve contenere almeno 10 cifre.");
-                    }
-                    return;
-                }
-
-                try {
-                    await db.collection('users').doc(currentUser.uid).update({
-                        phoneNumber: newPhone
-                    });
-                    
-                    // Update last refresh timestamp to allow immediate fetch if needed (though we update local cache)
-                    localStorage.setItem(`lastProfileRefresh_${currentUser.uid}`, Date.now().toString());
-
-                    // Update Cache
-                    updateLocalUserProfile(currentUser.uid, { phoneNumber: newPhone });
-                    
-                    userPhone.textContent = newPhone;
-                    if (window.showSuccessToast) {
-                        window.showSuccessToast("Numero di telefono aggiornato con successo!");
-                    }
-                    changePhoneModal.classList.remove('active'); // Close modal after successful update
-                } catch (error) {
-                    if (window.showErrorToast) {
-                        window.showErrorToast("Errore nell'aggiornamento: " + error.message);
-                    }
-                }
-            } else {
-                if (window.showErrorToast) {
-                    window.showErrorToast("Il numero di telefono non può essere vuoto.");
-                }
-            }
-        });
-    } else {
-        console.warn('Elemento con ID "confirm-phone-change" non trovato nell\'HTML');
     }
 
     // Change Language
@@ -1220,15 +1150,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirmLogoutBtn) {
         confirmLogoutBtn.addEventListener('click', async () => {
             console.log('Confirm Logout button clicked - Event Listener Triggered');
-            try {
-                console.log('Attempting to sign out...');
-                await auth.signOut();
-                console.log("User signed out successfully.");
-                window.location.href = '../auth/auth.html'; // Redirect to login page
-            } catch (error) {
-                console.error("Error during logout:", error);
-                if (window.showErrorToast) {
-                    window.showErrorToast("Errore durante il logout: " + error.message);
+            if (window.SessionManager) {
+                await window.SessionManager.logoutLocal();
+            } else {
+                try {
+                    console.log('Attempting to sign out...');
+                    await auth.signOut();
+                    console.log("User signed out successfully.");
+                    window.location.href = '../auth/auth.html'; // Redirect to login page
+                } catch (error) {
+                    console.error("Error during logout:", error);
+                    if (window.showErrorToast) {
+                        window.showErrorToast("Errore durante il logout: " + error.message);
+                    }
                 }
             }
         });
@@ -1415,4 +1349,91 @@ document.addEventListener('DOMContentLoaded', () => {
             logoutConfirmModal.classList.remove('active');
         }
     });
+
+    // Sessions Logic
+    async function loadSessions(uid) {
+        if (!sessionsList) return;
+
+        const currentSessionId = localStorage.getItem('fitsuite_sessionId');
+        
+        // Listener per il documento utente (contiene il map 'sessions')
+        db.collection('users').doc(uid)
+            .onSnapshot((doc) => {
+                sessionsList.innerHTML = '';
+                
+                if (!doc.exists) return;
+                
+                const userData = doc.data();
+                const sessions = userData.sessions || {};
+                const sessionIds = Object.keys(sessions);
+                
+                if (sessionIds.length === 0) {
+                    sessionsList.innerHTML = '<div class="no-sessions">Nessuna sessione attiva trovata.</div>';
+                    return;
+                }
+
+                // Ordina le sessioni per lastActive decrescente
+                const sortedSessionIds = sessionIds.sort((a, b) => {
+                    const timeA = sessions[a].lastActive ? (sessions[a].lastActive.toDate ? sessions[a].lastActive.toDate() : new Date(sessions[a].lastActive)) : 0;
+                    const timeB = sessions[b].lastActive ? (sessions[b].lastActive.toDate ? sessions[b].lastActive.toDate() : new Date(sessions[b].lastActive)) : 0;
+                    return timeB - timeA;
+                });
+
+                sortedSessionIds.forEach(sessionId => {
+                    const session = sessions[sessionId];
+                    const isCurrent = sessionId === currentSessionId;
+                    
+                    const sessionElement = document.createElement('div');
+                    sessionElement.className = `session-item ${isCurrent ? 'current' : ''}`;
+                    
+                    const lastActive = session.lastActive ? (session.lastActive.toDate ? session.lastActive.toDate() : new Date(session.lastActive)) : new Date();
+                    const timeStr = lastActive.toLocaleString('it-IT', { 
+                        day: '2-digit', month: '2-digit', year: '2-digit', 
+                        hour: '2-digit', minute: '2-digit' 
+                    });
+
+                    const isMobile = /Android|iPhone|iPad|iPod/i.test(session.userAgent || '');
+                    const iconClass = isMobile ? 'fas fa-mobile-alt' : 'fas fa-desktop';
+
+                    sessionElement.innerHTML = `
+                        <div class="session-info">
+                            <i class="${iconClass} session-icon"></i>
+                            <div class="session-details">
+                                <div class="session-name">${session.deviceName || 'Dispositivo Sconosciuto'} ${isCurrent ? '<span class="current-label">(Questo dispositivo)</span>' : ''}</div>
+                                <div class="session-meta">Ultima attività: ${timeStr} • ${session.browser || 'Browser'}</div>
+                            </div>
+                        </div>
+                        <button class="session-logout-btn ${isCurrent ? 'current-device-logout' : ''}" data-id="${sessionId}" data-current="${isCurrent}">
+                            ${isCurrent ? 'Esci' : 'Logout'}
+                        </button>
+                    `;
+                    
+                    sessionsList.appendChild(sessionElement);
+                });
+
+                // Aggiungi event listener ai bottoni di logout
+                document.querySelectorAll('.session-logout-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const targetId = e.currentTarget.dataset.id;
+                        const isCurrent = e.currentTarget.dataset.current === 'true';
+                        
+                        if (isCurrent) {
+                            if (await window.showConfirm('Vuoi uscire da questo dispositivo?', 'Conferma Logout', 'Esci', 'Annulla')) {
+                                await window.SessionManager.logoutLocal();
+                            }
+                        } else {
+                            if (await window.showConfirm('Vuoi disconnettere questo dispositivo?', 'Logout Remoto', 'Logout', 'Annulla')) {
+                                await window.SessionManager.removeRemoteSession(uid, targetId);
+                                if (window.showSuccessToast) {
+                                    window.showSuccessToast('Dispositivo disconnesso con successo.');
+                                }
+                            }
+                        }
+                    });
+                });
+            }, (error) => {
+                console.error('Errore nel caricamento delle sessioni dal documento utente:', error);
+                sessionsList.innerHTML = '<div class="error-message">Errore nel caricamento delle sessioni.</div>';
+            });
+    }
 });

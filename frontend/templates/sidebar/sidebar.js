@@ -231,6 +231,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             console.log('User is signed in for sidebar:', user.email);
             
+            // Sync Session and Setup Listener
+            if (window.SessionManager) {
+                await window.SessionManager.syncSession(user.uid);
+                
+                const sessionId = localStorage.getItem('fitsuite_sessionId');
+                if (sessionId) {
+                    // Real-time listener per il documento utente (contiene le sessioni)
+                    const userRef = db.collection('users').doc(user.uid);
+                    
+                    const unsubscribe = userRef.onSnapshot((doc) => {
+                        if (doc.exists) {
+                            const data = doc.data();
+                            const session = data.sessions ? data.sessions[sessionId] : null;
+                            
+                            if (!session || session.valid === false) {
+                                console.log('Sessione invalidata o rimossa dal documento utente. Logout in corso...');
+                                unsubscribe(); // Smetti di ascoltare
+                                window.SessionManager.logoutLocal();
+                            }
+                        }
+                    }, (error) => {
+                        console.error('Errore nel listener della sessione:', error);
+                    });
+                }
+            }
+
             // Update lastUserId
             if (user.uid !== lastUid) {
                 localStorage.setItem('lastUserId', user.uid);

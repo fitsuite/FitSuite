@@ -749,6 +749,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.error("Cache init failed", e);
                     }
                 }
+
+                // Gestione Sessione
+                if (window.SessionManager) {
+                    await window.SessionManager.syncSession(user.uid);
+                }
                 
                 // Clear Google sign-in flag
                 sessionStorage.removeItem('googleSignInInProgress');

@@ -692,3 +692,137 @@ body.settings-body {
         font-size: 16px; /* Evita testo troppo piccolo */
     }
 }
+
+/* Session Management Styles */
+.card-section-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 20px 0;
+    width: 100%;
+}
+
+.card-row-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 15px 0;
+}
+
+.row-value-hint {
+    display: block;
+    font-size: 13px;
+    color: var(--text-gray);
+    margin-top: 4px;
+}
+
+.sessions-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.session-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.session-item.current {
+    background: rgba(255, 102, 0, 0.05);
+    border-color: rgba(255, 102, 0, 0.2);
+}
+
+.session-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.session-icon {
+    font-size: 20px;
+    color: var(--primary-color);
+    width: 30px;
+    text-align: center;
+}
+
+.session-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.session-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: white;
+}
+
+.current-label {
+    font-size: 11px;
+    color: var(--primary-color);
+    margin-left: 5px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.session-meta {
+    font-size: 12px;
+    color: var(--text-gray);
+    margin-top: 2px;
+}
+
+.session-logout-btn {
+    background: transparent;
+    color: #ff4444;
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.session-logout-btn:hover {
+    background: #ff4444;
+    color: white;
+    border-color: #ff4444;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.2);
+}
+
+.session-logout-btn.current-device-logout {
+    color: var(--primary-color);
+    border-color: rgba(255, 102, 0, 0.3);
+}
+
+.session-logout-btn.current-device-logout:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(255, 102, 0, 0.2);
+}
+
+.session-loading, .no-sessions {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-gray);
+    font-size: 14px;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .session-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .session-logout-btn {
+        width: 100%;
+        padding: 10px;
+    }
+}
