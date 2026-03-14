@@ -151,7 +151,7 @@ const SessionManager = {
         // Pulisce anche altre chiavi di cache se necessario
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key.startsWith('userProfile_') || key.startsWith('userPreferences_') || key.startsWith('routines_')) {
+            if (key && (key.startsWith('userProfile_') || key.startsWith('userPreferences_') || key.startsWith('routines_'))) {
                 localStorage.removeItem(key);
                 i--;
             }

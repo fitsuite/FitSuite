@@ -232,10 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             console.log('User is signed in for sidebar:', user.email);
             
-            // Sync Session and Setup Listener
+            // Setup Session Listener (senza syncSession automatico per risparmiare richieste)
             if (window.SessionManager) {
-                await window.SessionManager.syncSession(user.uid);
-                
                 const sessionId = localStorage.getItem('fitsuite_sessionId');
                 if (sessionId) {
                     // Real-time listener per il documento utente (contiene le sessioni)

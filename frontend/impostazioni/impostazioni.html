@@ -119,19 +119,20 @@
                         <button class="card-btn" id="change-email-btn">Cambia Email</button>
                     </div>
 
-                    <!-- Session Management Section -->
-                    <div class="card-section-divider"></div>
-                    <div class="card-row-vertical">
-                        <div class="row-info">
-                            <i class="fas fa-shield-alt row-icon"></i>
-                            <div>
-                                <span class="row-label">Dispositivi e Sessioni</span>
-                                <span class="row-value-hint">Gestisci i dispositivi in cui hai effettuato l'accesso</span>
+                    <div class="card-row-vertical collapsible" id="sessions-collapsible">
+                        <div class="row-header">
+                            <div class="row-info">
+                                <i class="fas fa-shield-alt row-icon"></i>
+                                <div>
+                                    <span class="row-label">Dispositivi e Sessioni</span>
+                                    <span class="row-value-hint">Gestisci i dispositivi in cui hai effettuato l'accesso</span>
+                                </div>
                             </div>
+                            <i class="fas fa-chevron-down toggle-icon"></i>
                         </div>
-                        <div class="sessions-list-container" id="sessions-list">
+                        <div class="sessions-list-container collapsible-content" id="sessions-list">
                             <!-- Sessions will be loaded here -->
-                            <div class="session-loading">Caricamento sessioni...</div>
+                            <div class="session-loading">Clicca per visualizzare e verificare le sessioni...</div>
                         </div>
                     </div>
 

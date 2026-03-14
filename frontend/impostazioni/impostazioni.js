@@ -203,9 +203,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Carica le sessioni se non è già stato fatto o se sono cambiate
-                // Le sessioni sono ora parte dello stesso documento
-                if (sessionsList) {
+                // Carica le sessioni solo se il dropdown è aperto
+                const sessionsCollapsible = document.getElementById('sessions-collapsible');
+                if (sessionsList && sessionsCollapsible && sessionsCollapsible.classList.contains('active')) {
                     renderSessions(data.sessions || {}, uid);
                 }
             } else {
@@ -283,10 +283,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Load user avatar with Google profile picture fallback to initial
             loadUserAvatar(user.email, null, userInitialMain, 90);
             
-            // Sincronizza la sessione (ora molto più leggero grazie alla persistenza e onSnapshot)
-            if (window.SessionManager) {
-                window.SessionManager.syncSession(user.uid);
-            }
+            // Rimosso syncSession automatico al caricamento per risparmiare richieste
+            // Verrà chiamato solo all'apertura del dropdown delle sessioni
 
             try {
                 window.LoadingManager.nextStep('Caricamento dati profilo...');
@@ -444,7 +442,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update Preferences
         if (data.preferences) {
             // Save to localStorage (legacy/backup)
-            savePreferencesToCache(currentUser ? currentUser.uid : '', data.preferences);
+            if (window.CacheManager) {
+                window.CacheManager.savePreferences(currentUser ? currentUser.uid : '', data.preferences);
+            }
 
             if (currentColorLabel) {
                 currentColorLabel.textContent = data.preferences.color || "Arancione";
@@ -588,7 +588,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem(`lastProfileRefresh_${currentUser.uid}`, Date.now().toString());
 
                 // Update cache
-                savePreferencesToCache(currentUser.uid, { language: newLanguage });
+                if (window.CacheManager) {
+                    window.CacheManager.savePreferences(currentUser.uid, { language: newLanguage });
+                }
                 updateLocalUserProfile(currentUser.uid, { 'preferences.language': newLanguage });
 
                 userLanguage.textContent = newLanguage;
@@ -615,7 +617,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 // Optimistic Update: Update cache and UI immediately
-                savePreferencesToCache(currentUser.uid, { color: color });
+                if (window.CacheManager) {
+                    window.CacheManager.savePreferences(currentUser.uid, { color: color });
+                }
                 updateLocalUserProfile(currentUser.uid, { 'preferences.color': color });
                 
                 currentColorLabel.textContent = color;
@@ -677,7 +681,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem(`lastProfileRefresh_${currentUser.uid}`, Date.now().toString());
 
                 // Update cache
-                savePreferencesToCache(currentUser.uid, { notifications: selectedNotification });
+                if (window.CacheManager) {
+                    window.CacheManager.savePreferences(currentUser.uid, { notifications: selectedNotification });
+                }
                 updateLocalUserProfile(currentUser.uid, { 'preferences.notifications': selectedNotification });
 
                 userNotifications.textContent = selectedNotification;
@@ -1250,6 +1256,44 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Sessions Dropdown Logic
+    const sessionsCollapsible = document.getElementById('sessions-collapsible');
+    if (sessionsCollapsible) {
+        sessionsCollapsible.addEventListener('click', async (e) => {
+            // Se il click è su un bottone di logout interno, non chiudere il dropdown
+            if (e.target.closest('.session-logout-btn')) return;
+
+            const isOpening = !sessionsCollapsible.classList.contains('active');
+            
+            // Toggle dropdown
+            sessionsCollapsible.classList.toggle('active');
+
+            if (isOpening && currentUser) {
+                // Sincronizza la sessione (Richiesta di verifica)
+                if (window.SessionManager) {
+                    console.log('Verifica sessione in corso (Dropdown aperto)...');
+                    try {
+                        await window.SessionManager.syncSession(currentUser.uid);
+                    } catch (err) {
+                        console.error('Errore durante la verifica della sessione:', err);
+                    }
+                }
+
+                // Carica i dati attuali dal database per popolare la lista
+                const db = firebase.firestore();
+                try {
+                    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                    if (userDoc.exists) {
+                        const data = userDoc.data();
+                        renderSessions(data.sessions || {}, currentUser.uid);
+                    }
+                } catch (err) {
+                    console.error('Errore nel caricamento delle sessioni:', err);
+                }
+            }
+        });
+    }
+
 
 
 
@@ -1261,9 +1305,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (event.target === changePasswordModal) {
             changePasswordModal.classList.remove('active');
-        }
-        if (event.target === changePhoneModal) {
-            changePhoneModal.classList.remove('active');
         }
         if (event.target === changeLanguageModal) {
             changeLanguageModal.classList.remove('active');

@@ -826,3 +826,49 @@ body.settings-body {
         padding: 10px;
     }
 }
+
+/* Collapsible Sessions Section */
+.card-row-vertical.collapsible {
+    cursor: pointer;
+    transition: background 0.3s ease;
+    border-radius: 15px;
+    padding: 15px;
+    margin: 0;
+}
+
+.card-row-vertical.collapsible:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.toggle-icon {
+    color: var(--text-gray);
+    transition: transform 0.3s ease;
+    font-size: 18px;
+}
+
+.card-row-vertical.active .toggle-icon {
+    transform: rotate(180deg);
+    color: var(--primary-color);
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease;
+    opacity: 0;
+    margin-top: 0;
+    width: 100%;
+}
+
+.card-row-vertical.active .collapsible-content {
+    max-height: 2000px; /* Large enough to fit any number of sessions */
+    opacity: 1;
+    margin-top: 20px;
+}
