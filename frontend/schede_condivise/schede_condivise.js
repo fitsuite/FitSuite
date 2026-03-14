@@ -131,14 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } finally {
                 window.LoadingManager.hide();
             }
-
-            // Set up periodic refresh every 2 minutes
-            setInterval(async () => {
-                if (window.CacheManager && window.CacheManager.isSharedRoutinesCacheExpired(user.uid)) {
-                    console.log("Periodic refresh: Cache expired, fetching new shared routines");
-                    await fetchSharedRoutines(user.uid);
-                }
-            }, 2 * 60 * 1000); // 2 minutes
         } else {
             window.location.href = '../auth/auth.html';
         }

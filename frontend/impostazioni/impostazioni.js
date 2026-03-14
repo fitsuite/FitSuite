@@ -176,25 +176,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // State
     let currentUser = null;
-    let userDocListener = null;
 
-    // Funzione principale per inizializzare il listener real-time sui dati utente
-    function startUserDocListener(uid) {
-        if (userDocListener) {
-            userDocListener(); // Cancella listener precedente se esiste
+    // Funzione principale per caricare i dati utente una sola volta (con throttle di 30s)
+    async function fetchUserData(uid) {
+        // Check throttle first
+        if (window.CacheManager && !window.CacheManager.shouldFetch('profile', uid)) {
+            console.log("Fetch user data throttled (30s), skipping DB");
+            return;
         }
 
-        console.log("Starting real-time listener for user:", uid);
+        console.log("Fetching user data from DB for:", uid);
         
-        userDocListener = db.collection('users').doc(uid).onSnapshot((doc) => {
+        try {
+            const doc = await db.collection('users').doc(uid).get();
             if (doc.exists) {
                 const data = doc.data();
                 const cachedProfile = localStorage.getItem(`userProfile_${uid}`);
                 const dataString = JSON.stringify(data);
                 
+                // Update CacheManager mark
+                if (window.CacheManager) {
+                    window.CacheManager.markFetched('profile', uid);
+                }
+
                 // Aggiorna cache e UI solo se i dati sono effettivamente cambiati
                 if (dataString !== cachedProfile) {
-                    console.log("Real-time update: user data changed, updating UI");
+                    console.log("Fetch result: user data changed, updating UI");
                     localStorage.setItem(`userProfile_${uid}`, dataString);
                     updateUIWithUserData(data);
                     
@@ -212,9 +219,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("No user document found, creating one...");
                 initializeUserDoc(uid);
             }
-        }, (error) => {
-            console.error("Error in real-time listener:", error);
-        });
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+        }
     }
 
     async function initializeUserDoc(uid) {
@@ -260,8 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Error optimistic profile load:", e);
             }
         }
-        // Avvia il listener real-time immediatamente se abbiamo l'UID
-        startUserDocListener(lastUid);
+        // Fetch dei dati aggiornati una sola volta
+        fetchUserData(lastUid);
     }
 
     // Check Auth State
@@ -272,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update lastUserId
             if (user.uid !== lastUid) {
                 localStorage.setItem('lastUserId', user.uid);
-                startUserDocListener(user.uid);
+                fetchUserData(user.uid);
             }
 
             console.log('User is signed in:', user.email);
@@ -288,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 window.LoadingManager.nextStep('Caricamento dati profilo...');
-                // Aspetta solo il caricamento della sidebar, i dati arrivano dal listener
+                // Aspetta solo il caricamento della sidebar, i dati arrivano dal fetch
                 await waitForSidebar();
                 window.LoadingManager.nextStep('Preparazione interfaccia completata');
             } catch (error) {
@@ -298,10 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             console.log('No user signed in, redirecting to login...');
-            if (userDocListener) {
-                userDocListener();
-                userDocListener = null;
-            }
             window.location.href = '../auth/auth.html';
         }
     });
