@@ -202,12 +202,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // The CacheManager already handles cross-tab synchronization automatically
 
     // Listen for window resize to update menu visibility
-    window.addEventListener('resize', () => {
-        // Re-render routines to update menu visibility based on new screen size
-        if (auth.currentUser && allRoutines.length > 0) {
-            renderRoutines(allRoutines);
-        }
-    });
+    if (!window._listaSchedeResizeAdded) {
+        window.addEventListener('resize', () => {
+            // Re-render routines to update menu visibility based on new screen size
+            if (auth.currentUser && allRoutines.length > 0) {
+                renderRoutines(allRoutines);
+            }
+        }, { passive: true });
+        window._listaSchedeResizeAdded = true;
+    }
 
     async function fetchRoutines(uid, forceRefresh = false) {
         // 1. Check if we should perform an actual DB fetch based on throttle

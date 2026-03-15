@@ -149,6 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
             seduteContainer.innerHTML = '';
             seduteCount = 0;
 
+            const seduteFragment = document.createDocumentFragment();
+
             draft.seduteData.forEach(seduta => {
                 seduteCount++;
                 const sedutaCard = document.createElement('div');
@@ -162,11 +164,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     label.dataset.customName = "true";
                 }
 
-                seduteContainer.appendChild(sedutaCard);
+                seduteFragment.appendChild(sedutaCard);
                 initSedutaEvents(sedutaCard);
 
                 const exercisesList = sedutaCard.querySelector('.exercises-list');
                 if (seduta.exercises && seduta.exercises.length > 0) {
+                    const exercisesFragment = document.createDocumentFragment();
                     seduta.exercises.forEach(ex => {
                         const exerciseRow = document.createElement('div');
                         exerciseRow.className = 'exercise-row';
@@ -185,12 +188,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         exerciseRow.querySelector('.col-weight input').value = ex.weight || '';
                         exerciseRow.querySelector('.col-note textarea').value = ex.note || '';
 
-                        exercisesList.appendChild(exerciseRow);
+                        exercisesFragment.appendChild(exerciseRow);
                         initExerciseRowEvents(exerciseRow, mockEx);
                     });
+                    exercisesList.appendChild(exercisesFragment);
                 }
                 updateSedutaSummary(sedutaCard);
             });
+            seduteContainer.appendChild(seduteFragment);
             return true;
         }
         return false;
@@ -259,25 +264,28 @@ document.addEventListener('DOMContentLoaded', () => {
                (addExerciseModal && addExerciseModal.style.display === 'flex');
     }
 
-    window.addEventListener('popstate', (event) => {
-        // Calendar Modal
-        if (calendarModal && calendarModal.classList.contains('active')) {
-            hideCalendarModal(true);
-        }
+    if (!window._creaSchedaPopstateAdded) {
+        window.addEventListener('popstate', (event) => {
+            // Calendar Modal
+            if (calendarModal && calendarModal.classList.contains('active')) {
+                hideCalendarModal(true);
+            }
 
-        // Delete Seduta Modal
-        if (deleteConfirmModal && deleteConfirmModal.classList.contains('active')) {
-            hideDeleteModal(true);
-        }
+            // Delete Seduta Modal
+            if (deleteConfirmModal && deleteConfirmModal.classList.contains('active')) {
+                hideDeleteModal(true);
+            }
 
-        // Reset Modal
-        if (resetConfirmModal && resetConfirmModal.classList.contains('show')) {
-            hideResetModal(true);
-        }
+            // Reset Modal
+            if (resetConfirmModal && resetConfirmModal.classList.contains('show')) {
+                hideResetModal(true);
+            }
 
-        // Add Exercise Modal (handles its own popstate if AddExerciseModal object is used)
-        // But we can ensure it here too if needed.
-    });
+            // Add Exercise Modal (handles its own popstate if AddExerciseModal object is used)
+            // But we can ensure it here too if needed.
+        });
+        window._creaSchedaPopstateAdded = true;
+    }
 
     function hideCalendarModal(fromBackAction = false) {
         if (calendarModal && calendarModal.classList.contains('active')) {
@@ -406,6 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
             seduteCount = 0;
 
             if (aiRoutine.sedute && aiRoutine.sedute.length > 0) {
+                const seduteFragment = document.createDocumentFragment();
                 aiRoutine.sedute.forEach(seduta => {
                     seduteCount++;
                     const sedutaCard = document.createElement('div');
@@ -419,11 +428,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         label.dataset.customName = "true";
                     }
 
-                    seduteContainer.appendChild(sedutaCard);
+                    seduteFragment.appendChild(sedutaCard);
                     initSedutaEvents(sedutaCard);
 
                     const exercisesList = sedutaCard.querySelector('.exercises-list');
                     if (seduta.esercizi && seduta.esercizi.length > 0) {
+                        const exercisesFragment = document.createDocumentFragment();
                         seduta.esercizi.forEach(ex => {
                             const exerciseRow = document.createElement('div');
                             exerciseRow.className = 'exercise-row';
@@ -464,12 +474,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 noteInput.value = finalNote.trim();
                             }
 
-                            exercisesList.appendChild(exerciseRow);
+                            exercisesFragment.appendChild(exerciseRow);
                             initExerciseRowEvents(exerciseRow, mockEx);
                         });
+                        exercisesList.appendChild(exercisesFragment);
                     }
                     updateSedutaSummary(sedutaCard);
                 });
+                seduteContainer.appendChild(seduteFragment);
             } else {
                 seduteCount++;
                 const sedutaCard = document.createElement('div');
@@ -552,6 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
         seduteCount = 0;
 
         if (routine.seduteData && routine.seduteData.length > 0) {
+            const seduteFragment = document.createDocumentFragment();
             routine.seduteData.forEach(seduta => {
                 seduteCount++;
                 const sedutaCard = document.createElement('div');
@@ -565,11 +578,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     label.dataset.customName = "true";
                 }
 
-                seduteContainer.appendChild(sedutaCard);
+                seduteFragment.appendChild(sedutaCard);
                 initSedutaEvents(sedutaCard);
 
                 const exercisesList = sedutaCard.querySelector('.exercises-list');
                 if (seduta.exercises && seduta.exercises.length > 0) {
+                    const exercisesFragment = document.createDocumentFragment();
                     seduta.exercises.forEach(ex => {
                         const exerciseRow = document.createElement('div');
                         exerciseRow.className = 'exercise-row';
@@ -597,12 +611,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         const noteInput = exerciseRow.querySelector('.col-note textarea');
                         if (noteInput) noteInput.value = ex.note || '';
 
-                        exercisesList.appendChild(exerciseRow);
+                        exercisesFragment.appendChild(exerciseRow);
                         initExerciseRowEvents(exerciseRow, mockEx);
                     });
+                    exercisesList.appendChild(exercisesFragment);
                 }
                 updateSedutaSummary(sedutaCard);
             });
+            seduteContainer.appendChild(seduteFragment);
         } else {
             seduteCount++;
             const sedutaCard = document.createElement('div');

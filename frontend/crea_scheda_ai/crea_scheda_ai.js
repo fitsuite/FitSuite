@@ -68,11 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return resetConfirmModal && resetConfirmModal.classList.contains('show');
     }
 
-    window.addEventListener('popstate', (event) => {
-        if (resetConfirmModal && resetConfirmModal.classList.contains('show')) {
-            hideResetModal(true);
-        }
-    });
+    if (!window._creaSchedaAIPopstateAdded) {
+        window.addEventListener('popstate', (event) => {
+            if (resetConfirmModal && resetConfirmModal.classList.contains('show')) {
+                hideResetModal(true);
+            }
+        });
+        window._creaSchedaAIPopstateAdded = true;
+    }
 
     function hideResetModal(fromBackAction = false) {
         if (resetConfirmModal && resetConfirmModal.classList.contains('show')) {
@@ -298,7 +301,7 @@ numericInputs.forEach(input => {
     // Disabilita la modifica del valore tramite scroll/trackpad
     input.addEventListener('wheel', (e) => {
         e.preventDefault();
-    }, { passive: false });
+    }, { passive: false }); // Wheel e scroll di sistema possono richiedere passive: false per preventDefault
 
     // Rafforzamento dei limiti massimi via JS
      input.addEventListener('input', (e) => {

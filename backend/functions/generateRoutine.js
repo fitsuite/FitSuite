@@ -56,7 +56,7 @@ Usa SOLO gli esercizi presenti nella seguente lista: ${JSON.stringify(exerciseNa
 Regole per i Campi Esercizio:
 - "ripetizioni": Per esercizi a tempo, scrivi "n min" o "n sec" (es. "1 min", "30 sec"). Per esercizi unilaterali scrivi "n sec per lato".
 - "recupero": Se non c'è recupero, lascia il campo VUOTO (stringa vuota "").
-- "peso": Deve contenere solo il numero seguito da "kg" (es. "10kg", "15.5kg"). NON usare trattini, slash o altri simboli strani. L'unica eccezione è "Corpo libero" se non si usano pesi.
+- "peso": Per esercizi a corpo libero, scrivi "Corpo libero". Per OGNI esercizio con pesi o macchinari, DEVI specificare un numero (es. "10", "15.5"). Il valore deve essere PRIVO di unità di misura (NON scrivere "kg"), in quanto già presente nell'interfaccia.
 - "nome": Usa il nome esatto dalla lista, senza aggiungere nulla.
 
 Dati Utente:
@@ -78,15 +78,15 @@ Struttura JSON:
       "giorno": 1,
       "nome_seduta": "Esempio: Spinta",
       "esercizi": [
-        { "nome": "Nome esatto dalla lista", "serie": 3, "ripetizioni": "10", "recupero": "60s", "peso": "10kg", "note": "" }
+        { "nome": "Nome esatto dalla lista", "serie": 3, "ripetizioni": "10", "recupero": "60s", "peso": "10", "note": "" }
       ]
     }
   ]
 }
 `;
 
-        // Chiama Gemini API - Utilizziamo gemini-1.5-flash per la massima velocità e stabilità
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        // Chiama Gemini API - Utilizziamo gemini-3-flash per la massima velocità e stabilità
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${apiKey}`;
         
         const response = await axios.post(url, {
             contents: [{
@@ -143,7 +143,7 @@ Struttura JSON:
         if (status === 404) {
             throw new functions.https.HttpsError(
                 'not-found',
-                'Modello non trovato. Il nome "gemini-2.5-flash" potrebbe non essere ancora attivo nel tuo account o regione.'
+                'Modello non trovato. Il nome "gemini-3-flash" potrebbe non essere ancora attivo nel tuo account o regione.'
             );
         }
 
@@ -169,8 +169,9 @@ exports.testGeminiConnection = functions
     }
 
     try {
-        // Chiama Gemini API - Utilizziamo gemini-1.5-flash per la massima velocità e stabilità
-        const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const apiKey = geminiApiKey.value();
+        // Chiama Gemini API - Utilizziamo gemini-3-flash per la massima velocità e stabilità
+        const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${apiKey}`;
         
         console.log('Avvio test connettività Gemini...');
         
@@ -187,7 +188,7 @@ exports.testGeminiConnection = functions
             success: true,
             message: "Connessione a Gemini riuscita!",
             apiResponse: reply,
-            modelUsed: "gemini-1.5-flash"
+            modelUsed: "gemini-3-flash"
         };
 
     } catch (error) {

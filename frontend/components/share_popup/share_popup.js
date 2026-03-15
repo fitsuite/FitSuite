@@ -86,12 +86,15 @@ class SharePopup {
             }
         });
 
-        // Listen for popstate to close popup
-        window.addEventListener('popstate', (event) => {
-            if (this.overlay && this.overlay.classList.contains('show')) {
-                this.hide(true);
-            }
-        });
+        // Listen for popstate to close popup (only once)
+        if (!window._sharePopupPopstateAdded) {
+            window.addEventListener('popstate', (event) => {
+                if (this.overlay && this.overlay.classList.contains('show')) {
+                    this.hide(true);
+                }
+            });
+            window._sharePopupPopstateAdded = true;
+        }
 
         // Search input
         const searchInput = document.getElementById('user-search-input');

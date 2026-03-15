@@ -200,12 +200,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    window.addEventListener('popstate', (event) => {
-        // Handle visualizza_scheda specific popups
-        hideEditModal(true);
-        
-        // Other components (SharePopup, customPopup) handle their own popstate
-    });
+    if (!window._visualizzaSchedaPopstateAdded) {
+        window.addEventListener('popstate', (event) => {
+            // Handle visualizza_scheda specific popups
+            hideEditModal(true);
+            
+            // Other components (SharePopup, customPopup) handle their own popstate
+        });
+        window._visualizzaSchedaPopstateAdded = true;
+    }
 
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
@@ -357,8 +360,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateButtonVisibility();
 
-        // Aggiorna visibilità al resize
-        window.addEventListener('resize', updateButtonVisibility);
+        // Aggiorna visibilità al resize (solo una volta)
+        if (!window._visualizzaSchedaResizeAdded) {
+            window.addEventListener('resize', updateButtonVisibility, { passive: true });
+            window._visualizzaSchedaResizeAdded = true;
+        }
 
         // Gestione click Edit
         editBtn.onclick = (e) => {

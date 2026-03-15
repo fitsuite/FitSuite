@@ -485,7 +485,7 @@ if (routineList) {
         } else {
             routineList.classList.remove('scrolled');
         }
-    });
+    }, { passive: true });
 }
 
 // Avvia l'applicazione quando la pagina è pronta

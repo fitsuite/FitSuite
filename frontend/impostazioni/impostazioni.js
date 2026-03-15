@@ -63,6 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
         'Rosa': '#f472b6'
     };
 
+    const rgbMap = {
+        'Arancione': '255, 102, 0',
+        'Verde': '74, 222, 128',
+        'Blu': '59, 130, 246',
+        'Rosa': '244, 114, 182'
+    };
+
     const gradientMap = {
         'Arancione': 'linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%)',
         'Verde': 'linear-gradient(135deg, #1a2b16 0%, #1a1a1a 100%)',
@@ -73,9 +80,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set initial primary color based on user preferences
     function setPrimaryColor(colorName) {
         const hex = colorMap[colorName] || colorMap['Arancione']; // Default to orange
+        const rgb = rgbMap[colorName] || rgbMap['Arancione'];
         const gradient = gradientMap[colorName] || gradientMap['Arancione']; // Default to orange gradient
         document.documentElement.style.setProperty('--primary-color', hex);
+        document.documentElement.style.setProperty('--primary-color-rgb', rgb);
         document.documentElement.style.setProperty('--background-gradient', gradient);
+        
+        // Update any other dynamic gradients that should use the primary color
+        updateDynamicStyles(rgb);
+    }
+
+    function updateDynamicStyles(rgb) {
+        // Here we could add more dynamic styling if needed, but the CSS variables should cover most cases
+        // For example, we could update specific elements that don't use variables
     }
 
     function waitForSidebar() {

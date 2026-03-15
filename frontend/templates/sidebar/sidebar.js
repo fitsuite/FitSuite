@@ -119,8 +119,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Set initial height and add resize listener for mobile
         setSidebarHeight();
-        window.addEventListener('resize', setSidebarHeight);
-        window.addEventListener('orientationchange', setSidebarHeight);
+        // Aggiungi listener per altezza dinamica su mobile (una sola volta)
+        if (!window._sidebarListenersAdded) {
+            window.addEventListener('resize', setSidebarHeight, { passive: true });
+            window.addEventListener('orientationchange', setSidebarHeight, { passive: true });
+            window._sidebarListenersAdded = true;
+        }
 
         // Check if toggle button already exists
         if (!document.querySelector('.sidebar-toggle-btn')) {

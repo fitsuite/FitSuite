@@ -38,8 +38,9 @@ exports.generateWorkoutRoutine = onCall({
     else bmiStatus = "Obesità Classe II o superiore";
 
     // Lista di modelli da provare in ordine di preferenza (Piano Free)
-    // L'utente consiglia gemini-2.5-flash (Marzo 2026)
+    // L'utente consiglia gemini-3-flash (Marzo 2026)
     const models = [
+        'gemini-3-flash',
         'gemini-2.5-flash',
         'gemini-2.0-flash',
         'gemini-1.5-flash',
@@ -84,7 +85,7 @@ Linee Guida Scientifiche per la Generazione:
 
 4. STRUTTURA DELLA SCHEDA (JSON):
    - "ripetizioni": Numero esatto o range (es. "10-12") o tempo (es. "30s").
-   - "peso": Suggerisci un peso iniziale realistico (es. "20kg") o "Corpo libero".
+   - "peso": Per esercizi a corpo libero, scrivi "Corpo libero". Per OGNI esercizio con pesi o macchinari, DEVI specificare un numero (es. "10", "15.5"). Il valore deve essere PRIVO di unità di misura (NON scrivere "kg"), in quanto già presente nell'interfaccia.
    - "tempo": Specifica il tempo sotto tensione (es. "3-0-1-0").
    - "note": Spiega BREVEMENTE la motivazione scientifica della scelta (es. "Scelto per ridurre impatto sulle ginocchia dato il peso").
 
@@ -107,7 +108,7 @@ Struttura:
           "serie": 3,
           "ripetizioni": "12",
           "recupero": "60s",
-          "peso": "10kg",
+          "peso": "10",
           "rpe": "7",
           "tempo": "3-0-1-0",
           "note": "Motivazione tecnica"
@@ -196,7 +197,7 @@ exports.testGeminiConnection = onCall({
         throw new HttpsError('unauthenticated', 'Devi essere autenticato');
     }
 
-    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
+    const models = ['gemini-3-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
