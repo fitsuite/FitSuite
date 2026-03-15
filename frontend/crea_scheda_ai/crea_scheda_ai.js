@@ -34,6 +34,15 @@ document.addEventListener('DOMContentLoaded', () => {
         'Preparazione interfaccia...'
     ]);
 
+    // Utility per debouncing (per migliorare performance su mobile/iPad)
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
     const colorMap = {
         'Arancione': '#ff6600',
         'Verde': '#4ade80',
@@ -107,6 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem(`crea_scheda_ai_draft_${currentUser.uid}`, JSON.stringify(data));
     }
 
+    // Versione debounced di saveDraft per evitare sovraccarichi durante la digitazione
+    const debouncedSaveDraft = debounce(saveDraft, 800);
+
     function loadDraft() {
         if (!currentUser) return;
         
@@ -158,11 +170,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     form.addEventListener('input', () => {
-        saveDraft();
+        debouncedSaveDraft();
     });
     
     form.addEventListener('change', () => {
-        saveDraft();
+        debouncedSaveDraft();
     });
 
     resetBtn.addEventListener('click', () => {
@@ -361,7 +373,7 @@ function initCustomSelects() {
                 
                 optionsList.classList.remove('active');
                 trigger.classList.remove('active');
-                saveDraft();
+                debouncedSaveDraft();
             });
         });
     });

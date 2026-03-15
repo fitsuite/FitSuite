@@ -279,8 +279,13 @@ const AddExerciseModal = {
     setupListeners: function() {
         const searchInput = document.getElementById('exercise-search');
         if (searchInput) {
+            // Debounce search to improve performance on mobile
+            let searchTimeout;
             searchInput.addEventListener('input', (e) => {
-                this.filterExercises();
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this.filterExercises();
+                }, 400); // 400ms delay for search
             });
         }
 

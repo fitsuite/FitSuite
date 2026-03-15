@@ -30,6 +30,15 @@ document.addEventListener('DOMContentLoaded', () => {
         'Verifica dati scheda...'
     ]);
 
+    // Utility per debouncing (per migliorare performance su mobile/iPad)
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
     const saveBtn = document.getElementById('save-button');
     const resetBtn = document.getElementById('reset-button');
     const nomeSchedaInput = document.getElementById('nome-scheda');
@@ -79,124 +88,141 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveDraft() {
         if (!currentUser) return;
         
-        const seduteData = [];
-        const sedutaCards = document.querySelectorAll('.seduta-card');
+        try {
+            const seduteData = [];
+            const sedutaCards = document.querySelectorAll('.seduta-card');
 
-        sedutaCards.forEach((card, index) => {
-            const sedutaLabel = card.querySelector('.section-label').textContent.trim();
-            const exercises = [];
-            const exerciseRows = card.querySelectorAll('.exercise-row');
+            sedutaCards.forEach((card, index) => {
+                const sedutaLabel = card.querySelector('.section-label').textContent.trim();
+                const exercises = [];
+                const exerciseRows = card.querySelectorAll('.exercise-row');
 
-            exerciseRows.forEach(row => {
-                exercises.push({
-                    exerciseId: row.dataset.exerciseId,
-                    name: row.querySelector('.col-name input').value,
-                    reps: row.querySelector('.col-rep input').value,
-                    sets: row.querySelector('.col-set input').value,
-                    rest: row.querySelector('.col-rest input').value,
-                    weight: row.querySelector('.col-weight input').value,
-                    note: row.querySelector('.col-note textarea').value,
-                    photo: row.querySelector('.col-photo img').src
+                exerciseRows.forEach(row => {
+                    exercises.push({
+                        exerciseId: row.dataset.exerciseId,
+                        name: row.querySelector('.col-name input').value,
+                        reps: row.querySelector('.col-rep input').value,
+                        sets: row.querySelector('.col-set input').value,
+                        rest: row.querySelector('.col-rest input').value,
+                        weight: row.querySelector('.col-weight input').value,
+                        note: row.querySelector('.col-note textarea').value,
+                        photo: row.querySelector('.col-photo img').src
+                    });
+                });
+
+                seduteData.push({
+                    name: sedutaLabel,
+                    exercises: exercises
                 });
             });
 
-            seduteData.push({
-                name: sedutaLabel,
-                exercises: exercises
-            });
-        });
+            const draftData = {
+                name: nomeSchedaInput.value.trim(),
+                startDate: selectedStartDate ? selectedStartDate.getTime() : null,
+                endDate: selectedEndDate ? selectedEndDate.getTime() : null,
+                seduteData: seduteData,
+                editingRoutineId: editingRoutineId
+            };
 
-        const draftData = {
-            name: nomeSchedaInput.value.trim(),
-            startDate: selectedStartDate ? selectedStartDate.getTime() : null,
-            endDate: selectedEndDate ? selectedEndDate.getTime() : null,
-            seduteData: seduteData,
-            editingRoutineId: editingRoutineId
-        };
-
-        localStorage.setItem(`crea_scheda_draft_${currentUser.uid}`, JSON.stringify(draftData));
+            localStorage.setItem(`crea_scheda_draft_${currentUser.uid}`, JSON.stringify(draftData));
+        } catch (error) {
+            console.error("Error saving draft:", error);
+            // If localStorage is full, we don't want to crash the app
+        }
     }
+
+    // Versione debounced di saveDraft per evitare sovraccarichi durante la digitazione
+    const debouncedSaveDraft = debounce(saveDraft, 800);
 
     async function loadDraft() {
         if (!currentUser) return;
         
-        const draftJSON = localStorage.getItem(`crea_scheda_draft_${currentUser.uid}`);
-        if (!draftJSON) return false;
+        try {
+            const draftJSON = localStorage.getItem(`crea_scheda_draft_${currentUser.uid}`);
+            if (!draftJSON) return false;
 
-        const draft = JSON.parse(draftJSON);
-        
-        const params = new URLSearchParams(window.location.search);
-        const routineId = params.get('id');
-        if (routineId && draft.editingRoutineId !== routineId) return false;
-        if (!routineId && draft.editingRoutineId) return false;
-
-        nomeSchedaInput.value = draft.name || '';
-        
-        if (draft.startDate) {
-            selectedStartDate = new Date(draft.startDate);
-            if (draft.endDate) selectedEndDate = new Date(draft.endDate);
+            const draft = JSON.parse(draftJSON);
             
-            const options = { day: 'numeric', month: 'short', year: 'numeric' };
-            if (selectedEndDate) {
-                dateRangeDisplay.textContent = `${selectedStartDate.toLocaleDateString('it-IT', options)} - ${selectedEndDate.toLocaleDateString('it-IT', options)}`;
-            } else {
-                dateRangeDisplay.textContent = selectedStartDate.toLocaleDateString('it-IT', options);
-            }
-            dateRangeDisplay.classList.add('date-set');
-        }
+            const params = new URLSearchParams(window.location.search);
+            const routineId = params.get('id');
+            if (routineId && draft.editingRoutineId !== routineId) return false;
+            if (!routineId && draft.editingRoutineId) return false;
 
-        if (draft.seduteData && draft.seduteData.length > 0) {
-            seduteContainer.innerHTML = '';
-            seduteCount = 0;
-
-            const seduteFragment = document.createDocumentFragment();
-
-            draft.seduteData.forEach(seduta => {
-                seduteCount++;
-                const sedutaCard = document.createElement('div');
-                sedutaCard.className = 'card-section seduta-card';
-                sedutaCard.dataset.sedutaId = seduteCount;
-                sedutaCard.innerHTML = createSedutaHTML(seduteCount);
+            nomeSchedaInput.value = draft.name || '';
+            
+            if (draft.startDate) {
+                selectedStartDate = new Date(draft.startDate);
+                if (draft.endDate) selectedEndDate = new Date(draft.endDate);
                 
-                const label = sedutaCard.querySelector('.section-label');
-                label.textContent = seduta.name;
-                if (seduta.name !== `Seduta ${seduteCount}`) {
-                    label.dataset.customName = "true";
+                const options = { day: 'numeric', month: 'short', year: 'numeric' };
+                if (selectedEndDate) {
+                    dateRangeDisplay.textContent = `${selectedStartDate.toLocaleDateString('it-IT', options)} - ${selectedEndDate.toLocaleDateString('it-IT', options)}`;
+                } else {
+                    dateRangeDisplay.textContent = selectedStartDate.toLocaleDateString('it-IT', options);
                 }
+                dateRangeDisplay.classList.add('date-set');
+            }
 
-                seduteFragment.appendChild(sedutaCard);
-                initSedutaEvents(sedutaCard);
-
-                const exercisesList = sedutaCard.querySelector('.exercises-list');
-                if (seduta.exercises && seduta.exercises.length > 0) {
-                    const exercisesFragment = document.createDocumentFragment();
-                    seduta.exercises.forEach(ex => {
-                        const exerciseRow = document.createElement('div');
-                        exerciseRow.className = 'exercise-row';
-                        exerciseRow.dataset.exerciseId = ex.exerciseId || '';
-                        
-                        const mockEx = {
-                            name: ex.name,
-                            gifUrl: ex.photo || 'https://via.placeholder.com/90'
-                        };
-                        
-                        exerciseRow.innerHTML = createExerciseRowHTML(mockEx);
-                        
-                        exerciseRow.querySelector('.col-rep input').value = ex.reps || '';
-                        exerciseRow.querySelector('.col-set input').value = ex.sets || '';
-                        exerciseRow.querySelector('.col-rest input').value = ex.rest || '';
-                        exerciseRow.querySelector('.col-weight input').value = ex.weight || '';
-                        exerciseRow.querySelector('.col-note textarea').value = ex.note || '';
-
-                        exercisesFragment.appendChild(exerciseRow);
-                        initExerciseRowEvents(exerciseRow, mockEx);
-                    });
-                    exercisesList.appendChild(exercisesFragment);
-                }
-                updateSedutaSummary(sedutaCard);
-            });
-            seduteContainer.appendChild(seduteFragment);
-            return true;
+            if (draft.seduteData && draft.seduteData.length > 0) {
+                 seduteContainer.innerHTML = '';
+                 seduteCount = 0;
+ 
+                 // Caricamento progressivo delle sedute per evitare di bloccare il thread principale (specialmente su iPad)
+                 for (const seduta of draft.seduteData) {
+                     seduteCount++;
+                     const sedutaCard = document.createElement('div');
+                     sedutaCard.className = 'card-section seduta-card';
+                     sedutaCard.dataset.sedutaId = seduteCount;
+                     sedutaCard.innerHTML = createSedutaHTML(seduteCount);
+                     
+                     const label = sedutaCard.querySelector('.section-label');
+                     label.textContent = seduta.name;
+                     if (seduta.name !== `Seduta ${seduteCount}`) {
+                         label.dataset.customName = "true";
+                     }
+ 
+                     seduteContainer.appendChild(sedutaCard);
+                     initSedutaEvents(sedutaCard);
+ 
+                     const exercisesList = sedutaCard.querySelector('.exercises-list');
+                     if (seduta.exercises && seduta.exercises.length > 0) {
+                         const exercisesFragment = document.createDocumentFragment();
+                         seduta.exercises.forEach(ex => {
+                             const exerciseRow = document.createElement('div');
+                             exerciseRow.className = 'exercise-row';
+                             exerciseRow.dataset.exerciseId = ex.exerciseId || '';
+                             
+                             const mockEx = {
+                                 name: ex.name,
+                                 gifUrl: ex.photo || 'https://via.placeholder.com/90'
+                             };
+                             
+                             exerciseRow.innerHTML = createExerciseRowHTML(mockEx);
+                             
+                             exerciseRow.querySelector('.col-rep input').value = ex.reps || '';
+                             exerciseRow.querySelector('.col-set input').value = ex.sets || '';
+                             exerciseRow.querySelector('.col-rest input').value = ex.rest || '';
+                             exerciseRow.querySelector('.col-weight input').value = ex.weight || '';
+                             exerciseRow.querySelector('.col-note textarea').value = ex.note || '';
+ 
+                             exercisesFragment.appendChild(exerciseRow);
+                             initExerciseRowEvents(exerciseRow, mockEx);
+                         });
+                         exercisesList.appendChild(exercisesFragment);
+                     }
+                     updateSedutaSummary(sedutaCard);
+                     
+                     // Yield al thread principale se ci sono molte sedute
+                     if (draft.seduteData.length > 3) {
+                         await new Promise(resolve => setTimeout(resolve, 0));
+                     }
+                 }
+                 return true;
+             }
+        } catch (error) {
+            console.error("Error loading draft:", error);
+            // If the draft is corrupted, we want to proceed with a fresh load
+            return false;
         }
         return false;
     }
@@ -207,16 +233,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Trigger saveDraft on any input change
+    // Trigger saveDraft on any input change (debounced)
     const creaSchedaWrapper = document.querySelector('.crea-scheda-wrapper');
     if (creaSchedaWrapper) {
         creaSchedaWrapper.addEventListener('input', (e) => {
             if (e.target.closest('.exercise-input') || e.target.id === 'nome-scheda') {
-                saveDraft();
+                debouncedSaveDraft();
             }
         });
         creaSchedaWrapper.addEventListener('change', () => {
-            saveDraft();
+            debouncedSaveDraft();
         });
     }
 
@@ -371,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const aiRoutine = JSON.parse(aiRoutineJSON);
                     sessionStorage.removeItem('aiGeneratedRoutine'); // Clean up
                     await loadAIGeneratedRoutine(aiRoutine);
-                    saveDraft(); // Save the initial AI routine to draft
+                    debouncedSaveDraft(); // Save the initial AI routine to draft
                 } else if (routineId) {
                     window.LoadingManager.nextStep('Caricamento scheda esistente...');
                     // First try to load from draft if it's the same routine
@@ -808,7 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             dateRangeDisplay.classList.add('date-set');
             hideCalendarModal(false);
-            saveDraft();
+            debouncedSaveDraft();
         }
     });
 
@@ -1001,7 +1027,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     wrapper.remove();
                 }
             }
-            saveDraft();
+            debouncedSaveDraft();
         });
 
         duplicateBtn.addEventListener('click', () => {
@@ -1017,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
              
              // Re-initialize events for clone
              initExerciseRowEvents(clone, null);
-             saveDraft();
+             debouncedSaveDraft();
         });
 
         createSupersetBtn.addEventListener('click', () => {
@@ -1043,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  
                  dropdown.classList.remove('active');
                  initExerciseRowEvents(clone, null);
-                 saveDraft();
+                 debouncedSaveDraft();
             } else {
                  // Not in superset: Create wrapper
                  const wrapper = document.createElement('div');
@@ -1091,7 +1117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  
                  dropdown.classList.remove('active');
                  initExerciseRowEvents(clone, null);
-                 saveDraft();
+                 debouncedSaveDraft();
             }
         });
 
@@ -1101,7 +1127,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 exerciseRow.parentNode.insertBefore(exerciseRow, prev);
             }
             dropdown.classList.remove('active');
-            saveDraft();
+            debouncedSaveDraft();
         });
 
         moveDownBtn.addEventListener('click', () => {
@@ -1110,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 exerciseRow.parentNode.insertBefore(next, exerciseRow);
             }
             dropdown.classList.remove('active');
-            saveDraft();
+            debouncedSaveDraft();
         });
     }
 
@@ -1241,7 +1267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         label.dataset.customName = "true";
                     }
                 }
-                saveDraft();
+                debouncedSaveDraft();
             };
 
             label.addEventListener('blur', handleBlur, { once: true });
@@ -1343,7 +1369,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.dataset.sedutaId = index + 1;
         });
         seduteCount = cards.length;
-        saveDraft();
+        debouncedSaveDraft();
     }
 
     // Initialize events for existing sessions
@@ -1357,7 +1383,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sedutaCard.innerHTML = createSedutaHTML(seduteCount);
         seduteContainer.appendChild(sedutaCard);
         initSedutaEvents(sedutaCard);
-        saveDraft();
+        debouncedSaveDraft();
     });
 
     confirmDeleteBtn.addEventListener('click', () => {
@@ -1542,7 +1568,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Initialize events
         initExerciseRowEvents(exerciseRow, exercise);
-        saveDraft();
+        debouncedSaveDraft();
     });
 
     // Delegate click for Add Exercise buttons
