@@ -158,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('users').doc(user.uid).set({
                     email: email,
                     username: null, // Will be set later after login
+                    is_verified: 0, // Email verification status (0: not verified, 1: verified)
                     phoneNumber: "",
                     preferences: {
                         color: "Arancione",
@@ -166,6 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                
+                // Send verification email
+                await user.sendEmailVerification();
+                console.log('Verification email sent');
                 
                 console.log('User document created in Firestore');
                 sessionStorage.setItem('justLoggedIn', 'true');
@@ -602,6 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('users').doc(user.uid).set({
                     email: user.email,
                     username: null, // Will be set later when user chooses one
+                    is_verified: 1, // Google users are verified by default
                     phoneNumber: user.phoneNumber || "",
                     preferences: {
                         color: "Arancione",

@@ -305,6 +305,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             currentUser = user;
             
+            // Check if user has username
+            if (window.UsernameChecker) {
+                const hasValidUsername = await window.UsernameChecker.enforceUsernameRequirement();
+                if (!hasValidUsername) return;
+            }
+
+            // Check if user has verified email
+            if (window.EmailVerifier) {
+                const hasVerifiedEmail = await window.EmailVerifier.enforceEmailVerification();
+                if (!hasVerifiedEmail) return;
+            }
+
             // Update lastUserId
             if (user.uid !== lastUid) {
                 localStorage.setItem('lastUserId', user.uid);

@@ -213,6 +213,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
+            // Check if user has username
+            if (window.UsernameChecker) {
+                const hasValidUsername = await window.UsernameChecker.enforceUsernameRequirement();
+                if (!hasValidUsername) return;
+            }
+
+            // Check if user has verified email
+            if (window.EmailVerifier) {
+                const hasVerifiedEmail = await window.EmailVerifier.enforceEmailVerification();
+                if (!hasVerifiedEmail) return;
+            }
+
             try {
                 currentUser = user;
                 

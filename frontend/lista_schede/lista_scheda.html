@@ -116,6 +116,7 @@
     <script src="../components/share_popup/share_popup.js"></script>
     <script src="../components/popup/popup.js"></script>
     <script src="../components/username_checker.js"></script>
+    <script src="../components/email_verifier.js"></script>
     <script src="./lista_schede.js"></script>
     <script src="../components/session_control/session_control.js"></script>
     <script>
@@ -149,6 +150,15 @@
                 if (window.UsernameChecker) {
                     const hasValidUsername = await window.UsernameChecker.enforceUsernameRequirement();
                     if (!hasValidUsername) {
+                        // User was logged out or redirected, don't continue
+                        return;
+                    }
+                }
+
+                // Check if user has verified email
+                if (window.EmailVerifier) {
+                    const hasVerifiedEmail = await window.EmailVerifier.enforceEmailVerification();
+                    if (!hasVerifiedEmail) {
                         // User was logged out or redirected, don't continue
                         return;
                     }
