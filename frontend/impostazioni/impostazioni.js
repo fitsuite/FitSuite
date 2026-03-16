@@ -157,6 +157,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const languageOptions = document.querySelectorAll('.lang-option');
     const cancelLanguageChangeBtn = document.getElementById('cancel-language-change');
 
+    const changePasswordModal = document.getElementById('change-password-modal');
+    const cancelPasswordChangeBtn = document.getElementById('cancel-password-change');
+    const sendPasswordResetEmailBtn = document.getElementById('send-password-reset-email');
+
+    const changeEmailModal = document.getElementById('change-email-modal');
+    const cancelEmailChangeBtn = document.getElementById('cancel-email-change');
+    const confirmEmailChangeBtn = document.getElementById('confirm-email-change');
+    const newEmailInput = document.getElementById('new-email-input');
+
+    const confirmChangeModal = document.getElementById('confirm-change-modal');
+    const confirmTitle = document.getElementById('confirm-title');
+    const confirmMessage = document.getElementById('confirm-message');
+    const proceedConfirmBtn = document.getElementById('proceed-confirm');
+    const cancelConfirmBtn = document.getElementById('cancel-confirm');
+
     const changeNotificationsModal = document.getElementById('change-notifications-modal');
     const notificationOptions = document.querySelectorAll('input[name="notifications"]');
     const cancelNotificationsChangeBtn = document.getElementById('cancel-notifications-change');
@@ -543,8 +558,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Change Password
     if (changePasswordBtn) {
         changePasswordBtn.addEventListener('click', () => {
-            // Reindirizza alla nuova pagina dinamica
-            window.location.href = './cambio_pass_email/cambio_pass_email.html?action=changePassword';
+            // Mostra popup di conferma
+            confirmTitle.textContent = "Conferma Cambio Password";
+            confirmMessage.textContent = "Sei sicuro di voler ricevere un'email per reimpostare la tua password?";
+            confirmChangeModal.classList.add('active');
+            
+            // Gestione clic su procedi
+            proceedConfirmBtn.onclick = () => {
+                confirmChangeModal.classList.remove('active');
+                changePasswordModal.classList.add('active');
+            };
         });
     } else {
         console.warn('Elemento con ID "change-password-btn" non trovato nell\'HTML');
@@ -553,11 +576,88 @@ document.addEventListener('DOMContentLoaded', () => {
     // Change Email
     if (changeEmailBtn) {
         changeEmailBtn.addEventListener('click', () => {
-            // Reindirizza alla nuova pagina dinamica
-            window.location.href = './cambio_pass_email/cambio_pass_email.html?action=changeEmail';
+            // Mostra popup di conferma
+            confirmTitle.textContent = "Conferma Cambio Email";
+            confirmMessage.textContent = "Sei sicuro di voler cambiare il tuo indirizzo email?";
+            confirmChangeModal.classList.add('active');
+            
+            // Gestione clic su procedi
+            proceedConfirmBtn.onclick = () => {
+                confirmChangeModal.classList.remove('active');
+                changeEmailModal.classList.add('active');
+            };
         });
     } else {
         console.warn('Elemento con ID "change-email-btn" non trovato nell\'HTML');
+    }
+
+    // Chiudi popup di conferma
+    if (cancelConfirmBtn) {
+        cancelConfirmBtn.addEventListener('click', () => {
+            confirmChangeModal.classList.remove('active');
+        });
+    }
+
+    // Gestione Modale Password
+    if (cancelPasswordChangeBtn) {
+        cancelPasswordChangeBtn.addEventListener('click', () => {
+            changePasswordModal.classList.remove('active');
+        });
+    }
+
+    if (sendPasswordResetEmailBtn) {
+        sendPasswordResetEmailBtn.addEventListener('click', async () => {
+            const email = auth.currentUser.email;
+            try {
+                await auth.sendPasswordResetEmail(email);
+                if (window.showSuccessToast) {
+                    window.showSuccessToast(`Email di reset password inviata a ${email}`);
+                }
+                changePasswordModal.classList.remove('active');
+            } catch (error) {
+                if (window.showErrorToast) {
+                    window.showErrorToast("Errore nell'invio dell'email: " + error.message);
+                }
+            }
+        });
+    }
+
+    // Gestione Modale Email
+    if (cancelEmailChangeBtn) {
+        cancelEmailChangeBtn.addEventListener('click', () => {
+            changeEmailModal.classList.remove('active');
+        });
+    }
+
+    if (confirmEmailChangeBtn) {
+        confirmEmailChangeBtn.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            const newEmail = newEmailInput.value;
+            
+            if (!newEmail || !newEmail.includes('@')) {
+                if (window.showErrorToast) {
+                    window.showErrorToast("Inserisci un indirizzo email valido.");
+                }
+                return;
+            }
+
+            try {
+                // Invia email di verifica per il nuovo indirizzo
+                await user.verifyBeforeUpdateEmail(newEmail);
+                if (window.showSuccessToast) {
+                    window.showSuccessToast(`Email di verifica inviata a ${newEmail}. L'email verrà aggiornata dopo la conferma.`);
+                }
+                changeEmailModal.classList.remove('active');
+            } catch (error) {
+                if (error.code === 'auth/requires-recent-login') {
+                    if (window.showErrorToast) {
+                        window.showErrorToast("Per sicurezza, devi rieffettuare l'accesso prima di cambiare email.");
+                    }
+                } else if (window.showErrorToast) {
+                    window.showErrorToast("Errore durante l'aggiornamento dell'email: " + error.message);
+                }
+            }
+        });
     }
 
     // Change Language
