@@ -137,29 +137,29 @@
                 return true;
             }
 
-            // Check if user is already verified in Auth
-            let isAuthVerified = user.emailVerified;
-            
-            // Check DB status
+            // 1. Check DB status FIRST (allows manual override)
             const isDbVerified = await checkEmailVerifiedInDb(user.uid);
-
-            if (isAuthVerified) {
-                if (!isDbVerified) {
-                    // Sync Auth status to DB
-                    await updateEmailVerifiedInDb(user.uid);
-                }
+            if (isDbVerified) {
+                console.log('EmailVerifier - User is already verified in DB (manual override or synced)');
                 return true;
             }
 
-            // Not verified in Auth, but maybe they just verified it?
+            // 2. Check if user is already verified in Auth
+            let isAuthVerified = user.emailVerified;
+            
+            if (isAuthVerified) {
+                // Sync Auth status to DB if it was verified in Auth but not in DB
+                await updateEmailVerifiedInDb(user.uid);
+                return true;
+            }
+
+            // 3. Not verified in Auth, but maybe they just verified it?
             // Reload user to be sure
             await user.reload();
             isAuthVerified = firebase.auth().currentUser.emailVerified;
 
             if (isAuthVerified) {
-                if (!isDbVerified) {
-                    await updateEmailVerifiedInDb(user.uid);
-                }
+                await updateEmailVerifiedInDb(user.uid);
                 return true;
             }
 
