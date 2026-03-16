@@ -311,7 +311,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         routines.forEach(routine => {
             const routineItem = document.createElement('div');
-            routineItem.className = 'routine-list-row';
+            
+            // Determine status (active/expired)
+            let statusClass = '';
+            if (routine.endDate) {
+                try {
+                    const end = routine.endDate.toDate();
+                    const now = new Date();
+                    // Set both to midnight for comparison
+                    now.setHours(0, 0, 0, 0);
+                    const endCompare = new Date(end);
+                    endCompare.setHours(0, 0, 0, 0);
+                    
+                    if (endCompare < now) {
+                        statusClass = 'status-expired';
+                    } else {
+                        statusClass = 'status-active';
+                    }
+                } catch (e) {
+                    console.error("Error calculating status", e);
+                }
+            }
+
+            routineItem.className = `routine-list-row ${statusClass}`;
             
             // Format Data
             const seduteText = `${routine.sedute || 0} sedute`;
@@ -343,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <i class="fas fa-edit"></i> Modifica Scheda
                         </button>
                         <button class="menu-item rename-btn">
-                            <i class="fas fa-edit"></i> Rinomina
+                            <i class="fas fa-pen"></i> Rinomina
                         </button>
                         <button class="menu-item delete-btn delete">
                             <i class="fas fa-trash-alt"></i> Elimina

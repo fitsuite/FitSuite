@@ -239,12 +239,30 @@ body.list-body {
 .col-sessions, .col-date {
     color: var(--text-gray);
     font-size: 14px;
+    text-align: center;
 }
 
 .col-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     align-items: center;
+}
+
+/* Status Colors for Rows */
+.routine-list-row.status-expired {
+    border-left: 4px solid #ff4444;
+}
+
+.routine-list-row.status-expired .col-date {
+    color: #ff4444;
+}
+
+.routine-list-row.status-active {
+    border-left: 4px solid #4ade80;
+}
+
+.routine-list-row.status-active .col-date {
+    color: #4ade80;
 }
 
 .routine-list-row:hover {
@@ -268,12 +286,13 @@ cursor: pointer;
 padding: 0;
 border-radius: 50%;
 transition: all 0.2s;
-width: 28px;
-height: 28px;
+width: 32px;
+height: 32px;
 display: flex;
 align-items: center;
 justify-content: center;
 box-sizing: border-box;
+flex-shrink: 0;
 }
 
 .menu-trigger i {
@@ -468,14 +487,21 @@ color: white;
         font-size: 12px;
     }
 
+    .col-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
     .view-btn {
         padding: 6px 12px;
     }
 
     .menu-trigger {
-        width: 28px !important;
-        height: 28px !important;
+        width: 32px !important;
+        height: 32px !important;
         border-radius: 50% !important;
+        flex-shrink: 0 !important;
     }
 
     .menu-trigger i {

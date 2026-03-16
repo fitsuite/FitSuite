@@ -56,7 +56,11 @@ Usa SOLO gli esercizi presenti nella seguente lista: ${JSON.stringify(exerciseNa
 Regole per i Campi Esercizio:
 - "ripetizioni": Per esercizi a tempo, scrivi "n min" o "n sec" (es. "1 min", "30 sec"). Per esercizi unilaterali scrivi "n sec per lato".
 - "recupero": Se non c'è recupero, lascia il campo VUOTO (stringa vuota "").
-- "peso": Per esercizi a corpo libero, scrivi "Corpo libero". Per OGNI esercizio con pesi o macchinari, DEVI specificare un numero (es. "10", "15.5"). Il valore deve essere PRIVO di unità di misura (NON scrivere "kg"), in quanto già presente nell'interfaccia.
+- "peso": 
+  * Per esercizi a corpo libero (es. piegamenti, trazioni senza zavorra, squat a corpo libero), scrivi "A corpo libero".
+  * Per TUTTI gli altri esercizi che utilizzano pesi, manubri, bilancieri, cavi o macchinari, DEVI SEMPRE specificare un numero (es. "10", "15.5", "40"). 
+  * Il valore deve essere PRIVO di unità di misura (NON scrivere "kg").
+  * NON lasciare mai il campo vuoto se l'esercizio non è a corpo libero.
 - "nome": Usa il nome esatto dalla lista, senza aggiungere nulla.
 
 Dati Utente:
@@ -65,6 +69,10 @@ Dati Utente:
 - Frequenza: ${userData.giorni} giorni/settimana, Durata: ${userData.durata} min
 - Focus: ${userData.focus.join(', ')}
 - Limitazioni: ${userData.limitazioni || 'Nessuna'}
+
+Regole Scientifiche Obbligatorie:
+1. Obiettivo Perdita Peso: Inserisci OBBLIGATORIAMENTE esercizi di cardio (camminata inclinata, cyclette, corsa, ellittica, ecc.) all'interno della scheda. Non devono essere gli unici esercizi, ma devono essere presenti in ogni sessione o come sessione dedicata.
+2. Peso: Per tutti gli esercizi non a corpo libero, il peso DEVE essere sempre inserito.
 
 Genera ${userData.giorni} sedute distinte.
 Rispondi SOLO con il JSON valido.
@@ -128,8 +136,7 @@ Struttura JSON:
         if (status === 429) {
             throw new functions.https.HttpsError(
                 'resource-exhausted',
-                'Hai raggiunto il limite di richieste (Quota Exceeded). ' +
-                'Controlla su Google AI Studio se hai superato i limiti RPM (Richieste al Minuto) o RPD (Richieste al Giorno).'
+                'riprovare perche si e verificato un problema'
             );
         }
 

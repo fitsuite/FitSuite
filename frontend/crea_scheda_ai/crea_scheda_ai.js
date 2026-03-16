@@ -715,11 +715,7 @@ const bodyParts = [
             let errorMessage = "Non è stato possibile generare la scheda.\n\n";
             
             if (error.code === 'resource-exhausted') {
-                errorMessage += "⚠️ HAI ESAURITO LA QUOTA FREE TIER DI GEMINI API\n";
-                errorMessage += "- Probabile limite RPM (Richieste al Minuto) raggiunto.\n";
-                errorMessage += "- Per continuare: https://console.cloud.google.com/billing\n";
-                errorMessage += "- Oppure attendi qualche minuto e riprova.\n";
-                errorMessage += "- Se il problema persiste, controlla i log su Firebase Console.";
+                errorMessage = "riprovare perche si e verificato un problema";
             } else if (error.code === 'unauthenticated') {
                 errorMessage += "Errore di autenticazione. Per favore, accedi di nuovo.";
             } else {

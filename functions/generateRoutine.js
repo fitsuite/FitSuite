@@ -80,12 +80,16 @@ Linee Guida Scientifiche per la Generazione:
 
 3. SELEZIONE ESERCIZI E BIOMECCANICA:
    - BMI > 30: Evita Squat con bilanciere o Stacchi pesanti; usa Leg Press o varianti ai cavi/macchine per proteggere la colonna e le ginocchia.
-   - BMI > 28 + Obiettivo Dimagrimento: Inserisci OBBLIGATORIAMENTE 15-20 min di cardio (camminata inclinata, cyclette) a fine o inizio sessione.
+   - Obiettivo Perdita Peso: Inserisci OBBLIGATORIAMENTE esercizi di cardio (camminata inclinata, cyclette, corsa, ellittica, ecc.) all'interno della scheda. Non devono essere gli unici esercizi, ma devono essere presenti in ogni sessione o come sessione dedicata.
    - Altezza > 185cm: Attenzione alle lunghe leve; suggerisci ROM (Range of Motion) controllato.
 
 4. STRUTTURA DELLA SCHEDA (JSON):
    - "ripetizioni": Numero esatto o range (es. "10-12") o tempo (es. "30s").
-   - "peso": Per esercizi a corpo libero, scrivi "Corpo libero". Per OGNI esercizio con pesi o macchinari, DEVI specificare un numero (es. "10", "15.5"). Il valore deve essere PRIVO di unità di misura (NON scrivere "kg"), in quanto già presente nell'interfaccia.
+   - "peso": 
+     * Per esercizi a corpo libero (es. piegamenti, trazioni senza zavorra, squat a corpo libero), scrivi "A corpo libero".
+     * Per TUTTI gli altri esercizi che utilizzano pesi, manubri, bilancieri, cavi o macchinari, DEVI SEMPRE specificare un numero (es. "10", "15.5", "40"). 
+     * Il valore deve essere PRIVO di unità di misura (NON scrivere "kg").
+     * NON lasciare mai il campo vuoto se l'esercizio non è a corpo libero.
    - "tempo": Specifica il tempo sotto tensione (es. "3-0-1-0").
    - "note": Spiega BREVEMENTE la motivazione scientifica della scelta (es. "Scelto per ridurre impatto sulle ginocchia dato il peso").
 
@@ -174,8 +178,7 @@ Struttura:
 
     if (status === 429) {
         throw new HttpsError('resource-exhausted', 
-            'Quota Gemini superata (429). Hai raggiunto il limite di richieste RPM/RPD per il tuo account. ' +
-            'Assicurati che la chiave API sia attiva in Google AI Studio e prova a ricaricare la pagina.'
+            'riprovare perche si e verificato un problema'
         );
     }
 
