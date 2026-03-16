@@ -144,26 +144,8 @@
                 return true;
             }
 
-            // 2. Check if user is already verified in Auth
-            let isAuthVerified = user.emailVerified;
-            
-            if (isAuthVerified) {
-                // Sync Auth status to DB if it was verified in Auth but not in DB
-                await updateEmailVerifiedInDb(user.uid);
-                return true;
-            }
-
-            // 3. Not verified in Auth, but maybe they just verified it?
-            // Reload user to be sure
-            await user.reload();
-            isAuthVerified = firebase.auth().currentUser.emailVerified;
-
-            if (isAuthVerified) {
-                await updateEmailVerifiedInDb(user.uid);
-                return true;
-            }
-
-            // Still not verified, show popup
+            // 2. Not verified in DB, show popup. 
+            // The DB will ONLY be updated when the user clicks "HO VERIFICATO" in the popup.
             return await showEmailVerificationPopup();
         } catch (error) {
             console.error('EmailVerifier - Error enforcing email verification:', error);
