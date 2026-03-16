@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // DOM Elements - Actions
     const changePasswordBtn = document.getElementById('change-password-btn');
+    const changeEmailBtn = document.getElementById('change-email-btn');
     const deleteModal = document.getElementById('delete-confirm-modal');
     const confirmDeleteBtn = document.getElementById('confirm-delete');
     const cancelDeleteBtn = document.getElementById('cancel-delete');
@@ -151,10 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const contactUsBtn = document.getElementById('contact-us-btn');
     const giveFeedbackBtn = document.getElementById('give-feedback-btn');
     const viewBillingHistoryBtn = document.getElementById('view-billing-history-btn');
-
-    const changePasswordModal = document.getElementById('change-password-modal');
-    const cancelPasswordChangeBtn = document.getElementById('cancel-password-change');
-    const sendPasswordResetEmailBtn = document.getElementById('send-password-reset-email');
 
     const changeLanguageModal = document.getElementById('change-language-modal');
     const languageOptions = document.querySelectorAll('.lang-option');
@@ -546,37 +543,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Change Password
     if (changePasswordBtn) {
         changePasswordBtn.addEventListener('click', () => {
-            changePasswordModal.classList.add('active');
+            // Reindirizza alla nuova pagina dinamica
+            window.location.href = './cambio_pass_email/cambio_pass_email.html?action=changePassword';
         });
     } else {
         console.warn('Elemento con ID "change-password-btn" non trovato nell\'HTML');
     }
 
-    if (cancelPasswordChangeBtn) {
-        cancelPasswordChangeBtn.addEventListener('click', () => {
-            changePasswordModal.classList.remove('active');
+    // Change Email
+    if (changeEmailBtn) {
+        changeEmailBtn.addEventListener('click', () => {
+            // Reindirizza alla nuova pagina dinamica
+            window.location.href = './cambio_pass_email/cambio_pass_email.html?action=changeEmail';
         });
     } else {
-        console.warn('Elemento con ID "cancel-password-change" non trovato nell\'HTML');
-    }
-
-    if (sendPasswordResetEmailBtn) {
-        sendPasswordResetEmailBtn.addEventListener('click', async () => {
-            const email = auth.currentUser.email;
-            try {
-                await auth.sendPasswordResetEmail(email);
-                if (window.showSuccessToast) {
-                    window.showSuccessToast(`Email di reset password inviata a ${email}`);
-                }
-                changePasswordModal.classList.remove('active'); // Close modal after sending email
-            } catch (error) {
-                if (window.showErrorToast) {
-                    window.showErrorToast("Errore nell'invio dell'email: " + error.message);
-                }
-            }
-        });
-    } else {
-        console.warn('Elemento con ID "send-password-reset-email" non trovato nell\'HTML');
+        console.warn('Elemento con ID "change-email-btn" non trovato nell\'HTML');
     }
 
     // Change Language

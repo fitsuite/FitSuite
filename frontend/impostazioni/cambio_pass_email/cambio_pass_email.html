@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cambia Password | FitSuite</title>
+    <title>Sicurezza Account | FitSuite</title>
     
     <!-- External CSS -->
     <link rel="stylesheet" href="../../../style.css">
-    <link rel="stylesheet" href="./cambia-password.css">
+    <link rel="stylesheet" href="./cambio_pass_email.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../../components/toast/toast.css">
     <link rel="stylesheet" href="../../components/loading_screen/loading_screen.css">
@@ -30,20 +30,21 @@
       firebase.initializeApp(firebaseConfig);
     </script>
 </head>
-<body class="reset-password-body">
+<body class="security-body">
     <!-- Componenti UI comuni -->
     <script src="../../components/loading_screen/loading_screen.js"></script>
     <script src="../../components/toast/toast.js"></script>
 
-    <div class="reset-container">
-        <div class="reset-card glow-card">
-            <div class="reset-header">
+    <div class="security-container">
+        <div class="security-card glow-card">
+            <div class="security-header">
                 <div class="logo">FitSuite</div>
-                <h1>Cambia la tua Password</h1>
-                <p id="user-email-display">Caricamento informazioni...</p>
+                <h1 id="page-title">Sicurezza Account</h1>
+                <p id="user-info-display">Caricamento informazioni...</p>
             </div>
 
-            <form id="reset-password-form" class="reset-form" style="display: none;">
+            <!-- Form Cambio Password -->
+            <form id="change-password-form" class="security-form" style="display: none;">
                 <div class="form-group">
                     <label for="new-password">Nuova Password</label>
                     <div class="input-wrapper">
@@ -64,31 +65,60 @@
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
-                    <p class="password-hint">La password deve contenere almeno 6 caratteri.</p>
+                    <p class="hint">La password deve contenere almeno 6 caratteri.</p>
                 </div>
 
-                <button type="submit" class="reset-btn" id="submit-btn">
+                <button type="submit" class="submit-btn" id="password-submit-btn">
                     <span>Aggiorna Password</span>
                     <i class="fas fa-arrow-right"></i>
                 </button>
             </form>
 
+            <!-- Form Cambio Email -->
+            <form id="change-email-form" class="security-form" style="display: none;">
+                <div class="form-group">
+                    <label for="new-email">Nuova Email</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="new-email" placeholder="Inserisci la nuova email" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-email">Conferma Email</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-check-double input-icon"></i>
+                        <input type="email" id="confirm-email" placeholder="Conferma la nuova email" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="email-submit-btn">
+                    <span>Aggiorna Email</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <!-- Messaggi di Stato -->
             <div id="error-container" class="status-container" style="display: none;">
                 <i class="fas fa-exclamation-circle status-icon error"></i>
-                <h2>Link non valido</h2>
-                <p id="error-message">Il link di reset della password è scaduto o è già stato utilizzato.</p>
+                <h2 id="error-title">Link non valido</h2>
+                <p id="error-message">Il link è scaduto o è già stato utilizzato.</p>
                 <a href="../../auth/auth.html" class="status-btn">Torna al Login</a>
             </div>
 
             <div id="success-container" class="status-container" style="display: none;">
                 <i class="fas fa-check-circle status-icon success"></i>
-                <h2>Password Aggiornata!</h2>
-                <p>La tua password è stata modificata con successo. Ora puoi accedere con la nuova password.</p>
+                <h2 id="success-title">Aggiornamento Completato!</h2>
+                <p id="success-message">Le modifiche sono state salvate con successo.</p>
                 <a href="../../auth/auth.html" class="status-btn">Accedi Ora</a>
+            </div>
+            
+            <div class="back-link">
+                <a href="../impostazioni.html"><i class="fas fa-chevron-left"></i> Torna alle impostazioni</a>
             </div>
         </div>
     </div>
 
-    <script src="./cambia-password.js"></script>
+    <script src="./cambio_pass_email.js"></script>
 </body>
 </html>
