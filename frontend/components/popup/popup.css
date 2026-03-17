@@ -114,50 +114,16 @@
     letter-spacing: 0.5px;
 }
 
-.custom-popup-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-}
-
-.custom-popup-btn:hover::before {
-    left: 100%;
-}
-
 .custom-popup-btn.primary {
-    background: linear-gradient(135deg, var(--primary-color, #ff6600) 0%, #e55500 100%);
+    background: linear-gradient(135deg, var(--primary-color, #ff6600) 0%, rgba(var(--primary-color-rgb), 0.7) 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(255, 102, 0, 0.3);
-}
-
-.custom-popup-btn.primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 102, 0, 0.4);
-}
-
-.custom-popup-btn.primary:active {
-    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(var(--primary-color-rgb), 0.3);
 }
 
 .custom-popup-btn.secondary {
     background: linear-gradient(135deg, #444444 0%, #333333 100%);
     color: #fff;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.custom-popup-btn.secondary:hover {
-    background: linear-gradient(135deg, #555555 0%, #444444 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
-.custom-popup-btn.secondary:active {
-    transform: translateY(0);
 }
 
 /* Username-specific styles */

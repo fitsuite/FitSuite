@@ -41,6 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
         'Rosa': '#f472b6'
     };
 
+    const colorRGBMap = {
+        'Arancione': '255, 102, 0',
+        'Verde': '74, 222, 128',
+        'Blu': '59, 130, 246',
+        'Rosa': '244, 114, 182'
+    };
+
     const gradientMap = {
         'Arancione': 'linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%)',
         'Verde': 'linear-gradient(135deg, #1a2b16 0%, #1a1a1a 100%)',
@@ -50,8 +57,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setPrimaryColor(colorName) {
         const hex = colorMap[colorName] || colorMap['Arancione'];
+        const rgb = colorRGBMap[colorName] || colorRGBMap['Arancione'];
         const gradient = gradientMap[colorName] || gradientMap['Arancione'];
         document.documentElement.style.setProperty('--primary-color', hex);
+        document.documentElement.style.setProperty('--primary-color-rgb', rgb);
         document.documentElement.style.setProperty('--background-gradient', gradient);
     }
 
@@ -452,9 +461,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (isAccepted) {
                         window.location.href = `../visualizza_scheda/visualizza_scheda.html?id=${routine.id}`;
                     } else {
-                        if (await window.showConfirm("Devi prima accettare questa scheda condivisa. Vuoi accettarla ora?", "Accetta Scheda")) {
-                            await acceptSharedRoutine(routine.id);
-                        }
+                        if (await window.showConfirm("Devi prima accettare questa scheda condivisa. Vuoi accettarla ora?", "Accetta Scheda", "ACCETTA", "ANNULLA")) {
+                        await acceptSharedRoutine(routine.id);
+                    }
                     }
                 });
             }
@@ -465,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     menuDropdown.classList.remove('active');
-                    if (await window.showConfirm(`Sei sicuro di voler rimuovere la scheda condivisa "${routine.name}"?`, "Rimuovi Scheda")) {
+                    if (await window.showConfirm(`Sei sicuro di voler rimuovere la scheda condivisa "${routine.name}"?`, "Rimuovi Scheda", "RIMUOVI", "ANNULLA")) {
                         await removeSharedRoutine(routine.id);
                     }
                 });
@@ -485,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (rejectBtn) {
                 rejectBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    if (await window.showConfirm(`Sei sicuro di voler rifiutare la scheda "${routine.name}"?`, "Rifiuta Scheda")) {
+                    if (await window.showConfirm(`Sei sicuro di voler rifiutare la scheda "${routine.name}"?`, "Rifiuta Scheda", "RIFIUTA", "ANNULLA")) {
                         await removeSharedRoutine(routine.id);
                     }
                 });

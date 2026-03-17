@@ -136,13 +136,13 @@
     </div>
 
     <!-- Delete Seduta Confirmation Modal -->
-    <div id="delete-confirm-modal" class="modal">
-        <div class="modal-content">
-            <h3>Elimina Seduta</h3>
-            <p>Sei sicuro di voler eliminare questa seduta? Questa azione non può essere annullata.</p>
-            <div class="calendar-actions">
-                <button id="cancel-delete" class="modal-btn-secondary">Annulla</button>
-                <button id="confirm-delete" class="modal-btn-danger">Elimina</button>
+    <div id="delete-confirm-modal" class="popup-overlay">
+        <div class="custom-popup-content">
+            <h3 class="custom-popup-title">Elimina Seduta</h3>
+            <p class="custom-popup-message">Sei sicuro di voler eliminare questa seduta? Questa azione non può essere annullata.</p>
+            <div class="custom-popup-actions">
+                <button id="cancel-delete" class="custom-popup-btn secondary">ANNULLA</button>
+                <button id="confirm-delete" class="custom-popup-btn primary">ELIMINA</button>
             </div>
         </div>
     </div>
@@ -153,8 +153,8 @@
             <h3 class="custom-popup-title">Ripristina Scheda</h3>
             <p class="custom-popup-message">Sei sicuro di voler ripristinare la scheda? Tutti i dati inseriti verranno cancellati e l'azione non può essere annullata.</p>
             <div class="custom-popup-actions">
-                <button id="cancel-reset" class="custom-popup-btn secondary">Annulla</button>
-                <button id="confirm-reset" class="custom-popup-btn primary" style="background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);">Ripristina</button>
+                <button id="cancel-reset" class="custom-popup-btn secondary">ANNULLA</button>
+                <button id="confirm-reset" class="custom-popup-btn primary">RIPRISTINA</button>
             </div>
         </div>
     </div>

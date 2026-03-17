@@ -87,7 +87,9 @@
                 const username = await window.showPrompt(
                     'Scegli un username obbligatorio (3-20 caratteri, solo lettere, numeri e _):',
                     '',
-                    'Username Richiesto'
+                    'Username Richiesto',
+                    'SALVA',
+                    'ANNULLA'
                 );
 
                 console.log('UsernameChecker - Popup result:', username);

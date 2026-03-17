@@ -58,6 +58,13 @@ document.addEventListener('DOMContentLoaded', () => {
         'Rosa': '#f472b6'
     };
 
+    const colorRGBMap = {
+        'Arancione': '255, 102, 0',
+        'Verde': '74, 222, 128',
+        'Blu': '59, 130, 246',
+        'Rosa': '244, 114, 182'
+    };
+
     const gradientMap = {
         'Arancione': 'linear-gradient(135deg, #2b1d16 0%, #1a1a1a 100%)',
         'Verde': 'linear-gradient(135deg, #1a2b16 0%, #1a1a1a 100%)',
@@ -67,8 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setPrimaryColor(colorName) {
         const hex = colorMap[colorName] || colorMap['Arancione'];
+        const rgb = colorRGBMap[colorName] || colorRGBMap['Arancione'];
         const gradient = gradientMap[colorName] || gradientMap['Arancione'];
         document.documentElement.style.setProperty('--primary-color', hex);
+        document.documentElement.style.setProperty('--primary-color-rgb', rgb);
         document.documentElement.style.setProperty('--background-gradient', gradient);
     }
 
@@ -452,7 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renameMenuItem.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     menuDropdown.classList.remove('active');
-                    const newName = await window.showPrompt("Inserisci il nuovo nome della scheda:", routine.name, "Rinomina Scheda");
+                    const newName = await window.showPrompt("Inserisci il nuovo nome della scheda:", routine.name, "Rinomina Scheda", "RINOMINA", "ANNULLA");
                     if (newName && newName.trim() !== "" && newName !== routine.name) {
                         // Optimistic update
                         const oldName = routine.name;
@@ -485,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteMenuItem.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     menuDropdown.classList.remove('active');
-                    if (await window.showConfirm(`Confermi di voler eliminare la scheda "${routine.name}" ?`, "Elimina Scheda", "Elimina")) {
+                    if (await window.showConfirm(`Confermi di voler eliminare la scheda "${routine.name}" ?`, "Elimina Scheda", "ELIMINA", "ANNULLA")) {
                         // Optimistic update
                         const originalRoutines = [...allRoutines];
                         allRoutines = allRoutines.filter(r => r.id !== routine.id);

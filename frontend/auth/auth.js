@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const showLoginFromForgotLink = document.getElementById('show-login-from-forgot');
     const navbarLoginBtn = document.getElementById('navbar-login-btn');
     const navbarLoginButton = navbarLoginBtn ? navbarLoginBtn.querySelector('.login-btn') : null;
+    const verifyEmailOverlay = document.getElementById('verify-email-overlay');
+    const userEmailDisplay = document.getElementById('user-email-display');
 
     console.log('Elements found:');
     console.log('registrationFormContainer:', registrationFormContainer);
@@ -48,7 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('showRegisterLink:', showRegisterLink);
     console.log('forgotPasswordLink:', forgotPasswordLink);
     console.log('forgotPasswordContainer:', forgotPasswordContainer);
-    console.log('verifyEmailContainer:', verifyEmailContainer);
+    console.log('verifyEmailOverlay:', verifyEmailOverlay);
+    console.log('userEmailDisplay:', userEmailDisplay);
     console.log('showLoginFromForgotLink:', showLoginFromForgotLink);
     console.log('navbarLoginBtn:', navbarLoginBtn);
     console.log('navbarLoginButton:', navbarLoginButton);
@@ -132,20 +135,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // Email Verification Logic
-    const verifyEmailOverlay = document.getElementById('verify-email-overlay');
-    const verifyEmailForm = document.querySelector('.verify-email-form');
-    const resendCodeLink = document.getElementById('resend-code-link');
+    // Email Verification Logic (System B: Firebase Link)
+    const checkVerificationBtn = document.getElementById('check-verification-btn');
+    const resendLinkBtn = document.getElementById('resend-link-btn');
     const resendTimer = document.getElementById('resend-timer');
-    const userEmailDisplay = document.getElementById('user-email-display');
     let resendCooldown = 0;
     let resendInterval = null;
 
     function startResendTimer() {
         resendCooldown = 30;
-        resendCodeLink.classList.add('disabled');
-        resendTimer.style.display = 'inline';
-        resendTimer.textContent = `(${resendCooldown}s)`;
+        if (resendLinkBtn) resendLinkBtn.classList.add('disabled');
+        if (resendTimer) {
+            resendTimer.style.display = 'inline';
+            resendTimer.textContent = `(${resendCooldown}s)`;
+        }
 
         if (resendInterval) clearInterval(resendInterval);
         
@@ -153,89 +156,70 @@ document.addEventListener('DOMContentLoaded', () => {
             resendCooldown--;
             if (resendCooldown <= 0) {
                 clearInterval(resendInterval);
-                resendCodeLink.classList.remove('disabled');
-                resendTimer.style.display = 'none';
+                if (resendLinkBtn) resendLinkBtn.classList.remove('disabled');
+                if (resendTimer) resendTimer.style.display = 'none';
             } else {
-                resendTimer.textContent = `(${resendCooldown}s)`;
+                if (resendTimer) resendTimer.textContent = `(${resendCooldown}s)`;
             }
         }, 1000);
     }
 
-    async function generateAndSendCode(user) {
-        if (!user) return;
-        
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
-        const email = user.email;
-        
+    async function sendVerificationLink(user) {
+        if (!user) return false;
         try {
-            // Store code in Firestore
-            await db.collection('verification_codes').doc(user.uid).set({
-                code: code,
-                email: email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // Call Cloud Function to send email
-            // We'll implement this function later
-            const sendEmail = firebase.functions().httpsCallable('sendVerificationEmail');
-            await sendEmail({ email, code });
-            
-            console.log('Verification code sent to:', email);
+            await user.sendEmailVerification();
+            console.log('Verification email link sent to:', user.email);
             return true;
         } catch (error) {
-            console.error('Error sending verification code:', error);
-            displayMessage('verify-email-error-message', 'Errore nell\'invio del codice. Riprova.');
+            console.error('Error sending verification email:', error);
+            displayMessage('verify-email-error-message', 'Errore nell\'invio dell\'email. Riprova tra poco.');
             return false;
         }
     }
 
-    if (verifyEmailForm) {
-        verifyEmailForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const codeInput = document.getElementById('verification-code').value;
+    if (checkVerificationBtn) {
+        checkVerificationBtn.addEventListener('click', async () => {
             const user = auth.currentUser;
-
             if (!user) return;
 
             try {
                 clearMessages('verify-email-error-message');
-                const doc = await db.collection('verification_codes').doc(user.uid).get();
-                
-                if (doc.exists && doc.data().code === codeInput) {
-                    // Code matches!
-                    await db.collection('users').doc(user.uid).update({
+                // Forza il ricaricamento del profilo utente per aggiornare emailVerified
+                await user.reload();
+                const updatedUser = auth.currentUser;
+
+                if (updatedUser.emailVerified) {
+                    displayMessage('verify-email-success-message', 'Email verificata con successo! Reindirizzamento...', false);
+                    
+                    // Aggiorna is_verified anche su Firestore per coerenza (opzionale)
+                    await db.collection('users').doc(updatedUser.uid).update({
                         is_verified: 1
                     });
-                    
-                    displayMessage('verify-email-success-message', 'Email verificata con successo!', false);
-                    
-                    // Cleanup verification code
-                    await db.collection('verification_codes').doc(user.uid).delete();
-                    
+
                     setTimeout(() => {
                         window.location.href = '../lista_schede/lista_scheda.html';
                     }, 1500);
                 } else {
-                    displayMessage('verify-email-error-message', 'Codice non valido. Riprova.');
+                    displayMessage('verify-email-error-message', 'L\'email non risulta ancora verificata. Controlla la tua posta e clicca sul link.');
                 }
             } catch (error) {
-                console.error('Verification error:', error);
-                displayMessage('verify-email-error-message', 'Si è verificato un errore durante la verifica.');
+                console.error('Error checking verification status:', error);
+                displayMessage('verify-email-error-message', 'Si è verificato un errore durante il controllo.');
             }
         });
     }
 
-    if (resendCodeLink) {
-        resendCodeLink.addEventListener('click', async (e) => {
+    if (resendLinkBtn) {
+        resendLinkBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             if (resendCooldown > 0) return;
 
             const user = auth.currentUser;
             if (user) {
-                const success = await generateAndSendCode(user);
+                const success = await sendVerificationLink(user);
                 if (success) {
                     startResendTimer();
-                    displayMessage('verify-email-success-message', 'Nuovo codice inviato!', false);
+                    displayMessage('verify-email-success-message', 'Nuovo link inviato!', false);
                 }
             }
         });
@@ -281,11 +265,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 console.log('User document created in Firestore');
                 
-                // Invia il codice di verifica
+                // Invia il link di verifica
                 if (userEmailDisplay) userEmailDisplay.textContent = email;
-                const codeSent = await generateAndSendCode(user);
+                const linkSent = await sendVerificationLink(user);
                 
-                if (codeSent) {
+                if (linkSent) {
                     if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';
                     startResendTimer();
                 } else {
@@ -323,15 +307,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 console.log('Login successful:', user.uid);
                 
+                // Ricarica il profilo per avere lo stato più recente di emailVerified
+                await user.reload();
+                const refreshedUser = auth.currentUser;
+                
                 // Check if user document exists, create if missing
-                const userDoc = await db.collection('users').doc(user.uid).get();
+                const userDoc = await db.collection('users').doc(refreshedUser.uid).get();
                 if (!userDoc.exists) {
                     console.log('User document not found, creating...');
-                    await db.collection('users').doc(user.uid).set({
-                        email: user.email,
+                    await db.collection('users').doc(refreshedUser.uid).set({
+                        email: refreshedUser.email,
                         username: null, // Will be set by username checker
-                        is_verified: 0, // Inizia non verificato
-                        phoneNumber: user.phoneNumber || "",
+                        is_verified: refreshedUser.emailVerified ? 1 : 0,
+                        phoneNumber: refreshedUser.phoneNumber || "",
                         preferences: {
                             color: "Arancione",
                             language: "Italiano",
@@ -340,19 +328,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     console.log('User document created during login');
-                } else {
-                    const userData = userDoc.data();
-                    if (userData && userData.is_verified === 0) {
-                        console.log('User is not verified, showing overlay');
-                        if (userEmailDisplay) userEmailDisplay.textContent = email;
-                        if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';
-                        generateAndSendCode(user);
-                        startResendTimer();
-                        return; // Non reindirizzare
-                    }
+                }
+
+                // Controllo verifica email (System B)
+                if (!refreshedUser.emailVerified) {
+                    console.log('User email not verified, showing overlay');
+                    if (userEmailDisplay) userEmailDisplay.textContent = refreshedUser.email;
+                    if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';
+                    // Invia un nuovo link al login se non è verificato
+                    await sendVerificationLink(refreshedUser);
+                    startResendTimer();
+                    return; // Blocca il login
                 }
                 
+                // Se arriviamo qui, l'utente è verificato
                 sessionStorage.setItem('justLoggedIn', 'true');
+                window.location.href = '../lista_schede/lista_scheda.html';
                 
             } catch (error) {
                 console.error('Login error:', error);
@@ -645,7 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                              'SÌ = Apro la console automaticamente\n' +
                                              'NO = Copio il link negli appunti';
                             
-                            if (await window.showConfirm(confirmMsg)) {
+                            if (await window.showConfirm(confirmMsg, "Errore Dominio", "APRI", "COPIA")) {
                                 const firebaseConsoleUrl = 'https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings';
                                 window.open(firebaseConsoleUrl, '_blank');
                             } else {
@@ -663,7 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     });
                             }
                         } else {
-                            if (await window.showConfirm('Vuoi aprire la Firebase Console per risolvere il problema?')) {
+                            if (await window.showConfirm('Vuoi aprire la Firebase Console per risolvere il problema?', 'Errore Firebase', "APRI", "ANNULLA")) {
                                 const firebaseConsoleUrl = 'https://console.firebase.google.com/project/fitsuite-a7b6c/authentication/settings';
                                 window.open(firebaseConsoleUrl, '_blank');
                             }
@@ -871,19 +862,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('User document created for Google user');
                 }
                 
-                // Check if user is verified
-                const userData = userDoc.exists ? userDoc.data() : null;
-                if (userData && userData.is_verified === 0) {
+                // Check if user is verified (System B)
+                if (!user.emailVerified) {
                     console.log('User not verified in onAuthStateChanged, showing overlay');
                     if (userEmailDisplay) userEmailDisplay.textContent = user.email;
                     if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';
-                    // Don't auto-resend here to avoid spamming on every refresh
+                    // Non inviamo il link automaticamente qui per evitare spam al refresh
                     return;
                 }
                 
                 // Check if user has username, if not redirect to username selection page
-                if (!userData || !userData.username || userData.username.trim() === '') {
-                    console.log('Google user needs username, redirecting to username selection');
+                const freshUserDoc = await db.collection('users').doc(user.uid).get();
+                const freshUserData = freshUserDoc.exists ? freshUserDoc.data() : null;
+                
+                if (!freshUserData || !freshUserData.username || freshUserData.username.trim() === '') {
+                    console.log('User needs username, redirecting to username selection');
                     window.location.href = '../lista_schede/lista_scheda.html';
                     return;
                 }

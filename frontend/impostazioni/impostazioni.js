@@ -827,7 +827,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const newUsername = await window.showPrompt(
                 'Modifica username (3-20 caratteri, solo lettere, numeri e _):',
                 currentUsername,
-                'Modifica Username'
+                'Modifica Username',
+                'SALVA',
+                'ANNULLA'
             );
 
             if (newUsername === null) {
@@ -1497,11 +1499,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isCurrent = e.currentTarget.dataset.current === 'true';
                 
                 if (isCurrent) {
-                    if (await window.showConfirm('Vuoi uscire da questo dispositivo?', 'Conferma Logout', 'Esci', 'Annulla')) {
+                    if (await window.showConfirm('Vuoi uscire da questo dispositivo?', 'Conferma Logout', 'ESCI', 'ANNULLA')) {
                         await window.SessionManager.logoutLocal();
                     }
                 } else {
-                    if (await window.showConfirm('Vuoi disconnettere questo dispositivo?', 'Logout Remoto', 'Logout', 'Annulla')) {
+                    if (await window.showConfirm('Vuoi disconnettere questo dispositivo?', 'Logout Remoto', 'LOGOUT', 'ANNULLA')) {
                         await window.SessionManager.removeRemoteSession(uid, targetId);
                         if (window.showSuccessToast) {
                             window.showSuccessToast('Dispositivo disconnesso con successo.');

@@ -97,6 +97,7 @@
         inputEl.value = '';
         inputEl.style.display = 'none';
         cancelBtn.style.display = 'none';
+        cancelBtn.textContent = 'ANNULLA';
         okBtn.textContent = 'OK';
         
         // Remove previous event listeners if any (cloning to remove)
@@ -105,7 +106,7 @@
     }
 
     // Override window.alert
-    window.alert = function(message, title = 'Avviso') {
+    window.alert = function(message, title = 'Avviso', okButtonText = 'CHIUDI') {
         return new Promise((resolve) => {
             if (!document.getElementById('customPopup')) initPopup();
             
@@ -115,9 +116,11 @@
             const popup = document.getElementById('customPopup');
             const titleEl = document.getElementById('customPopupTitle');
             const messageEl = document.getElementById('customPopupMessage');
+            const okBtn = document.getElementById('customPopupOk');
             
             titleEl.textContent = title;
             messageEl.textContent = message;
+            okBtn.textContent = okButtonText;
             
             resolvePromise = resolve;
             popup.classList.add('show');
@@ -125,7 +128,7 @@
     };
 
     // Custom Confirm
-    window.showConfirm = function(message, title = 'Conferma', okButtonText = 'OK') {
+    window.showConfirm = function(message, title = 'Conferma', okButtonText = 'OK', cancelButtonText = 'Annulla') {
         return new Promise((resolve) => {
             if (!document.getElementById('customPopup')) initPopup();
             
@@ -141,6 +144,7 @@
             titleEl.textContent = title;
             messageEl.textContent = message;
             cancelBtn.style.display = 'inline-block';
+            cancelBtn.textContent = cancelButtonText;
             okBtn.textContent = okButtonText;
             
             resolvePromise = (result) => {
@@ -154,7 +158,7 @@
     };
 
     // Custom Prompt
-    window.showPrompt = function(message, defaultValue = '', title = 'Inserisci') {
+    window.showPrompt = function(message, defaultValue = '', title = 'Inserisci', okButtonText = 'CONFERMA', cancelButtonText = 'ANNULLA') {
         return new Promise((resolve) => {
             if (!document.getElementById('customPopup')) initPopup();
             
@@ -165,13 +169,16 @@
             const titleEl = document.getElementById('customPopupTitle');
             const messageEl = document.getElementById('customPopupMessage');
             const inputEl = document.getElementById('customPopupInput');
+            const okBtn = document.getElementById('customPopupOk');
             const cancelBtn = document.getElementById('customPopupCancel');
             
             titleEl.textContent = title;
             messageEl.textContent = message;
             inputEl.value = defaultValue;
             inputEl.style.display = 'block';
+            okBtn.textContent = okButtonText;
             cancelBtn.style.display = 'inline-block';
+            cancelBtn.textContent = cancelButtonText;
             
             // Focus input after a small delay to allow transition
             setTimeout(() => inputEl.focus(), 100);

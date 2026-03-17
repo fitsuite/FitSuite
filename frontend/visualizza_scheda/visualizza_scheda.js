@@ -392,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Gestione click Remove Saved
         removeSavedBtn.onclick = async (e) => {
             e.preventDefault();
-            if (await window.showConfirm(`Sei sicuro di voler rimuovere la scheda "${routine.name || 'Scheda'}" dalle tue schede salvate?`, "Rimuovi Scheda Salvata")) {
+            if (await window.showConfirm(`Sei sicuro di voler rimuovere la scheda "${routine.name || 'Scheda'}" dalle tue schede salvate?`, "Rimuovi Scheda Salvata", "RIMUOVI", "ANNULLA")) {
                 await removeSharedRoutine(routine.id);
             }
         };
