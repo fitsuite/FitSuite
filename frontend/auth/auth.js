@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const showRegisterLink = document.getElementById('show-register');
     const forgotPasswordLink = document.getElementById('forgot-password-link');
     const forgotPasswordContainer = document.getElementById('forgot-password-container');
+
     const showLoginFromForgotLink = document.getElementById('show-login-from-forgot');
     const navbarLoginBtn = document.getElementById('navbar-login-btn');
     const navbarLoginButton = navbarLoginBtn ? navbarLoginBtn.querySelector('.login-btn') : null;
@@ -47,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('showRegisterLink:', showRegisterLink);
     console.log('forgotPasswordLink:', forgotPasswordLink);
     console.log('forgotPasswordContainer:', forgotPasswordContainer);
+    console.log('verifyEmailContainer:', verifyEmailContainer);
     console.log('showLoginFromForgotLink:', showLoginFromForgotLink);
     console.log('navbarLoginBtn:', navbarLoginBtn);
     console.log('navbarLoginButton:', navbarLoginButton);
@@ -158,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('users').doc(user.uid).set({
                     email: email,
                     username: null, // Will be set later after login
-                    is_verified: 0, // Email verification status (0: not verified, 1: verified)
+                    is_verified: 1, // Auto-verify for now
                     phoneNumber: "",
                     preferences: {
                         color: "Arancione",
@@ -168,12 +170,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // Send verification email
-                await user.sendEmailVerification();
-                console.log('Verification email sent');
-                
                 console.log('User document created in Firestore');
                 sessionStorage.setItem('justLoggedIn', 'true');
+                
+                // Redirect immediately after registration
+                window.location.href = '../lista_schede/lista_scheda.html';
                 
             } catch (error) {
                 console.error('Registration error:', error);
@@ -210,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     await db.collection('users').doc(user.uid).set({
                         email: user.email,
                         username: null, // Will be set by username checker
-                        is_verified: user.emailVerified ? 1 : 0,
+                        is_verified: 1, // Auto-verify for now
                         phoneNumber: user.phoneNumber || "",
                         preferences: {
                             color: "Arancione",
