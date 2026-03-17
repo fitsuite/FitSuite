@@ -326,7 +326,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (endCompare < now) {
                         statusClass = 'status-expired';
                     } else {
-                        statusClass = 'status-active';
+                        const diffTime = endCompare - now;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        if (diffDays <= 7) {
+                            statusClass = 'status-warning';
+                        } else {
+                            statusClass = 'status-active';
+                        }
                     }
                 } catch (e) {
                     console.error("Error calculating status", e);
@@ -374,6 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="col-name">
                     <span class="routine-name">${routine.name || 'Scheda senza nome'}</span>
+                    ${routine.isAI ? '<span class="ai-badge" title="Creata con AI"><i class="fas fa-robot"></i></span>' : ''}
                 </div>
                 <div class="col-sessions">
                     <span>${seduteText}</span>
@@ -478,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteMenuItem.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     menuDropdown.classList.remove('active');
-                    if (await window.showConfirm(`Sei sicuro di voler eliminare la scheda "${routine.name}"?`, "Elimina Scheda")) {
+                    if (await window.showConfirm(`Confermi di voler eliminare la scheda "${routine.name}" ?`, "Elimina Scheda", "Elimina")) {
                         // Optimistic update
                         const originalRoutines = [...allRoutines];
                         allRoutines = allRoutines.filter(r => r.id !== routine.id);

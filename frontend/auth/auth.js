@@ -210,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     await db.collection('users').doc(user.uid).set({
                         email: user.email,
                         username: null, // Will be set by username checker
+                        is_verified: user.emailVerified ? 1 : 0,
                         phoneNumber: user.phoneNumber || "",
                         preferences: {
                             color: "Arancione",
@@ -365,6 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             await db.collection('users').doc(user.uid).set({
                                                 email: user.email,
                                                 username: null, // Will be set later when user chooses one
+                                                is_verified: 1, // Google users are pre-verified
                                                 phoneNumber: user.phoneNumber || "",
                                                 preferences: {
                                                     color: "Arancione",
@@ -432,6 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 await db.collection('users').doc(user.uid).set({
                                     email: user.email,
                                     username: null, // Will be set later when user chooses one
+                                    is_verified: 1, // Google users are pre-verified
                                     phoneNumber: user.phoneNumber || "",
                                     preferences: {
                                         color: "Arancione",
@@ -609,6 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     username: null, // Will be set later when user chooses one
                     is_verified: 1, // Google users are verified by default
                     phoneNumber: user.phoneNumber || "",
+                    photoURL: user.photoURL || "",
                     preferences: {
                         color: "Arancione",
                         language: "Italiano",

@@ -125,7 +125,7 @@
     };
 
     // Custom Confirm
-    window.showConfirm = function(message, title = 'Conferma') {
+    window.showConfirm = function(message, title = 'Conferma', okButtonText = 'OK') {
         return new Promise((resolve) => {
             if (!document.getElementById('customPopup')) initPopup();
             
@@ -136,10 +136,12 @@
             const titleEl = document.getElementById('customPopupTitle');
             const messageEl = document.getElementById('customPopupMessage');
             const cancelBtn = document.getElementById('customPopupCancel');
+            const okBtn = document.getElementById('customPopupOk');
             
             titleEl.textContent = title;
             messageEl.textContent = message;
             cancelBtn.style.display = 'inline-block';
+            okBtn.textContent = okButtonText;
             
             resolvePromise = (result) => {
                 // If result is null (cancel clicked), resolve false

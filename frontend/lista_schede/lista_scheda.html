@@ -83,7 +83,6 @@
                     <button class="refresh-btn" id="refresh-btn" title="Aggiorna schede">
                         <i class="fas fa-sync-alt"></i>
                     </button>
-                    <button class="create-scheda-btn desktop-only" id="create-scheda-button">Crea Scheda</button>
                 </div>
             </header>
 
@@ -93,7 +92,7 @@
                     <span class="col-name">Nome</span>
                     <span class="col-sessions">Sedute</span>
                     <span class="col-date">Periodo</span>
-                    <span class="col-actions">Azioni</span>
+                    <span class="col-actions"></span>
                 </div>
                 <div class="routines-list" id="routines-container">
                     <!-- Le schede verranno caricate qui -->
@@ -129,13 +128,6 @@
             .catch(error => console.error('Error loading sidebar:', error));
 
         document.addEventListener('DOMContentLoaded', () => {
-            const createSchedaButton = document.getElementById('create-scheda-button');
-            if (createSchedaButton) {
-                createSchedaButton.addEventListener('click', () => {
-                    window.location.href = '../crea_scheda/crea_scheda.html';
-                });
-            }
-
             // Firebase Auth check
             const auth = firebase.auth();
             const loadingScreen = document.getElementById('loading-screen');
