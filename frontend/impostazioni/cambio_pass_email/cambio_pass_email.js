@@ -47,33 +47,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     const action = urlParams.get('action'); // Per redirect manuali da impostazioni
 
     // Gestione dei vari stati
-    if (mode === 'resetPassword' && oobCode) {
-        setupPasswordReset(oobCode);
-    } else if (mode === 'verifyAndChangeEmail' && oobCode) {
-        setupEmailChangeVerification(oobCode);
-    } else if (mode === 'recoverEmail' && oobCode) {
-        setupEmailRecovery(oobCode);
-    } else if (action === 'changePassword') {
-        setupManualPasswordChange();
-    } else if (action === 'changeEmail') {
-        setupManualEmailChange();
-    } else {
-        handleError({ code: 'auth/invalid-action-code' }, 'Link non valido o scaduto');
+    try {
+        if (mode === 'resetPassword' && oobCode) {
+            setupPasswordReset(oobCode);
+        } else if (mode === 'verifyAndChangeEmail' && oobCode) {
+            setupEmailChangeVerification(oobCode);
+        } else if (mode === 'verifyEmail' && oobCode) {
+            setupEmailVerification(oobCode);
+        } else if (mode === 'recoverEmail' && oobCode) {
+            setupEmailRecovery(oobCode);
+        } else if (action === 'changePassword') {
+            setupManualPasswordChange();
+        } else if (action === 'changeEmail') {
+            setupManualEmailChange();
+        } else if (mode || oobCode || action) {
+            // Se c'è un parametro ma non corrisponde a nulla di noto
+            handleError({ code: 'auth/invalid-action-code' }, 'Link non valido o scaduto');
+            if (loading) loading.hide();
+        } else {
+            // Nessun parametro, probabilmente accesso diretto alla pagina
+            userInfoDisplay.textContent = "Seleziona un'operazione dalle impostazioni.";
+            if (loading) loading.hide();
+        }
+    } catch (err) {
+        console.error("Errore generale nell'inizializzazione:", err);
+        handleError(err, 'Errore di sistema');
+        if (loading) loading.hide();
     }
 
     // --- LOGICA PASSWORD RESET (Link Firebase) ---
     async function setupPasswordReset(code) {
         pageTitle.textContent = "Reimposta Password";
-        loading.show(['Verifica del link...', 'Recupero informazioni account...']);
+        if (loading) loading.show(['Verifica del link...', 'Recupero informazioni account...']);
         
         try {
             const email = await auth.verifyPasswordResetCode(code);
             userInfoDisplay.textContent = `Stai reimpostando la password per: ${email}`;
             changePasswordForm.style.display = 'block';
-            loading.hide();
+            if (loading) loading.hide();
         } catch (error) {
             handleError(error, 'Errore di verifica');
-            loading.hide();
+            if (loading) loading.hide();
         }
 
         changePasswordForm.addEventListener('submit', async (e) => {
@@ -100,17 +114,73 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- LOGICA VERIFICA CAMBIO EMAIL (Link Firebase) ---
     async function setupEmailChangeVerification(code) {
         pageTitle.textContent = "Verifica Cambio Email";
-        loading.show(['Verifica del link...', 'Aggiornamento email in corso...']);
+        if (loading) loading.show(['Verifica del link...', 'Aggiornamento email in corso...']);
         
         try {
             const info = await auth.checkActionCode(code);
             const newEmail = info.data.email;
             await auth.applyActionCode(code);
-            loading.hide();
+            
+            // Se l'utente è loggato, aggiorniamo anche Firestore
+            const user = auth.currentUser;
+            if (user) {
+                await firebase.firestore().collection('users').doc(user.uid).update({
+                    email: newEmail,
+                    is_verified: 1
+                });
+            }
+
+            if (loading) loading.hide();
             showSuccessState("Email Verificata!", `La tua email è stata aggiornata con successo a: ${newEmail}`);
         } catch (error) {
             handleError(error, 'Errore di verifica');
-            loading.hide();
+            if (loading) loading.hide();
+        }
+    }
+
+    // --- LOGICA VERIFICA EMAIL INIZIALE (Link Firebase) ---
+    async function setupEmailVerification(code) {
+        pageTitle.textContent = "Verifica Email";
+        console.log("Inizio verifica email con codice:", code);
+        
+        if (loading) {
+            loading.show(['Verifica del link...', 'Attivazione account in corso...']);
+        } else {
+            console.warn("LoadingManager non trovato, procedo senza feedback visivo");
+        }
+        
+        try {
+            console.log("Chiamata a auth.applyActionCode...");
+            await auth.applyActionCode(code);
+            console.log("auth.applyActionCode completata con successo");
+            
+            // Tentiamo di aggiornare Firestore se l'utente è loggato o se possiamo trovarlo
+            // Nota: applyActionCode non logga l'utente, quindi currentUser potrebbe essere null
+            // Ma se l'utente ha la scheda aperta nell'altro tab, Firestore verrà aggiornato da lì
+            // Tuttavia, se è loggato in questo tab (es. sessione persistente), lo facciamo qui
+            const user = auth.currentUser;
+            if (user) {
+                console.log("Utente loggato trovato, aggiorno Firestore...");
+                await firebase.firestore().collection('users').doc(user.uid).update({
+                    is_verified: 1
+                });
+                console.log("Firestore aggiornato con successo");
+            } else {
+                console.log("Nessun utente loggato in questo tab, Firestore verrà aggiornato al prossimo login o dal tab originale");
+            }
+
+            if (loading) loading.hide();
+            showSuccessState("Email Verificata!", "Il tuo account è stato attivato con successo. Ora puoi accedere a tutte le funzionalità.");
+            
+            // Reindirizzamento automatico dopo 3 secondi alla dashboard
+            setTimeout(() => {
+                console.log("Reindirizzamento alla dashboard...");
+                window.location.href = '../../lista_schede/lista_scheda.html';
+            }, 3000);
+        } catch (error) {
+            console.error("Errore durante applyActionCode:", error);
+            handleError(error, 'Errore di verifica');
+            if (loading) loading.hide();
         }
     }
 

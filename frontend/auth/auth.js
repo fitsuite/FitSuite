@@ -141,6 +141,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const resendTimer = document.getElementById('resend-timer');
     let resendCooldown = 0;
     let resendInterval = null;
+    let autoCheckInterval = null;
+
+    function startAutoCheck() {
+        if (autoCheckInterval) clearInterval(autoCheckInterval);
+        console.log('Avvio controllo automatico verifica email...');
+        autoCheckInterval = setInterval(async () => {
+            const user = auth.currentUser;
+            if (user && !user.emailVerified) {
+                try {
+                    await user.reload();
+                    if (auth.currentUser.emailVerified) {
+                        console.log('Email verificata automaticamente!');
+                        clearInterval(autoCheckInterval);
+                        if (checkVerificationBtn) checkVerificationBtn.click();
+                    }
+                } catch (e) {
+                    console.warn('Errore durante auto-check:', e);
+                }
+            } else if (!user || user.emailVerified) {
+                clearInterval(autoCheckInterval);
+            }
+        }, 3000); // Controlla ogni 3 secondi
+    }
+
+    function stopAutoCheck() {
+        if (autoCheckInterval) {
+            clearInterval(autoCheckInterval);
+            autoCheckInterval = null;
+        }
+    }
 
     function startResendTimer() {
         resendCooldown = 30;
@@ -167,12 +197,19 @@ document.addEventListener('DOMContentLoaded', () => {
     async function sendVerificationLink(user) {
         if (!user) return false;
         try {
-            await user.sendEmailVerification();
-            console.log('Verification email link sent to:', user.email);
+            // Configurazione per reindirizzare l'utente alla nostra pagina personalizzata
+            const actionCodeSettings = {
+                // L'URL a cui reindirizzare l'utente. Firebase aggiungerà i parametri mode e oobCode automaticamente
+                url: window.location.origin + '/frontend/impostazioni/cambio_pass_email/cambio_pass_email.html',
+                handleCodeInApp: true
+            };
+            
+            await user.sendEmailVerification(actionCodeSettings);
+            console.log('Verification email link sent to:', user.email, 'with URL:', actionCodeSettings.url);
             return true;
         } catch (error) {
             console.error('Error sending verification email:', error);
-            displayMessage('verify-email-error-message', 'Errore nell\'invio dell\'email. Riprova tra poco.');
+            displayMessage('verify-email-error-message', 'Errore nell\'invio dell\'email: ' + (error.message || 'Riprova tra poco.'));
             return false;
         }
     }
@@ -180,31 +217,45 @@ document.addEventListener('DOMContentLoaded', () => {
     if (checkVerificationBtn) {
         checkVerificationBtn.addEventListener('click', async () => {
             const user = auth.currentUser;
-            if (!user) return;
+            console.log('Controllo verifica per utente:', user ? user.email : 'Nessun utente');
+            if (!user) {
+                displayMessage('verify-email-error-message', 'Devi essere loggato per verificare l\'email.');
+                return;
+            }
 
             try {
                 clearMessages('verify-email-error-message');
+                console.log('Stato attuale emailVerified:', user.emailVerified);
+                
                 // Forza il ricaricamento del profilo utente per aggiornare emailVerified
                 await user.reload();
                 const updatedUser = auth.currentUser;
+                console.log('Stato post-reload emailVerified:', updatedUser.emailVerified);
 
                 if (updatedUser.emailVerified) {
+                    stopAutoCheck();
                     displayMessage('verify-email-success-message', 'Email verificata con successo! Reindirizzamento...', false);
                     
-                    // Aggiorna is_verified anche su Firestore per coerenza (opzionale)
-                    await db.collection('users').doc(updatedUser.uid).update({
-                        is_verified: 1
-                    });
+                    // Aggiorna is_verified anche su Firestore per coerenza
+                    try {
+                        await db.collection('users').doc(updatedUser.uid).update({
+                            is_verified: 1
+                        });
+                        console.log('Firestore aggiornato: is_verified = 1');
+                    } catch (fsError) {
+                        console.error('Errore aggiornamento Firestore:', fsError);
+                        // Procediamo comunque perché Auth è verificato
+                    }
 
                     setTimeout(() => {
                         window.location.href = '../lista_schede/lista_scheda.html';
                     }, 1500);
                 } else {
-                    displayMessage('verify-email-error-message', 'L\'email non risulta ancora verificata. Controlla la tua posta e clicca sul link.');
+                    displayMessage('verify-email-error-message', 'L\'email non risulta ancora verificata. Assicurati di aver cliccato sul link ricevuto.');
                 }
             } catch (error) {
                 console.error('Error checking verification status:', error);
-                displayMessage('verify-email-error-message', 'Si è verificato un errore durante il controllo.');
+                displayMessage('verify-email-error-message', 'Errore durante il controllo: ' + error.message);
             }
         });
     }
@@ -271,10 +322,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (linkSent) {
                     if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';
+                    startAutoCheck();
                     startResendTimer();
                 } else {
                     // Se fallisce l'invio, comunque mostriamo l'overlay per permettere il reinvio
                     if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';
+                    startAutoCheck();
                 }
                 
                 sessionStorage.setItem('justLoggedIn', 'true');
@@ -337,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';
                     // Invia un nuovo link al login se non è verificato
                     await sendVerificationLink(refreshedUser);
+                    startAutoCheck();
                     startResendTimer();
                     return; // Blocca il login
                 }
