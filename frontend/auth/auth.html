@@ -40,6 +40,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-functions-compat.js"></script>
     <script>
       // Your web app's Firebase configuration
       const firebaseConfig = {
@@ -174,5 +175,26 @@
     <script src="../impostazioni/session_manager.js"></script>
     <script src="./auth.js"></script>
     <script src="../components/popup/popup.js"></script>
+
+    <!-- Email Verification Overlay -->
+    <div id="verify-email-overlay" class="auth-overlay" style="display: none;">
+        <div class="registration-form-container">
+            <h2>Verifica la tua Email</h2>
+            <p style="font-size: 14px; margin-bottom: 20px;">Abbiamo inviato un codice di verifica a <span id="user-email-display" style="font-weight: bold; color: #ff6600;"></span>. Inseriscilo qui sotto per continuare.</p>
+            <form class="verify-email-form">
+                <div class="form-group">
+                    <label for="verification-code">Codice di Verifica</label>
+                    <input type="text" id="verification-code" placeholder="Codice a 6 cifre" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+                </div>
+                <button type="submit" class="continue-btn" id="verify-code-btn">Verifica</button>
+                <div id="verify-email-error-message" class="error-message"></div>
+                <div id="verify-email-success-message" class="success-message"></div>
+            </form>
+            <p class="login-link">Non hai ricevuto il codice? <a href="#" id="resend-code-link">Reinvia</a> <span id="resend-timer" style="display: none; color: #888;">(30s)</span></p>
+            <div class="terms-privacy">
+                <p class="copyright">© 2025 - FitSuite</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

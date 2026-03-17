@@ -132,6 +132,115 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    // Email Verification Logic
+    const verifyEmailOverlay = document.getElementById('verify-email-overlay');
+    const verifyEmailForm = document.querySelector('.verify-email-form');
+    const resendCodeLink = document.getElementById('resend-code-link');
+    const resendTimer = document.getElementById('resend-timer');
+    const userEmailDisplay = document.getElementById('user-email-display');
+    let resendCooldown = 0;
+    let resendInterval = null;
+
+    function startResendTimer() {
+        resendCooldown = 30;
+        resendCodeLink.classList.add('disabled');
+        resendTimer.style.display = 'inline';
+        resendTimer.textContent = `(${resendCooldown}s)`;
+
+        if (resendInterval) clearInterval(resendInterval);
+        
+        resendInterval = setInterval(() => {
+            resendCooldown--;
+            if (resendCooldown <= 0) {
+                clearInterval(resendInterval);
+                resendCodeLink.classList.remove('disabled');
+                resendTimer.style.display = 'none';
+            } else {
+                resendTimer.textContent = `(${resendCooldown}s)`;
+            }
+        }, 1000);
+    }
+
+    async function generateAndSendCode(user) {
+        if (!user) return;
+        
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const email = user.email;
+        
+        try {
+            // Store code in Firestore
+            await db.collection('verification_codes').doc(user.uid).set({
+                code: code,
+                email: email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Call Cloud Function to send email
+            // We'll implement this function later
+            const sendEmail = firebase.functions().httpsCallable('sendVerificationEmail');
+            await sendEmail({ email, code });
+            
+            console.log('Verification code sent to:', email);
+            return true;
+        } catch (error) {
+            console.error('Error sending verification code:', error);
+            displayMessage('verify-email-error-message', 'Errore nell\'invio del codice. Riprova.');
+            return false;
+        }
+    }
+
+    if (verifyEmailForm) {
+        verifyEmailForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const codeInput = document.getElementById('verification-code').value;
+            const user = auth.currentUser;
+
+            if (!user) return;
+
+            try {
+                clearMessages('verify-email-error-message');
+                const doc = await db.collection('verification_codes').doc(user.uid).get();
+                
+                if (doc.exists && doc.data().code === codeInput) {
+                    // Code matches!
+                    await db.collection('users').doc(user.uid).update({
+                        is_verified: 1
+                    });
+                    
+                    displayMessage('verify-email-success-message', 'Email verificata con successo!', false);
+                    
+                    // Cleanup verification code
+                    await db.collection('verification_codes').doc(user.uid).delete();
+                    
+                    setTimeout(() => {
+                        window.location.href = '../lista_schede/lista_scheda.html';
+                    }, 1500);
+                } else {
+                    displayMessage('verify-email-error-message', 'Codice non valido. Riprova.');
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                displayMessage('verify-email-error-message', 'Si è verificato un errore durante la verifica.');
+            }
+        });
+    }
+
+    if (resendCodeLink) {
+        resendCodeLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (resendCooldown > 0) return;
+
+            const user = auth.currentUser;
+            if (user) {
+                const success = await generateAndSendCode(user);
+                if (success) {
+                    startResendTimer();
+                    displayMessage('verify-email-success-message', 'Nuovo codice inviato!', false);
+                }
+            }
+        });
+    }
+
     // Email/Password Registration
     const registrationForm = document.querySelector('.registration-form');
     if (registrationForm) {
@@ -160,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('users').doc(user.uid).set({
                     email: email,
                     username: null, // Will be set later after login
-                    is_verified: 1, // Auto-verify for now
+                    is_verified: 0, // Inizia non verificato
                     phoneNumber: "",
                     preferences: {
                         color: "Arancione",
@@ -171,10 +280,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 console.log('User document created in Firestore');
-                sessionStorage.setItem('justLoggedIn', 'true');
                 
-                // Redirect immediately after registration
-                window.location.href = '../lista_schede/lista_scheda.html';
+                // Invia il codice di verifica
+                if (userEmailDisplay) userEmailDisplay.textContent = email;
+                const codeSent = await generateAndSendCode(user);
+                
+                if (codeSent) {
+                    if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';
+                    startResendTimer();
+                } else {
+                    // Se fallisce l'invio, comunque mostriamo l'overlay per permettere il reinvio
+                    if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';
+                }
+                
+                sessionStorage.setItem('justLoggedIn', 'true');
                 
             } catch (error) {
                 console.error('Registration error:', error);
@@ -211,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     await db.collection('users').doc(user.uid).set({
                         email: user.email,
                         username: null, // Will be set by username checker
-                        is_verified: 1, // Auto-verify for now
+                        is_verified: 0, // Inizia non verificato
                         phoneNumber: user.phoneNumber || "",
                         preferences: {
                             color: "Arancione",
@@ -221,6 +340,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     console.log('User document created during login');
+                } else {
+                    const userData = userDoc.data();
+                    if (userData && userData.is_verified === 0) {
+                        console.log('User is not verified, showing overlay');
+                        if (userEmailDisplay) userEmailDisplay.textContent = email;
+                        if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';
+                        generateAndSendCode(user);
+                        startResendTimer();
+                        return; // Non reindirizzare
+                    }
                 }
                 
                 sessionStorage.setItem('justLoggedIn', 'true');
@@ -742,8 +871,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('User document created for Google user');
                 }
                 
-                // Check if user has username, if not redirect to username selection page
+                // Check if user is verified
                 const userData = userDoc.exists ? userDoc.data() : null;
+                if (userData && userData.is_verified === 0) {
+                    console.log('User not verified in onAuthStateChanged, showing overlay');
+                    if (userEmailDisplay) userEmailDisplay.textContent = user.email;
+                    if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';
+                    // Don't auto-resend here to avoid spamming on every refresh
+                    return;
+                }
+                
+                // Check if user has username, if not redirect to username selection page
                 if (!userData || !userData.username || userData.username.trim() === '') {
                     console.log('Google user needs username, redirecting to username selection');
                     window.location.href = '../lista_schede/lista_scheda.html';
