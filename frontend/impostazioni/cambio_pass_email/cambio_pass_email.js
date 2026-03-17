@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Gestione dei vari stati
     if (mode === 'resetPassword' && oobCode) {
         setupPasswordReset(oobCode);
+    } else if (mode === 'verifyEmail' && oobCode) {
+        setupEmailVerification(oobCode);
     } else if (mode === 'verifyAndChangeEmail' && oobCode) {
         setupEmailChangeVerification(oobCode);
     } else if (mode === 'recoverEmail' && oobCode) {
@@ -95,6 +97,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                 setLoading(passwordSubmitBtn, false);
             }
         });
+    }
+
+    // --- LOGICA VERIFICA EMAIL (Link Firebase) ---
+    async function setupEmailVerification(code) {
+        pageTitle.textContent = "Verifica Email";
+        loading.show(['Verifica del link...', 'Conferma in corso...']);
+        
+        try {
+            await auth.applyActionCode(code);
+            
+            // If user is logged in, we can update the database directly
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+                // Sincronizziamo anche Firestore se l'utente è loggato
+                const db = firebase.firestore();
+                await db.collection('users').doc(currentUser.uid).set({
+                    is_verified: 1
+                }, { merge: true });
+            }
+            
+            loading.hide();
+            showSuccessState("Email Verificata!", "Il tuo indirizzo email è stato confermato con successo. Ora puoi utilizzare tutte le funzionalità di FitSuite.");
+        } catch (error) {
+            handleError(error, 'Errore di verifica');
+            loading.hide();
+        }
     }
 
     // --- LOGICA VERIFICA CAMBIO EMAIL (Link Firebase) ---

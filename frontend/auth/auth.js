@@ -36,6 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const showRegisterLink = document.getElementById('show-register');
     const forgotPasswordLink = document.getElementById('forgot-password-link');
     const forgotPasswordContainer = document.getElementById('forgot-password-container');
+    const verifyEmailContainer = document.getElementById('verify-email-container');
+    const userEmailDisplay = document.getElementById('user-email-display');
+    const checkVerificationBtn = document.getElementById('check-verification-btn');
+    const resendVerificationBtn = document.getElementById('resend-verification-btn');
+    const logoutFromVerify = document.getElementById('logout-from-verify');
+    const resendTimer = document.getElementById('resend-timer');
+    const timerSecondsDisplay = document.getElementById('timer-seconds');
+    const verifyErrorMessage = document.getElementById('verify-error-message');
+    const verifySuccessMessage = document.getElementById('verify-success-message');
+
     const showLoginFromForgotLink = document.getElementById('show-login-from-forgot');
     const navbarLoginBtn = document.getElementById('navbar-login-btn');
     const navbarLoginButton = navbarLoginBtn ? navbarLoginBtn.querySelector('.login-btn') : null;
@@ -47,28 +57,31 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('showRegisterLink:', showRegisterLink);
     console.log('forgotPasswordLink:', forgotPasswordLink);
     console.log('forgotPasswordContainer:', forgotPasswordContainer);
+    console.log('verifyEmailContainer:', verifyEmailContainer);
     console.log('showLoginFromForgotLink:', showLoginFromForgotLink);
     console.log('navbarLoginBtn:', navbarLoginBtn);
     console.log('navbarLoginButton:', navbarLoginButton);
 
     // Initialize form display states
-    if (registrationFormContainer && loginFormContainer && forgotPasswordContainer) {
+    if (registrationFormContainer && loginFormContainer && forgotPasswordContainer && verifyEmailContainer) {
         registrationFormContainer.style.display = 'block';
         loginFormContainer.style.display = 'none';
         forgotPasswordContainer.style.display = 'none';
+        verifyEmailContainer.style.display = 'none';
         if (navbarLoginButton) {
             navbarLoginButton.innerText = 'Accedi'; // Initial state for navbar button
         }
     }
 
 
-    if (registrationFormContainer && loginFormContainer && showLoginLink && showRegisterLink && navbarLoginButton && forgotPasswordLink && forgotPasswordContainer && showLoginFromForgotLink) {
+    if (registrationFormContainer && loginFormContainer && showLoginLink && showRegisterLink && navbarLoginButton && forgotPasswordLink && forgotPasswordContainer && showLoginFromForgotLink && verifyEmailContainer) {
         showLoginLink.addEventListener('click', (e) => {
             e.preventDefault();
             console.log('showLoginLink clicked');
             registrationFormContainer.style.display = 'none';
             loginFormContainer.style.display = 'block';
             forgotPasswordContainer.style.display = 'none';
+            verifyEmailContainer.style.display = 'none';
             navbarLoginButton.innerText = 'Registrati'; // Cambia il testo del pulsante della navbar
         });
 
@@ -78,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loginFormContainer.style.display = 'none';
             registrationFormContainer.style.display = 'block';
             forgotPasswordContainer.style.display = 'none';
+            verifyEmailContainer.style.display = 'none';
             navbarLoginButton.innerText = 'Accedi'; // Cambia il testo del pulsante della navbar
         });
 
@@ -87,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loginFormContainer.style.display = 'none';
             registrationFormContainer.style.display = 'none';
             forgotPasswordContainer.style.display = 'block';
+            verifyEmailContainer.style.display = 'none';
             navbarLoginButton.innerText = 'Accedi'; // Il pulsante della navbar dovrebbe mostrare "Accedi" per tornare al login
         });
 
@@ -95,7 +110,141 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('showLoginFromForgotLink clicked');
             forgotPasswordContainer.style.display = 'none';
             loginFormContainer.style.display = 'block';
+            verifyEmailContainer.style.display = 'none';
             navbarLoginButton.innerText = 'Registrati'; // Il pulsante della navbar dovrebbe mostrare "Registrati" per tornare alla registrazione
+        });
+    }
+
+    // --- LOGICA VERIFICA EMAIL ---
+
+    function showVerifyEmailView(email) {
+        registrationFormContainer.style.display = 'none';
+        loginFormContainer.style.display = 'none';
+        forgotPasswordContainer.style.display = 'none';
+        verifyEmailContainer.style.display = 'block';
+        if (userEmailDisplay) userEmailDisplay.textContent = email;
+        if (navbarLoginButton) navbarLoginButton.innerText = 'Accedi';
+        
+        // Start timer if needed
+        checkResendCooldown();
+    }
+
+    function checkResendCooldown() {
+        const lastSent = localStorage.getItem('lastEmailVerificationSent');
+        if (lastSent) {
+            const now = Date.now();
+            const diff = now - parseInt(lastSent);
+            const cooldown = 30000; // 30 seconds
+            
+            if (diff < cooldown) {
+                const remaining = Math.ceil((cooldown - diff) / 1000);
+                startResendTimer(remaining);
+            }
+        }
+    }
+
+    function startResendTimer(seconds) {
+        if (!resendVerificationBtn || !resendTimer || !timerSecondsDisplay) return;
+        
+        resendVerificationBtn.disabled = true;
+        resendVerificationBtn.style.opacity = '0.5';
+        resendVerificationBtn.style.cursor = 'not-allowed';
+        resendTimer.style.display = 'block';
+        timerSecondsDisplay.textContent = seconds;
+        
+        const interval = setInterval(() => {
+            seconds--;
+            timerSecondsDisplay.textContent = seconds;
+            if (seconds <= 0) {
+                clearInterval(interval);
+                resendVerificationBtn.disabled = false;
+                resendVerificationBtn.style.opacity = '1';
+                resendVerificationBtn.style.cursor = 'pointer';
+                resendTimer.style.display = 'none';
+            }
+        }, 1000);
+    }
+
+    if (checkVerificationBtn) {
+        checkVerificationBtn.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            try {
+                clearMessages('verify-error-message');
+                await user.reload();
+                const refreshedUser = auth.currentUser;
+                
+                if (refreshedUser.emailVerified) {
+                    displayMessage('verify-success-message', 'Email verificata con successo! Reindirizzamento...', false);
+                    
+                    // Update Firestore
+                    await db.collection('users').doc(refreshedUser.uid).set({
+                        is_verified: 1
+                    }, { merge: true });
+                    
+                    // Redirect
+                    setTimeout(() => {
+                        window.location.href = '../lista_schede/lista_scheda.html';
+                    }, 1500);
+                } else {
+                    displayMessage('verify-error-message', 'L\'email non risulta ancora verificata. Controlla la tua posta.');
+                }
+            } catch (error) {
+                console.error('Error checking verification:', error);
+                displayMessage('verify-error-message', 'Errore durante la verifica. Riprova più tardi.');
+            }
+        });
+    }
+
+    if (resendVerificationBtn) {
+        resendVerificationBtn.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            try {
+                clearMessages('verify-error-message');
+                clearMessages('verify-success-message');
+                
+                // Rate limit check
+                const lastSent = localStorage.getItem('lastEmailVerificationSent');
+                if (lastSent) {
+                    const now = Date.now();
+                    if (now - parseInt(lastSent) < 30000) {
+                        return; // Should be handled by UI, but double check
+                    }
+                }
+                
+                // Use standard settings without handleCodeInApp if causing issues
+                // Or try with a simpler URL
+                const actionCodeSettings = {
+                    url: window.location.origin + '/frontend/auth/auth.html',
+                    handleCodeInApp: false
+                };
+                
+                await user.sendEmailVerification(actionCodeSettings);
+                
+                localStorage.setItem('lastEmailVerificationSent', Date.now().toString());
+                displayMessage('verify-success-message', 'Email di verifica reinviata!', false);
+                startResendTimer(30);
+                
+            } catch (error) {
+                console.error('Error resending email:', error);
+                // Handle common errors like too many requests
+                if (error.code === 'auth/too-many-requests') {
+                    displayMessage('verify-error-message', 'Troppe richieste. Riprova più tardi.');
+                } else {
+                    displayMessage('verify-error-message', 'Errore nel reinvio dell\'email. Assicurati che l\'indirizzo sia corretto.');
+                }
+            }
+        });
+    }
+
+    if (logoutFromVerify) {
+        logoutFromVerify.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await auth.signOut();
+            window.location.reload();
         });
     }
 
@@ -169,8 +318,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 // Send verification email
-                await user.sendEmailVerification();
+                const actionCodeSettings = {
+                    url: window.location.origin + '/frontend/auth/auth.html',
+                    handleCodeInApp: false
+                };
+                await user.sendEmailVerification(actionCodeSettings);
                 console.log('Verification email sent');
+                
+                // Show verification view immediately after registration
+                showVerifyEmailView(email);
                 
                 console.log('User document created in Firestore');
                 sessionStorage.setItem('justLoggedIn', 'true');
@@ -728,6 +884,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             console.log('User is signed in:', user);
+            
+            // Check if email is verified (only for email/password users, Google users are usually verified)
+            if (!user.emailVerified) {
+                console.log('User email not verified, showing verification view');
+                showVerifyEmailView(user.email);
+                return;
+            }
             
             // Save lastUserId for optimistic loading
             localStorage.setItem('lastUserId', user.uid);

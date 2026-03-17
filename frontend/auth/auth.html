@@ -164,6 +164,26 @@
                     <p class="copyright"> 2025 - FitSuite</p>
                 </div>
             </div>
+
+            <div class="verify-email-container registration-form-container" id="verify-email-container" style="display: none;">
+                <h2>Verifica la tua Email</h2>
+                <div class="verify-email-content">
+                    <p id="verify-email-message">Abbiamo inviato un link di verifica a <strong id="user-email-display"></strong>. <br><br>Controlla la tua casella di posta (anche nello spam) e clicca sul link per attivare il tuo account.</p>
+                    <div class="verify-actions" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                        <button id="check-verification-btn" class="continue-btn">Ho verificato</button>
+                        <button id="resend-verification-btn" class="google-signin-btn" style="background: white; border: 1px solid #ddd; color: #333; justify-content: center;">Reinvia Email</button>
+                    </div>
+                    <div id="resend-timer" style="display: none; margin-top: 15px; font-size: 0.9em; color: #666; text-align: center;">
+                        Puoi reinviare l'email tra <span id="timer-seconds">30</span> secondi.
+                    </div>
+                    <div id="verify-error-message" class="error-message" style="margin-top: 15px;"></div>
+                    <div id="verify-success-message" class="success-message" style="margin-top: 15px;"></div>
+                </div>
+                <p class="login-link" style="margin-top: 25px;"><a href="#" id="logout-from-verify">Esci e usa un altro account</a></p>
+                <div class="terms-privacy">
+                    <p class="copyright">© 2025 - FitSuite</p>
+                </div>
+            </div>
         </div>
     </main>
     <script src="../impostazioni/session_manager.js"></script>

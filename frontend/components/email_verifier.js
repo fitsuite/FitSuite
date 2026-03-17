@@ -96,8 +96,23 @@
                 } else {
                     // User clicked "REINVIA EMAIL"
                     try {
+                        // Check rate limit (30 seconds)
+                        const lastSent = localStorage.getItem('lastEmailVerificationSent');
+                        const now = Date.now();
+                        if (lastSent && (now - parseInt(lastSent)) < 30000) {
+                            const remaining = Math.ceil((30000 - (now - parseInt(lastSent))) / 1000);
+                            if (window.showErrorToast) window.showErrorToast(`Attendi ancora ${remaining} secondi prima di reinviare.`);
+                            showPopup();
+                            return;
+                        }
+
                         if (window.showLoadingToast) window.showLoadingToast('Invio email...');
-                        await user.sendEmailVerification();
+                        const actionCodeSettings = {
+                            url: window.location.origin + '/frontend/auth/auth.html',
+                            handleCodeInApp: false
+                        };
+                        await user.sendEmailVerification(actionCodeSettings);
+                        localStorage.setItem('lastEmailVerificationSent', Date.now().toString());
                         if (window.hideLoadingToast) window.hideLoadingToast();
                         if (window.showSuccessToast) window.showSuccessToast('Email di verifica reinviata!');
                     } catch (error) {
