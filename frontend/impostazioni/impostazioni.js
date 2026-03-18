@@ -828,98 +828,59 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to show username change popup
     async function showUsernameChangePopup() {
         try {
-            // Get current username (remove @ if present)
             const currentUsername = userUsernameMain.textContent.replace('@', '');
             
+            const validateUsername = async (value) => {
+                // Non usiamo trim() per catturare spazi come errori
+                if (!value || value.length === 0) return 'ERRORE: L\'username non può essere vuoto.';
+                if (value === currentUsername) return 'L\'username è già lo stesso.';
+                if (value.length < 3) return 'ERRORE: Troppo corto (min 3 caratteri).';
+                if (value.length > 20) return 'ERRORE: Troppo lungo (max 20 caratteri).';
+                
+                // Regex: solo lettere, numeri, . e _ (NO SPAZI)
+                const validRegex = /^[a-zA-Z0-9._]+$/;
+                if (!validRegex.test(value)) {
+                    return 'ERRORE: Caratteri non ammessi (usa solo lettere, numeri, . e _). Niente spazi.';
+                }
+                
+                if (window.showLoadingToast) window.showLoadingToast('Verifica disponibilità...');
+                const isUnique = await isUsernameUnique(value);
+                if (window.hideLoadingToast) window.hideLoadingToast();
+                
+                if (!isUnique) return 'ERRORE: Questo username è già occupato.';
+                return null;
+            };
+
             const newUsername = await window.showPrompt(
-                'Modifica username (3-20 caratteri, solo lettere, numeri e _):',
+                'Modifica il tuo username:',
                 currentUsername,
                 'Modifica Username',
                 'SALVA',
-                'ANNULLA'
+                'ANNULLA',
+                validateUsername,
+                20
             );
 
-            if (newUsername === null) {
-                return; // User cancelled
-            }
+            if (newUsername === null) return;
 
-            const trimmedUsername = newUsername.trim();
-
-            // Validate username
-            if (trimmedUsername.length < 3) {
-                await window.showErrorToast('L\'username deve contenere almeno 3 caratteri.');
-                await showUsernameChangePopup();
-                return;
-            }
-
-            if (trimmedUsername.length > 20) {
-                await window.showErrorToast('L\'username non può superare i 20 caratteri.');
-                await showUsernameChangePopup();
-                return;
-            }
-
-            if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
-                await window.showErrorToast('L\'username può contenere solo lettere, numeri e underscore.');
-                await showUsernameChangePopup();
-                return;
-            }
-
-            // Check if username is the same as current
-            if (trimmedUsername === currentUsername) {
-                await window.showSuccessToast('L\'username è già lo stesso.');
-                return;
-            }
-
-            // Show loading state
-            if (window.showLoadingToast) {
-                window.showLoadingToast('Verifica disponibilità username...');
-            }
-
-            // Check if username is unique
-            const isUnique = await isUsernameUnique(trimmedUsername);
+            const trimmedUsername = newUsername; // Niente trim, validato sopra
             
-            // Hide loading state
-            if (window.hideLoadingToast) {
-                window.hideLoadingToast();
-            }
-
-            if (!isUnique) {
-                await window.showErrorToast('Questo username è già stato scelto da un altro utente. Scegline un altro.');
-                await showUsernameChangePopup();
-                return;
-            }
-
             // Update username in database
             const updated = await updateUserUsername(currentUser.uid, trimmedUsername);
             
             if (updated) {
-                // Update UI
                 userUsernameMain.textContent = `@${trimmedUsername}`;
-                
-                // Update avatar
-                if (userInitialMain) {
-                    loadUserAvatar(currentUser.email, trimmedUsername, userInitialMain, 90);
-                }
-                
-                // Update local cache
+                if (userInitialMain) loadUserAvatar(currentUser.email, trimmedUsername, userInitialMain, 90);
                 updateLocalUserProfile(currentUser.uid, { username: trimmedUsername });
-                
-                // Dispatch custom event to notify other components
-                window.dispatchEvent(new CustomEvent('usernameUpdated', { 
-                    detail: { userId: currentUser.uid, username: trimmedUsername } 
-                }));
-                
-                await window.showSuccessToast(`Username aggiornato con successo a @${trimmedUsername}!`);
+                window.dispatchEvent(new CustomEvent('usernameUpdated', { detail: { userId: currentUser.uid, username: trimmedUsername } }));
+                await window.showSuccessToast(`Username aggiornato a @${trimmedUsername}!`);
             } else {
-                await window.showErrorToast('Errore nell\'aggiornamento dell\'username. Riprova.');
+                await window.showErrorToast('Errore nell\'aggiornamento dell\'username.');
             }
-
         } catch (error) {
             console.error('Error changing username:', error);
-            if (window.hideLoadingToast) {
-                window.hideLoadingToast();
-            }
-            await window.showErrorToast('Errore durante il cambio username: ' + error.message);
+            if (window.hideLoadingToast) window.hideLoadingToast();
+            await window.showErrorToast('Errore durante il cambio username.');
         }
     }
 
