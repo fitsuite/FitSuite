@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const navbarLoginButton = navbarLoginBtn ? navbarLoginBtn.querySelector('.login-btn') : null;
     const verifyEmailOverlay = document.getElementById('verify-email-overlay');
     const userEmailDisplay = document.getElementById('user-email-display');
+    const closeVerifyOverlayBtn = document.getElementById('close-verify-overlay');
 
     console.log('Elements found:');
     console.log('registrationFormContainer:', registrationFormContainer);
@@ -52,9 +53,38 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('forgotPasswordContainer:', forgotPasswordContainer);
     console.log('verifyEmailOverlay:', verifyEmailOverlay);
     console.log('userEmailDisplay:', userEmailDisplay);
+    console.log('closeVerifyOverlayBtn:', closeVerifyOverlayBtn);
     console.log('showLoginFromForgotLink:', showLoginFromForgotLink);
     console.log('navbarLoginBtn:', navbarLoginBtn);
     console.log('navbarLoginButton:', navbarLoginButton);
+
+    // Gestione chiusura overlay verifica email
+    if (closeVerifyOverlayBtn && verifyEmailOverlay) {
+        closeVerifyOverlayBtn.addEventListener('click', async () => {
+            console.log('Chiusura overlay verifica email richiesta');
+            
+            // 1. Ferma i timer e i controlli automatici
+            stopAutoCheck();
+            if (resendInterval) {
+                clearInterval(resendInterval);
+                resendCooldown = 0;
+            }
+
+            // 2. Nascondi l'overlay
+            verifyEmailOverlay.style.display = 'none';
+
+            // 3. Imposta flag in sessionStorage per NON riaprirlo automaticamente in questa sessione su QUESTA pagina
+            sessionStorage.setItem('verifyOverlayClosedExplicitly', 'true');
+
+            // 4. Esegui il logout per permettere all'utente di registrarsi con un'altra mail
+            try {
+                await auth.signOut();
+                console.log('Logout effettuato con successo dopo chiusura overlay');
+            } catch (error) {
+                console.error('Errore durante il logout post-chiusura overlay:', error);
+            }
+        });
+    }
 
     // Initialize form display states
     if (registrationFormContainer && loginFormContainer && forgotPasswordContainer) {
@@ -286,6 +316,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registrationForm) {
         registrationForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            // Rimuovi il flag di chiusura esplicita se l'utente tenta una nuova registrazione
+            sessionStorage.removeItem('verifyOverlayClosedExplicitly');
+            
             const email = registrationForm.querySelector('#email').value;
             const password = registrationForm.querySelector('#password').value;
             const confirmPassword = registrationForm.querySelector('#confirm-password').value;
@@ -350,6 +383,9 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Login form found.');
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            // Rimuovi il flag di chiusura esplicita se l'utente tenta un nuovo login
+            sessionStorage.removeItem('verifyOverlayClosedExplicitly');
+            
             const email = loginForm.querySelector('#login-email').value;
             const password = loginForm.querySelector('#login-password').value;
 
@@ -925,6 +961,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Check if user is verified (System B)
                 if (!user.emailVerified) {
+                    // Se l'utente ha chiuso esplicitamente l'overlay in questa sessione, non mostrarlo
+                    if (sessionStorage.getItem('verifyOverlayClosedExplicitly') === 'true') {
+                        console.log('User not verified but overlay was explicitly closed, skipping automatic show');
+                        return;
+                    }
+
                     console.log('User not verified in onAuthStateChanged, showing overlay');
                     if (userEmailDisplay) userEmailDisplay.textContent = user.email;
                     if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';

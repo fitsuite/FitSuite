@@ -176,9 +176,9 @@
     <script src="./auth.js"></script>
     <script src="../components/popup/popup.js"></script>
 
-    <!-- Email Verification Overlay -->
     <div id="verify-email-overlay" class="auth-overlay" style="display: none;">
-        <div class="registration-form-container">
+        <div class="registration-form-container" style="position: relative;">
+            <button id="close-verify-overlay" class="close-overlay-btn" title="Chiudi e torna alla registrazione">&times;</button>
             <h2>Verifica la tua Email</h2>
             <p style="font-size: 14px; margin-bottom: 20px;">Abbiamo inviato un <b>link di verifica</b> a <span id="user-email-display" style="font-weight: bold; color: #ff6600;"></span>.</p>
             <p style="font-size: 13px; color: #ccc; margin-bottom: 25px;">Clicca sul link ricevuto per attivare il tuo account, poi torna qui e clicca sul pulsante sotto.</p>
