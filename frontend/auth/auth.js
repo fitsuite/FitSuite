@@ -29,6 +29,73 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Test Firebase Config Button Logic
+    const testFirebaseBtn = document.getElementById('test-firebase-btn');
+    if (testFirebaseBtn) {
+        testFirebaseBtn.addEventListener('click', async () => {
+            console.log('Testing Firebase configuration...');
+            testFirebaseBtn.disabled = true;
+            const originalText = testFirebaseBtn.innerText;
+            testFirebaseBtn.innerText = 'Testing...';
+            
+            let report = "--- REPORT TEST FIREBASE ---\n\n";
+            
+            try {
+                // 1. Test Auth Connection
+                console.log('Testing Auth connection...');
+                const authState = auth.currentUser;
+                report += `✅ Auth: Inizializzato\n`;
+                report += `👤 Stato: ${authState ? 'Loggato (' + authState.email + ')' : 'Non loggato'}\n\n`;
+
+                // 2. Test Google Connectivity (Fundamental for Google Login)
+                console.log('Testing Google Connectivity...');
+                try {
+                    const googleCheck = await fetch('https://accounts.google.com/generate_204', {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        cache: 'no-cache'
+                    });
+                    report += `✅ Google Services: Raggiungibili\n`;
+                } catch (e) {
+                    report += `❌ Google Services: NON RAGGIUNGIBILI (Possibile Ad-Block o Firewall)\n`;
+                }
+
+                // 3. Test Domain Authorization
+                const currentDomain = window.location.hostname;
+                report += `🌐 Dominio Attuale: ${currentDomain}\n`;
+                if (currentDomain.includes('github.io')) {
+                    report += `ℹ️ Nota: Su GitHub Pages assicurati che '${currentDomain}' sia tra i "Authorized Domains" in Firebase Console.\n`;
+                }
+                report += `\n`;
+
+                // 4. Test Firestore Connection and Rules
+                console.log('Testing Firestore connection and rules...');
+                try {
+                    // Try to read from 'users' collection with a dummy ID
+                    await db.collection('users').doc('test_connectivity').get();
+                    report += `✅ Firestore: Raggiungibile\n`;
+                } catch (fsError) {
+                    console.error('Firestore Test Error:', fsError);
+                    if (fsError.code === 'permission-denied') {
+                        report += `⚠️ Firestore Rules: ACCESSO NEGATO (Normale se non loggato)\n`;
+                        report += `   Codice: ${fsError.code}\n`;
+                    } else {
+                        report += `❌ Firestore: ERRORE (${fsError.message})\n`;
+                    }
+                }
+
+                alert(report + "\nLa configurazione di base è pronta per il test di Login Google.");
+
+            } catch (error) {
+                console.error('General Firebase Test Error:', error);
+                alert('❌ Errore Generale durante il test\n\n' + error.message);
+            } finally {
+                testFirebaseBtn.disabled = false;
+                testFirebaseBtn.innerText = originalText;
+            }
+        });
+    }
+
     // Form toggle functionality
     const registrationFormContainer = document.getElementById('registration-form-container');
     const loginFormContainer = document.getElementById('login-form-container');
