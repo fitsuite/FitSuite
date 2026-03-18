@@ -63,6 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Authentication
     auth.onAuthStateChanged(async (user) => {
         if (user) {
+            // Verifica email
+            if (!user.emailVerified) {
+                console.log('User not verified, redirecting to auth.html');
+                window.location.href = '../auth/auth.html';
+                return;
+            }
+
             currentUser = user;
             await loadAllData();
         } else {

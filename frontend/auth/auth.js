@@ -232,19 +232,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 const updatedUser = auth.currentUser;
                 console.log('Stato post-reload emailVerified:', updatedUser.emailVerified);
 
-                if (updatedUser.emailVerified) {
+                // Controllo Firestore per verifica manuale
+                const userDoc = await db.collection('users').doc(updatedUser.uid).get();
+                const isVerifiedInFirestore = userDoc.exists && userDoc.data().is_verified === 1;
+
+                if (updatedUser.emailVerified || isVerifiedInFirestore) {
                     stopAutoCheck();
                     displayMessage('verify-email-success-message', 'Email verificata con successo! Reindirizzamento...', false);
                     
-                    // Aggiorna is_verified anche su Firestore per coerenza
-                    try {
-                        await db.collection('users').doc(updatedUser.uid).update({
-                            is_verified: 1
-                        });
-                        console.log('Firestore aggiornato: is_verified = 1');
-                    } catch (fsError) {
-                        console.error('Errore aggiornamento Firestore:', fsError);
-                        // Procediamo comunque perché Auth è verificato
+                    // Se Firebase dice che è verificato ma Firestore no, aggiorna Firestore
+                    if (updatedUser.emailVerified && !isVerifiedInFirestore) {
+                        try {
+                            await db.collection('users').doc(updatedUser.uid).update({
+                                is_verified: 1
+                            });
+                            console.log('Firestore aggiornato: is_verified = 1');
+                        } catch (fsError) {
+                            console.error('Errore aggiornamento Firestore:', fsError);
+                        }
                     }
 
                     setTimeout(() => {
@@ -384,7 +389,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Controllo verifica email (System B)
-                if (!refreshedUser.emailVerified) {
+                const isVerifiedInFirestore = userDoc.exists && userDoc.data().is_verified === 1;
+                
+                if (!refreshedUser.emailVerified && !isVerifiedInFirestore) {
                     console.log('User email not verified, showing overlay');
                     if (userEmailDisplay) userEmailDisplay.textContent = refreshedUser.email;
                     if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';

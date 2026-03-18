@@ -134,6 +134,14 @@
             auth.onAuthStateChanged(user => {
                 if (!user) {
                     window.location.href = '../auth/auth.html';
+                    return;
+                }
+                
+                // Verifica email
+                if (!user.emailVerified) {
+                    console.log('User not verified, redirecting to auth.html');
+                    window.location.href = '../auth/auth.html';
+                    return;
                 }
                 // loadingScreen.style.display = 'none'; // Moved to schede_condivise.js after data load
             });

@@ -138,6 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     auth.onAuthStateChanged(async user => {
         if (user) {
+            // Verifica email
+            if (!user.emailVerified) {
+                console.log('User not verified, redirecting to auth.html');
+                window.location.href = '../auth/auth.html';
+                return;
+            }
+
             // Update lastUserId if different (should be rare)
             if (user.uid !== lastUid) {
                 localStorage.setItem('lastUserId', user.uid);

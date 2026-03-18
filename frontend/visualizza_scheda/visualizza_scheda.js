@@ -213,6 +213,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Authentication & Initialization ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
+            // Verifica email
+            if (!user.emailVerified) {
+                console.log('User not verified, redirecting to auth.html');
+                window.location.href = '../auth/auth.html';
+                return;
+            }
+
             // Check if user has username
             if (window.UsernameChecker) {
                 const hasValidUsername = await window.UsernameChecker.enforceUsernameRequirement();
