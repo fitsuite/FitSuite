@@ -23,7 +23,6 @@ const CookieManager = {
     // Definizioni delle categorie
     CATEGORIES: {
         NECESSARY: 'necessary',
-        PREFERENCES: 'preferences',
         ANALYTICS: 'analytics',
         MARKETING: 'marketing'
     },
@@ -38,14 +37,14 @@ const CookieManager = {
         const consent = this.getConsentState();
         
         // 3. Imposta lo stato di default (Basic Consent Mode)
-        // Se non c'è consenso, tutto è 'denied' tranne i necessari
+        // Se non c'è consenso, tutto è 'denied' tranne i necessari e le preferenze (tecnici)
         const defaultConsent = {
             'ad_storage': consent && consent.marketing ? 'granted' : 'denied',
             'ad_user_data': consent && consent.marketing ? 'granted' : 'denied',
             'ad_personalization': consent && consent.marketing ? 'granted' : 'denied',
             'analytics_storage': consent && consent.analytics ? 'granted' : 'denied',
-            'functionality_storage': consent && consent.preferences ? 'granted' : 'denied',
-            'personalization_storage': consent && consent.preferences ? 'granted' : 'denied',
+            'functionality_storage': 'granted', // Tecnico (Necessario)
+            'personalization_storage': 'granted', // Tecnico (Necessario)
             'security_storage': 'granted', // Sempre attivo
             'wait_for_update': 500
         };
@@ -74,8 +73,8 @@ const CookieManager = {
                 'ad_user_data': consent.marketing ? 'granted' : 'denied',
                 'ad_personalization': consent.marketing ? 'granted' : 'denied',
                 'analytics_storage': consent.analytics ? 'granted' : 'denied',
-                'functionality_storage': consent.preferences ? 'granted' : 'denied',
-                'personalization_storage': consent.preferences ? 'granted' : 'denied'
+                'functionality_storage': 'granted', // Tecnico (Necessario)
+                'personalization_storage': 'granted' // Tecnico (Necessario)
             });
         }
 
@@ -121,26 +120,8 @@ const CookieManager = {
             window.adsbygoogle.requestNonPersonalizedAds = 1;
         }
 
-        // 3. PULIZIA COOKIE E PREFERENZE (Sempre eseguita per sicurezza)
+        // 3. PULIZIA COOKIE (Sempre eseguita per sicurezza)
         this.cleanupCookies(consent);
-        
-        if (!consent.preferences) {
-            this.cleanupPreferences();
-        }
-    },
-
-    /**
-     * Pulisce le preferenze locali se il consenso viene revocato
-     */
-    cleanupPreferences: function() {
-        console.log('CookieManager: Pulizia preferenze locali...');
-        // Rimuovi il tema globale salvato in CacheManager se presente
-        if (window.CacheManager && window.CacheManager.GLOBAL_THEME_KEY) {
-            localStorage.removeItem(window.CacheManager.GLOBAL_THEME_KEY);
-        }
-        
-        // Se c'è un evento per resettare il tema ai valori predefiniti, lo lanciamo
-        window.dispatchEvent(new CustomEvent('cookiePreferencesRevoked'));
     },
 
     /**
@@ -300,7 +281,7 @@ const CookieManager = {
         
         const consent = {
             necessary: true,
-            preferences: !!preferences.preferences,
+            preferences: true, // Sempre attivo (Cookie Tecnico)
             analytics: !!preferences.analytics,
             marketing: !!preferences.marketing,
             timestamp: new Date().toISOString(),

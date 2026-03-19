@@ -9,16 +9,9 @@ export const COOKIE_CATEGORIES = {
     NECESSARY: {
         id: 'necessary',
         label: 'Tecnici (Necessari)',
-        description: 'Questi cookie sono indispensabili per il corretto funzionamento del sito e non possono essere disattivati. Includono la gestione della sessione, la sicurezza e il salvataggio delle tue preferenze sui cookie stessi.',
+        description: 'Questi cookie sono indispensabili per il corretto funzionamento del sito, la sicurezza e il salvataggio delle tue preferenze (come il tema o la lingua). Non possono essere disattivati.',
         required: true,
         default: true
-    },
-    PREFERENCES: {
-        id: 'preferences',
-        label: 'Preferenze',
-        description: 'Permettono al sito di ricordare le tue scelte (come la lingua o il tema) per offrirti un\'esperienza più personalizzata.',
-        required: false,
-        default: false
     },
     ANALYTICS: {
         id: 'analytics',

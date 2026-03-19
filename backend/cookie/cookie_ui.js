@@ -50,18 +50,10 @@ const CookieUI = {
                 <div class="cookie-option">
                     <div class="cookie-info">
                         <h4>Necessari</h4>
+                        <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Inclusi: sessione, sicurezza e preferenze (tema/lingua)</p>
                     </div>
                     <label class="switch">
                         <input type="checkbox" checked disabled>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="cookie-option">
-                    <div class="cookie-info">
-                        <h4>Preferenze</h4>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="cookie-pref-pref" ${consent.preferences ? 'checked' : ''}>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -138,7 +130,6 @@ const CookieUI = {
             const originalText = btn.innerHTML;
             
             window.CookieManager.saveConsent({
-                preferences: document.getElementById('cookie-pref-pref').checked,
                 analytics: document.getElementById('cookie-pref-stats').checked,
                 marketing: document.getElementById('cookie-pref-mark').checked
             });
