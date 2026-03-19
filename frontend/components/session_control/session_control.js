@@ -20,8 +20,18 @@
         `;
         document.body.appendChild(overlay);
 
-        document.getElementById('activate-session-btn').addEventListener('click', () => {
-            activateCurrentTab();
+        document.getElementById('activate-session-btn').addEventListener('click', function() {
+            const btn = this;
+            btn.classList.add('btn-loading');
+            const progress = document.createElement('div');
+            progress.className = 'btn-progress';
+            btn.appendChild(progress);
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-spinner"></i> ${originalText}`;
+            
+            setTimeout(() => {
+                activateCurrentTab();
+            }, 800);
         });
     }
 

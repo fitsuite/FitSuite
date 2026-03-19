@@ -7,8 +7,12 @@
                 <p id="customPopupMessage" class="custom-popup-message"></p>
                 <input type="text" id="customPopupInput" class="custom-popup-input" style="display:none;">
                 <div class="custom-popup-actions">
-                    <button id="customPopupCancel" class="custom-popup-btn secondary" style="display:none;">Annulla</button>
-                    <button id="customPopupOk" class="custom-popup-btn primary">OK</button>
+                    <button id="customPopupCancel" class="custom-popup-btn secondary" style="display:none;">
+                        <span>Annulla</span>
+                    </button>
+                    <button id="customPopupOk" class="custom-popup-btn primary">
+                        <span>OK</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -46,17 +50,37 @@
                 }
             }
 
-            okBtn.addEventListener('click', () => {
-                if (input.style.display !== 'none') {
-                    closePopup(input.value);
-                } else {
-                    closePopup(true);
-                }
+            // Add progress bars to buttons
+            [okBtn, cancelBtn].forEach(btn => {
+                const progress = document.createElement('div');
+                progress.className = 'btn-progress';
+                btn.appendChild(progress);
             });
 
-            cancelBtn.addEventListener('click', () => {
-                closePopup(null); // Or false for confirm
+            const handleAction = async (btn, result) => {
+                const originalContent = btn.innerHTML;
+                btn.classList.add('btn-loading');
+                
+                // Add progress bar if not present (though style.css handles the animation)
+                if (!btn.querySelector('.btn-progress')) {
+                    const progress = document.createElement('div');
+                    progress.className = 'btn-progress';
+                    btn.appendChild(progress);
+                }
+                
+                btn.innerHTML = `<i class="fas fa-spinner"></i> ${originalContent}`;
+                
+                // Allow the animation to show
+                await new Promise(resolve => setTimeout(resolve, 800));
+                closePopup(result);
+            };
+
+            okBtn.addEventListener('click', () => {
+                const result = input.style.display !== 'none' ? input.value : true;
+                handleAction(okBtn, result);
             });
+
+            cancelBtn.addEventListener('click', () => handleAction(cancelBtn, false));
             
             // Allow Enter key in input
             input.addEventListener('keypress', (e) => {

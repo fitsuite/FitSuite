@@ -133,13 +133,30 @@ const CookieUI = {
         });
 
         // Salva personalizzati
-        document.getElementById('cookie-save-custom').addEventListener('click', () => {
+        document.getElementById('cookie-save-custom').addEventListener('click', function() {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            
             window.CookieManager.saveConsent({
                 preferences: document.getElementById('cookie-pref-pref').checked,
                 analytics: document.getElementById('cookie-pref-stats').checked,
                 marketing: document.getElementById('cookie-pref-mark').checked
             });
-            self.removeBanner();
+            
+            // Feedback visivo istantaneo
+            btn.innerHTML = '<i class="fas fa-check"></i> Salvato!';
+            btn.style.backgroundColor = '#4ade80';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                self.removeBanner();
+                // Ripristina per la prossima volta che si apre
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.backgroundColor = '';
+                    btn.disabled = false;
+                }, 500);
+            }, 600);
         });
     },
 
@@ -178,15 +195,19 @@ const CookieUI = {
     }
 };
 
-// Inizializzazione
-document.addEventListener('DOMContentLoaded', () => {
-    // Carica dinamicamente il CSS se non è già presente
-    if (!document.querySelector('link[href*="cookie_ui.css"]')) {
+// Inizializzazione - Gestita ora da CookieManager per evitare doppie chiamate
+window.CookieUI = CookieUI;
+
+// Carica il CSS se necessario (può essere fatto indipendentemente)
+(function() {
+    if (typeof document !== 'undefined' && !document.querySelector('link[href*="cookie_ui.css"]')) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = '/backend/cookie/cookie_ui.css';
+        // Gestione path per ambiente locale vs produzione
+        if (window.location.pathname.includes('/FitSuite/')) {
+            link.href = '/FitSuite/backend/cookie/cookie_ui.css';
+        }
         document.head.appendChild(link);
     }
-    
-    CookieUI.init();
-});
+})();

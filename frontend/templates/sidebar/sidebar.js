@@ -203,6 +203,12 @@ document.addEventListener('DOMContentLoaded', () => {
         checkSidebar();
     }
 
+    // React to cookie preference changes
+    window.addEventListener('cookiePreferencesRevoked', () => {
+        console.log('Sidebar: Preferenze cookie revocate, reset tema...');
+        setPrimaryColor('Arancione'); // Reset to default orange
+    });
+
     // Initialize mobile sidebar when DOM is ready
     waitForSidebar(initMobileSidebar);
 

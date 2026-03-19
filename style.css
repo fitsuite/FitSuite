@@ -1352,6 +1352,37 @@ input:checked + .slider:before {
     100% { transform: scale(1); }
 }
 
+/* Loading State for Buttons */
+.btn-loading {
+    position: relative !important;
+    pointer-events: none !important;
+    opacity: 0.8 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    overflow: hidden !important;
+}
+
+.btn-loading .btn-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.4);
+    width: 100%;
+    animation: btn-progress-loading 2s cubic-bezier(0.1, 0, 0.1, 1) forwards;
+}
+
+@keyframes btn-progress-loading {
+    from { width: 0%; }
+    to { width: 100%; }
+}
+
+.btn-loading i.fa-spinner {
+    animation: fa-spin 1s linear infinite;
+}
+
 .popular .pricing-btn:hover {
     background: #e65c00;
     transform: scale(1.05) !important;

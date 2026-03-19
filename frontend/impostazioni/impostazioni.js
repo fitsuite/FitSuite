@@ -1022,13 +1022,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener('click', async () => {
             try {
+                // Add loading effect
+                confirmDeleteBtn.classList.add('btn-loading');
+                const progress = document.createElement('div');
+                progress.className = 'btn-progress';
+                confirmDeleteBtn.appendChild(progress);
+                const originalText = confirmDeleteBtn.innerHTML;
+                confirmDeleteBtn.innerHTML = `<i class="fas fa-spinner"></i> ${originalText}`;
+
                 const user = auth.currentUser;
                 const uid = user.uid;
 
                 // 1. Delete Firestore Data
                 await db.collection('users').doc(uid).delete();
-                
-                // Note: You might want to delete routines/subcollections here too
                 
                 // 2. Delete Auth Account
                 await user.delete();
@@ -1036,6 +1042,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Account deleted successfully");
                 window.location.href = '../auth/auth.html';
             } catch (error) {
+                // Reset loading state if error
+                confirmDeleteBtn.classList.remove('btn-loading');
+                const prog = confirmDeleteBtn.querySelector('.btn-progress');
+                if (prog) prog.remove();
+                confirmDeleteBtn.innerHTML = "ELIMINA ACCOUNT";
+
                 if (error.code === 'auth/requires-recent-login') {
                     if (window.showWarningToast) {
                         window.showWarningToast("Per eliminare l'account è necessario aver effettuato l'accesso di recente. Effettua il logout e rientra prima di riprovare.");
