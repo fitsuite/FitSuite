@@ -649,6 +649,60 @@ const CacheManager = {
         return cacheEntry.data;
     },
 
+    // Clear all cache related to user and application
+    clearAllCache: function() {
+        console.log('Clearing all local storage cache...');
+        const keysToRemove = [];
+        
+        // Scan for all relevant keys
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key) continue;
+            
+            // Define all prefixes that should be cleared on logout
+            const prefixes = [
+                this.PREFS_KEY_PREFIX,
+                this.ROUTINES_KEY_PREFIX,
+                this.SHARED_ROUTINES_KEY_PREFIX,
+                this.USER_INFO_KEY_PREFIX,
+                this.LAST_REFRESH_PREFIX,
+                this.LAST_SHARED_REFRESH_PREFIX,
+                this.LAST_FETCH_PREFIX,
+                'cached_', // Generic data cache
+                'userProfile_', // Potential profile cache
+                'routines_' // Old format cache
+            ];
+
+            const exactKeys = [
+                this.GLOBAL_THEME_KEY,
+                'lastUserId',
+                'fitsuite_sessionId'
+            ];
+
+            const shouldRemove = prefixes.some(p => key.startsWith(p)) || exactKeys.includes(key);
+            
+            if (shouldRemove) {
+                keysToRemove.push(key);
+            }
+        }
+        
+        // Remove found keys
+        keysToRemove.forEach(key => {
+            try {
+                localStorage.removeItem(key);
+                this._lruTracker.delete(key);
+            } catch (e) {
+                console.warn('Failed to remove key during cache clear:', key, e);
+            }
+        });
+        
+        // Clear in-memory state
+        this._loadingStates.clear();
+        
+        console.log(`Successfully cleared ${keysToRemove.length} cache items`);
+        return true;
+    },
+
     // Cross-tab synchronization
     setupCrossTabSync: function() {
         window.addEventListener('storage', (e) => {
