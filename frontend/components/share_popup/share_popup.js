@@ -134,6 +134,12 @@ class SharePopup {
     }
 
     async show(routineId, routine) {
+        // Check plan limits for sharing
+        if (window.PlanManager && !window.PlanManager.canShare()) {
+            window.PlanManager.showProPopup("Solo gli utenti PT possono condividere le proprie schede con altri utenti. Passa al piano PT per sbloccare questa funzione!");
+            return;
+        }
+
         this.currentRoutineId = routineId;
         this.currentRoutine = routine;
 

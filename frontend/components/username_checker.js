@@ -143,6 +143,10 @@
                     startDate: firebase.firestore.FieldValue.serverTimestamp(),
                     endDate: null, // Null per free
                     ptId: null // Opzionale: ID del Personal Trainer se il piano è "pt"
+                },
+                ai_usage: {
+                    count: 0,
+                    lastReset: null
                 }
             }, { merge: true });
             
@@ -163,6 +167,10 @@
                             startDate: new Date().toISOString(), // Use local time for cache
                             endDate: null,
                             ptId: null
+                        };
+                        profile.ai_usage = {
+                            count: 0,
+                            lastReset: null
                         };
                         localStorage.setItem(`userProfile_${userId}`, JSON.stringify(profile));
                     }

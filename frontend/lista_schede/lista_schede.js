@@ -158,6 +158,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     waitForSidebar()
                 ]);
                 
+                // Apply plan visibility
+                if (window.PlanManager) {
+                    window.PlanManager.applyAdsVisibility();
+                }
+                
                 window.LoadingManager.nextStep('Preparazione interfaccia completata');
             } catch (error) {
                 console.error("Error during initialization:", error);
