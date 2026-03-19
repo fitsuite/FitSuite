@@ -3,6 +3,8 @@ const {setGlobalOptions} = require("firebase-functions");
 const {onRequest} = require("firebase-functions/https");
 const logger = require("firebase-functions/logger");
 const nodemailer = require("nodemailer");
+const { getFirestore } = require("firebase-admin/firestore");
+const stripeLib = require("stripe");
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -33,6 +35,75 @@ const { generateWorkoutRoutine, testGeminiConnection } = require("./generateRout
 // Esporta le funzioni
 exports.generateWorkoutRoutine = generateWorkoutRoutine;
 exports.testGeminiConnection = testGeminiConnection;
+
+/**
+ * Cloud Function: createStripeCheckoutSession
+ * 
+ * Crea una sessione di checkout Stripe recuperando la chiave dal database.
+ */
+exports.createStripeCheckoutSession = onCall(async (request) => {
+    const { planId } = request.data;
+    const auth = request.auth;
+
+    if (!auth) {
+        throw new Error("Devi essere autenticato per procedere al pagamento.");
+    }
+
+    if (!planId || !['pro', 'pt'].includes(planId)) {
+        throw new Error("Piano non valido.");
+    }
+
+    try {
+        const db = getFirestore();
+        // Recupera la chiave segreta dal database come richiesto dall'utente
+        const configDoc = await db.collection('config').doc('stripe').get();
+        
+        if (!configDoc.exists) {
+            throw new Error("Configurazione Stripe non trovata nel database.");
+        }
+
+        const stripeSecretKey = configDoc.data().STRIPE_SECRET_KEY;
+        if (!stripeSecretKey) {
+            throw new Error("Chiave STRIPE_SECRET_KEY mancante nel database.");
+        }
+
+        const stripe = stripeLib(stripeSecretKey);
+
+        // Definiamo i prezzi (ID dei prodotti Stripe in produzione dovrebbero essere nel DB)
+        // Per ora simuliamo con i prezzi fissi o usiamo i nomi dei piani
+        const prices = {
+            'pro': { amount: 499, name: 'Piano PRO' }, // 4.99€
+            'pt': { amount: 999, name: 'Piano PT' }    // 9.99€
+        };
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'eur',
+                    product_data: {
+                        name: prices[planId].name,
+                    },
+                    unit_amount: prices[planId].amount,
+                },
+                quantity: 1,
+            }],
+            mode: 'payment',
+            success_url: `${request.data.origin}/frontend/scelta_piano/scelta_piano.html?payment_success=true&plan=${planId}`,
+            cancel_url: `${request.data.origin}/frontend/scelta_piano/scelta_piano.html`,
+            client_reference_id: auth.uid,
+            metadata: {
+                planId: planId,
+                userId: auth.uid
+            }
+        });
+
+        return { url: session.url };
+    } catch (error) {
+        logger.error("Errore creazione sessione Stripe:", error);
+        throw new Error("Impossibile avviare il pagamento. Riprova più tardi.");
+    }
+});
 
 // Funzione per inviare l'email di verifica
 exports.sendVerificationEmail = onCall(async (request) => {
