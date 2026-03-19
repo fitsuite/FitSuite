@@ -1289,7 +1289,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (changePlanBtn) {
-        changePlanBtn.addEventListener('click', openSubscriptionEditModal);
+        changePlanBtn.addEventListener('click', () => {
+            if (window.showPremiumPopup) {
+                window.showPremiumPopup();
+            } else {
+                openSubscriptionEditModal();
+            }
+        });
     }
 
     if (editPaymentMethodBtn) {

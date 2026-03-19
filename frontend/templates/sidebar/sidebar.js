@@ -69,6 +69,31 @@ document.addEventListener('DOMContentLoaded', () => {
     window.loadUserAvatar = loadUserAvatar;
     window.setPrimaryColor = setPrimaryColor;
 
+    // Load Premium Popup Pro globally
+    function loadPremiumPopup() {
+        if (!document.getElementById('premium-popup-script')) {
+            const script = document.createElement('script');
+            script.id = 'premium-popup-script';
+            
+            // Get the base path for frontend
+            // We look for where sidebar.js is located and use that as reference
+            const sidebarScript = document.querySelector('script[src*="sidebar.js"]');
+            let pathPrefix = '../components/popup/popup_pro/'; // Default fallback
+            
+            if (sidebarScript) {
+                const src = sidebarScript.getAttribute('src');
+                // If src is "../templates/sidebar/sidebar.js", we need to go up 2 levels to get to frontend/
+                // then down to components/popup/popup_pro/
+                const base = src.replace('templates/sidebar/sidebar.js', '');
+                pathPrefix = base + 'components/popup/popup_pro/';
+            }
+            
+            script.src = pathPrefix + 'popup_pro.js';
+            document.head.appendChild(script);
+        }
+    }
+    loadPremiumPopup();
+
     // Listen for username updates
     window.addEventListener('usernameUpdated', (event) => {
         const { userId, username } = event.detail;
