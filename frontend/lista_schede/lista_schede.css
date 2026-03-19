@@ -264,23 +264,36 @@ body.list-body {
 
 .col-sessions, .col-date {
     color: var(--text-gray);
-    font-size: 14px;
+    font-size: 13px; /* Ridotto da 14px */
     text-align: center;
     display: flex;
+    flex-direction: column; /* Impostato per impilare numero e testo */
     justify-content: center;
     align-items: center;
+    line-height: 1.2;
 }
 
 .routine-list-row .col-sessions {
     color: white;
-    font-size: 16px;
     font-weight: 500;
+}
+
+.sessions-number {
+    font-size: 15px; /* Ridotto da 16px */
+    font-weight: 600;
+}
+
+.sessions-text {
+    font-size: 11px;
+    color: var(--text-gray);
+    text-transform: lowercase;
 }
 
 .col-actions {
     display: flex;
     justify-content: center;
     align-items: center;
+    min-width: 100px;
 }
 
 /* Status Colors for Rows */
@@ -514,9 +527,9 @@ color: white;
 
     .list-header, .routine-list-row {
         /* Adjusted: Mostra tutte le colonne come in desktop */
-        grid-template-columns: 44px 1.5fr 0.8fr 1.2fr 100px;
-        gap: 8px;
-        padding: 10px;
+        grid-template-columns: 44px 1.2fr 0.8fr 1.2fr 100px;
+        gap: 5px;
+        padding: 8px 10px;
     }
 
     .col-name {

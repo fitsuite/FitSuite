@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
             routineItem.className = `routine-list-row ${statusClass}`;
             
             // Format Data
-            const seduteText = `${routine.sedute || 0} sedute`;
+            const seduteCount = routine.sedute || 0;
             
             let periodText = '-';
             if (routine.startDate && routine.endDate) {
@@ -404,7 +404,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${routine.isAI ? '<span class="ai-badge" title="Creata con AI"><i class="fas fa-robot"></i></span>' : ''}
                 </div>
                 <div class="col-sessions">
-                    <span>${seduteText}</span>
+                    <span class="sessions-number">${seduteCount}</span>
+                    <span class="sessions-text">sedute</span>
                 </div>
                 <div class="col-date">
                     <span>${periodText}</span>
