@@ -187,32 +187,41 @@
                     <h2 class="card-title">Abbonamento</h2>
                     <div class="card-row">
                         <div class="row-info">
-                            <i class="fas fa-calendar-alt row-icon"></i>
+                            <i class="fas fa-id-card row-icon"></i>
                             <div>
-                                <span class="row-label">Scadenza Abbonamento</span>
-                                <span class="row-value" id="subscription-expiry">24/12/2024</span>
+                                <span class="row-label">Piano Attuale</span>
+                                <span class="row-value" id="subscription-plan">Free</span>
                             </div>
                         </div>
-                        <button class="card-btn card-btn-edit" id="edit-subscription-expiry">Modifica</button>
+                        <button class="card-btn primary" id="change-plan-btn">Cambia Piano</button>
+                    </div>
+                    <div class="card-row">
+                        <div class="row-info">
+                            <i class="fas fa-check-circle row-icon"></i>
+                            <div>
+                                <span class="row-label">Stato</span>
+                                <span class="row-value" id="subscription-status">Attivo</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-row">
+                        <div class="row-info">
+                            <i class="fas fa-calendar-alt row-icon"></i>
+                            <div>
+                                <span class="row-label">Scadenza</span>
+                                <span class="row-value" id="subscription-expiry">Senza scadenza</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-row">
                         <div class="row-info">
                             <i class="fas fa-credit-card row-icon"></i>
                             <div>
                                 <span class="row-label">Metodo di Pagamento</span>
-                                <span class="row-value" id="payment-method">**** **** **** 1234</span>
+                                <span class="row-value" id="payment-method">Non collegato</span>
                             </div>
                         </div>
                         <button class="card-btn card-btn-edit" id="edit-payment-method">Modifica</button>
-                    </div>
-                    <div class="card-row">
-                        <div class="row-info">
-                            <i class="fas fa-history row-icon"></i>
-                            <div>
-                                <span class="row-label">Storico Fatturazione</span>
-                            </div>
-                        </div>
-                        <button class="card-btn primary" id="view-billing-history-btn">Visualizza</button>
                     </div>
                     <div class="card-footer-action">
                         <button class="delete-account-btn-styled" id="cancel-subscription-btn">Annulla Abbonamento</button>
@@ -272,43 +281,60 @@
     <!-- Modal di modifica abbonamento -->
     <div id="subscription-edit-modal" class="modal">
         <div class="modal-content">
-            <h3>Modifica Abbonamento</h3>
+            <h3>Gestione Abbonamento</h3>
             <div class="modal-form-group">
-                <label for="subscription-type">Tipo di Abbonamento:</label>
+                <label for="subscription-type">Piano Abbonamento:</label>
                 <select id="subscription-type" class="modal-input">
-                    <option value="Nessuno">Nessuno</option>
-                    <option value="Base">Base</option>
-                    <option value="Premium">Premium</option>
-                    <option value="VIP">VIP</option>
+                    <option value="free">Free</option>
+                    <option value="pro">Pro</option>
+                    <option value="pt">Personal Trainer</option>
                 </select>
             </div>
             <div class="modal-form-group">
-                <label for="subscription-start-date">Data Inizio:</label>
-                <input type="date" id="subscription-start-date" class="modal-input">
+                <label for="subscription-status-input">Stato Abbonamento:</label>
+                <select id="subscription-status-input" class="modal-input">
+                    <option value="active">Attivo</option>
+                    <option value="past_due">In ritardo di pagamento</option>
+                    <option value="canceled">Annullato</option>
+                </select>
             </div>
-            <div class="modal-form-group">
+            <div class="modal-form-group" id="end-date-group">
                 <label for="subscription-end-date">Data Scadenza:</label>
                 <input type="date" id="subscription-end-date" class="modal-input">
             </div>
+            <div class="modal-actions">
+                <button id="cancel-subscription-edit" class="modal-btn-secondary">Chiudi</button>
+                <button id="save-subscription-changes" class="modal-btn-primary">Aggiorna Piano (Admin)</button>
+            </div>
+            <p class="modal-note" style="font-size: 0.8rem; color: #888; margin-top: 10px;">Nota: In produzione, l'abbonamento sarà gestito tramite Stripe.</p>
+        </div>
+    </div>
+
+    <!-- Modal di modifica metodo di pagamento -->
+    <div id="payment-edit-modal" class="modal">
+        <div class="modal-content">
+            <h3>Gestione Metodo di Pagamento</h3>
             <div class="modal-form-group">
-                <label for="payment-method-input">Metodo di Pagamento:</label>
-                <input type="text" id="payment-method-input" class="modal-input" placeholder="Es. **** **** **** 1234">
+                <label for="card-holder-name">Titolare della Carta:</label>
+                <input type="text" id="card-holder-name" class="modal-input" placeholder="Nome Cognome">
             </div>
             <div class="modal-form-group">
-                <label for="auto-renew-input">Rinnovo Automatico:</label>
-                <input type="checkbox" id="auto-renew-input" class="modal-checkbox">
+                <label for="card-number">Numero Carta:</label>
+                <input type="text" id="card-number" class="modal-input" placeholder="**** **** **** 1234">
             </div>
-            <div class="modal-form-group">
-                <label for="last-payment-date-input">Ultimo Pagamento:</label>
-                <input type="date" id="last-payment-date-input" class="modal-input">
-            </div>
-            <div class="modal-form-group">
-                <label for="next-payment-date-input">Prossimo Pagamento:</label>
-                <input type="date" id="next-payment-date-input" class="modal-input">
+            <div class="modal-form-row" style="display: flex; gap: 10px;">
+                <div class="modal-form-group" style="flex: 1;">
+                    <label for="card-expiry">Scadenza:</label>
+                    <input type="text" id="card-expiry" class="modal-input" placeholder="MM/AA">
+                </div>
+                <div class="modal-form-group" style="flex: 1;">
+                    <label for="card-cvc">CVC:</label>
+                    <input type="password" id="card-cvc" class="modal-input" placeholder="***" maxlength="3">
+                </div>
             </div>
             <div class="modal-actions">
-                <button id="cancel-subscription-edit" class="modal-btn-secondary">Annulla</button>
-                <button id="save-subscription-changes" class="modal-btn-primary">Salva</button>
+                <button id="cancel-payment-edit" class="modal-btn-secondary">Chiudi</button>
+                <button id="save-payment-changes" class="modal-btn-primary">Aggiorna Metodo</button>
             </div>
         </div>
     </div>

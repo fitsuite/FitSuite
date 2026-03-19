@@ -121,8 +121,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const editUsernameBtn = document.getElementById('edit-username-btn');
 
     // DOM Elements - Subscription
+    const subscriptionPlan = document.getElementById('subscription-plan');
+    const subscriptionStatus = document.getElementById('subscription-status');
     const subscriptionExpiry = document.getElementById('subscription-expiry');
     const paymentMethod = document.getElementById('payment-method');
+    const changePlanBtn = document.getElementById('change-plan-btn');
+    const editPaymentMethodBtn = document.getElementById('edit-payment-method');
+    const cancelSubscriptionBtn = document.getElementById('cancel-subscription-btn');
 
     // DOM Elements - Preferences
     const currentColorLabel = document.getElementById('current-color');
@@ -188,16 +193,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const billingHistoryModal = document.getElementById('billing-history-modal');
     const closeBillingHistoryModalBtn = document.getElementById('close-billing-history-modal');
 
-    // DOM Elements - SubscriptionDOM Elements - Subscription
-    const editSubscriptionExpiryBtn = document.getElementById('edit-subscription-expiry');
-    const editPaymentMethodBtn = document.getElementById('edit-payment-method');
-    const cancelSubscriptionBtn = document.getElementById('cancel-subscription-btn');
+    // DOM Elements - Subscription Modals
     const subscriptionEditModal = document.getElementById('subscription-edit-modal');
     const cancelSubscriptionEditBtn = document.getElementById('cancel-subscription-edit');
     const saveSubscriptionChangesBtn = document.getElementById('save-subscription-changes');
+    
+    const paymentEditModal = document.getElementById('payment-edit-modal');
+    const cancelPaymentEditBtn = document.getElementById('cancel-payment-edit');
+    const savePaymentChangesBtn = document.getElementById('save-payment-changes');
+
     const subscriptionTypeInput = document.getElementById('subscription-type');
-    const subscriptionStartDateInput = document.getElementById('subscription-start-date');
     const subscriptionEndDateInput = document.getElementById('subscription-end-date');
+    const cardHolderInput = document.getElementById('card-holder-name');
+    const cardNumberInput = document.getElementById('card-number');
+    const cardExpiryInput = document.getElementById('card-expiry');
+    const cardCvcInput = document.getElementById('card-cvc');
     const paymentMethodInput = document.getElementById('payment-method-input');
     const autoRenewInput = document.getElementById('auto-renew-input');
     const lastPaymentDateInput = document.getElementById('last-payment-date-input');
@@ -408,70 +418,72 @@ document.addEventListener('DOMContentLoaded', () => {
                 return new Date(dateVal); // String/Number
             };
 
-            const endDate = formatDate(data.subscription.endDate);
+            // Update Plan
+            if (subscriptionPlan) {
+                const planDisplay = {
+                    'free': 'Free',
+                    'pro': 'Pro',
+                    'pt': 'Personal Trainer'
+                };
+                subscriptionPlan.textContent = planDisplay[data.subscription.plan] || (data.subscription.plan ? data.subscription.plan.charAt(0).toUpperCase() + data.subscription.plan.slice(1) : "Free");
+            }
+
+            // Update Status
+            if (subscriptionStatus) {
+                const statusDisplay = {
+                    'active': 'Attivo',
+                    'past_due': 'Pagamento Scaduto',
+                    'canceled': 'Annullato'
+                };
+                subscriptionStatus.textContent = statusDisplay[data.subscription.status] || "Inattivo";
+                
+                // Color status if needed
+                if (data.subscription.status === 'active') {
+                    subscriptionStatus.style.color = '#4CAF50'; // Green
+                } else if (data.subscription.status === 'past_due') {
+                    subscriptionStatus.style.color = '#F44336'; // Red
+                } else {
+                    subscriptionStatus.style.color = ''; // Default
+                }
+            }
+
+            // Update Expiry
             if (subscriptionExpiry) {
-                subscriptionExpiry.textContent = endDate ? endDate.toLocaleDateString() : "Nessun abbonamento attivo";
-            } else {
-                console.warn('Elemento con ID "subscription-expiry" non trovato nell\'HTML');
+                if (data.subscription.plan === 'free') {
+                    subscriptionExpiry.textContent = "Senza scadenza";
+                } else {
+                    const endDate = formatDate(data.subscription.endDate);
+                    subscriptionExpiry.textContent = endDate ? endDate.toLocaleDateString() : "Non disponibile";
+                }
             }
             
+            // Update Payment Method
             if (paymentMethod) {
-                paymentMethod.textContent = data.subscription.paymentMethod || "Non impostato";
-            } else {
-                console.warn('Elemento con ID "payment-method" non trovato nell\'HTML');
+                paymentMethod.textContent = data.subscription.stripeCustomerId ? "Collegato (Stripe)" : "Non collegato";
             }
-            
-            // Initialize new subscription fields
-            if (autoRenewInput) {
-                autoRenewInput.checked = data.subscription.autoRenew || false;
-            } else {
-                console.warn('Elemento con ID "auto-renew-input" non trovato nell\'HTML');
+
+            // Show/Hide Payment Method Edit button based on plan and presence of Stripe ID
+            if (editPaymentMethodBtn) {
+                // If plan is free AND no stripe customer ID, hide edit button
+                if (data.subscription.plan === 'free' && !data.subscription.stripeCustomerId) {
+                    editPaymentMethodBtn.style.display = 'none';
+                } else {
+                    editPaymentMethodBtn.style.display = 'block';
+                }
             }
-            
-            const lastPayment = formatDate(data.subscription.lastPaymentDate);
-            if (lastPaymentDateInput) {
-                lastPaymentDateInput.value = lastPayment ? lastPayment.toISOString().split('T')[0] : '';
-            } else {
-                console.warn('Elemento con ID "last-payment-date-input" non trovato nell\'HTML');
-            }
-            
-            const nextPayment = formatDate(data.subscription.nextPaymentDate);
-            if (nextPaymentDateInput) {
-                nextPaymentDateInput.value = nextPayment ? nextPayment.toISOString().split('T')[0] : '';
-            } else {
-                console.warn('Elemento con ID "next-payment-date-input" non trovato nell\'HTML');
+
+            // Show/Hide Cancel button based on plan
+            if (cancelSubscriptionBtn) {
+                cancelSubscriptionBtn.style.display = (data.subscription.plan === 'free') ? 'none' : 'block';
             }
         } else {
-            if (subscriptionExpiry) {
-                subscriptionExpiry.textContent = "Nessun abbonamento attivo";
-            } else {
-                console.warn('Elemento con ID "subscription-expiry" non trovato nell\'HTML');
-            }
-            
-            if (paymentMethod) {
-                paymentMethod.textContent = "Non impostato";
-            } else {
-                console.warn('Elemento con ID "payment-method" non trovato nell\'HTML');
-            }
-            
-            // Reset new subscription fields
-            if (autoRenewInput) {
-                autoRenewInput.checked = false;
-            } else {
-                console.warn('Elemento con ID "auto-renew-input" non trovato nell\'HTML');
-            }
-            
-            if (lastPaymentDateInput) {
-                lastPaymentDateInput.value = '';
-            } else {
-                console.warn('Elemento con ID "last-payment-date-input" non trovato nell\'HTML');
-            }
-            
-            if (nextPaymentDateInput) {
-                nextPaymentDateInput.value = '';
-            } else {
-                console.warn('Elemento con ID "next-payment-date-input" non trovato nell\'HTML');
-            }
+            // Default Free state if no subscription object
+            if (subscriptionPlan) subscriptionPlan.textContent = "Free";
+            if (subscriptionStatus) subscriptionStatus.textContent = "Inattivo";
+            if (subscriptionExpiry) subscriptionExpiry.textContent = "Senza scadenza";
+            if (paymentMethod) paymentMethod.textContent = "Non collegato";
+            if (editPaymentMethodBtn) editPaymentMethodBtn.style.display = 'none';
+            if (cancelSubscriptionBtn) cancelSubscriptionBtn.style.display = 'none';
         }
         
         // Update Preferences
@@ -1226,21 +1238,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         try {
             const doc = await db.collection('users').doc(currentUser.uid).get();
-            if (doc.exists && doc.data().subscription) {
-                const subData = doc.data().subscription;
-                subscriptionTypeInput.value = subData.type || "Nessuno";
-                subscriptionStartDateInput.value = subData.startDate ? new Date(subData.startDate.toDate()).toISOString().split('T')[0] : '';
-                subscriptionEndDateInput.value = subData.endDate ? new Date(subData.endDate.toDate()).toISOString().split('T')[0] : '';
-                paymentMethodInput.value = subData.paymentMethod || "";
-                autoRenewInput.checked = subData.autoRenew || false;
-                lastPaymentDateInput.value = subData.lastPaymentDate ? new Date(subData.lastPaymentDate.toDate()).toISOString().split('T')[0] : '';
-                nextPaymentDateInput.value = subData.nextPaymentDate ? new Date(subData.nextPaymentDate.toDate()).toISOString().split('T')[0] : '';
+            const subData = (doc.exists && doc.data().subscription) ? doc.data().subscription : null;
+            
+            if (subData) {
+                if (subscriptionTypeInput) subscriptionTypeInput.value = subData.plan || "free";
+                const statusInput = document.getElementById('subscription-status-input');
+                if (statusInput) statusInput.value = subData.status || "active";
+                
+                if (subscriptionEndDateInput) {
+                    const endDate = subData.endDate ? (subData.endDate.toDate ? subData.endDate.toDate() : new Date(subData.endDate)) : null;
+                    subscriptionEndDateInput.value = endDate ? endDate.toISOString().split('T')[0] : '';
+                }
             } else {
-                // Set default values if no subscription data exists
-                subscriptionTypeInput.value = "Nessuno";
-                subscriptionStartDateInput.value = '';
-                subscriptionEndDateInput.value = '';
-                paymentMethodInput.value = '';
+                if (subscriptionTypeInput) subscriptionTypeInput.value = "free";
             }
             subscriptionEditModal.classList.add('active');
         } catch (error) {
@@ -1251,20 +1261,64 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    if (editSubscriptionExpiryBtn) {
-        editSubscriptionExpiryBtn.addEventListener('click', openSubscriptionEditModal);
-    } else {
-        console.warn('Elemento con ID "edit-subscription-expiry" non trovato nell\'HTML');
+    // Payment Edit Modal Logic
+    const openPaymentEditModal = async () => {
+        if (!currentUser) {
+            if (window.showErrorToast) {
+                window.showErrorToast("Devi essere loggato per modificare il metodo di pagamento.");
+            }
+            return;
+        }
+        try {
+            const doc = await db.collection('users').doc(currentUser.uid).get();
+            const subData = (doc.exists && doc.data().subscription) ? doc.data().subscription : null;
+            
+            // Reset payment fields
+            if (cardHolderInput) cardHolderInput.value = "";
+            if (cardNumberInput) cardNumberInput.value = (subData && subData.stripeCustomerId) ? "**** **** **** 1234" : "";
+            if (cardExpiryInput) cardExpiryInput.value = "";
+            if (cardCvcInput) cardCvcInput.value = "";
+            
+            paymentEditModal.classList.add('active');
+        } catch (error) {
+            console.error("Error opening payment edit modal:", error);
+            if (window.showErrorToast) {
+                window.showErrorToast("Errore nel caricamento del metodo di pagamento.");
+            }
+        }
+    };
+
+    if (changePlanBtn) {
+        changePlanBtn.addEventListener('click', openSubscriptionEditModal);
     }
 
     if (editPaymentMethodBtn) {
-        editPaymentMethodBtn.addEventListener('click', openSubscriptionEditModal);
+        editPaymentMethodBtn.addEventListener('click', openPaymentEditModal);
     } else {
         console.warn('Elemento con ID "edit-payment-method" non trovato nell\'HTML');
     }
 
     if (cancelSubscriptionBtn) {
-        cancelSubscriptionBtn.addEventListener('click', openSubscriptionEditModal);
+        cancelSubscriptionBtn.addEventListener('click', async () => {
+            // Mostra popup di conferma specifico per l'annullamento
+            confirmTitle.textContent = "Annulla Abbonamento";
+            confirmMessage.textContent = "Sei sicuro di voler annullare il tuo abbonamento? Manterrai i vantaggi fino alla fine del periodo corrente.";
+            confirmChangeModal.classList.add('active');
+            
+            proceedConfirmBtn.onclick = async () => {
+                confirmChangeModal.classList.remove('active');
+                try {
+                    await db.collection('users').doc(currentUser.uid).update({
+                        'subscription.status': 'canceled'
+                    });
+                    if (window.showSuccessToast) window.showSuccessToast("Abbonamento annullato con successo.");
+                    fetchUserData(currentUser.uid);
+                } catch (error) {
+                    console.error("Error canceling subscription:", error);
+                    if (window.showErrorToast) window.showErrorToast("Errore durante l'annullamento dell'abbonamento.");
+                }
+            };
+        });
     } else {
         console.warn('Elemento con ID "cancel-subscription-btn" non trovato nell\'HTML');
     }
@@ -1277,6 +1331,12 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Elemento con ID "cancel-subscription-edit" non trovato nell\'HTML');
     }
 
+    if (cancelPaymentEditBtn) {
+        cancelPaymentEditBtn.addEventListener('click', () => {
+            paymentEditModal.classList.remove('active');
+        });
+    }
+
     if (saveSubscriptionChangesBtn) {
         saveSubscriptionChangesBtn.addEventListener('click', async () => {
             if (!currentUser) {
@@ -1286,37 +1346,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const newSubscriptionType = subscriptionTypeInput.value;
-            const newStartDate = subscriptionStartDateInput.value;
+            const newPlan = subscriptionTypeInput.value;
+            const statusInput = document.getElementById('subscription-status-input');
+            const newStatus = statusInput ? statusInput.value : 'active';
             const newEndDate = subscriptionEndDateInput.value;
-            const newPaymentMethod = paymentMethodInput.value.trim();
-            const newAutoRenew = autoRenewInput.checked;
-            const newLastPaymentDate = lastPaymentDateInput.value;
-            const newNextPaymentDate = nextPaymentDateInput.value;
-
-            if (!newSubscriptionType || !newStartDate || !newEndDate || !newPaymentMethod) {
-                if (window.showErrorToast) {
-                    window.showErrorToast("Tipo di abbonamento, Data Inizio, Data Scadenza e Metodo di Pagamento sono obbligatori.");
-                }
-                return;
-            }
-            if (newAutoRenew && (!newLastPaymentDate || !newNextPaymentDate)) {
-                if (window.showErrorToast) {
-                    window.showErrorToast("Se il rinnovo automatico è attivo, Data Ultimo Pagamento e Data Prossimo Pagamento sono obbligatori.");
-                }
-                return;
-            }
 
             try {
                 const subscriptionUpdates = {
-                    'subscription.type': newSubscriptionType,
-                    'subscription.startDate': firebase.firestore.Timestamp.fromDate(new Date(newStartDate)),
-                    'subscription.endDate': firebase.firestore.Timestamp.fromDate(new Date(newEndDate)),
-                    'subscription.paymentMethod': newPaymentMethod,
-                    'subscription.status': newSubscriptionType === "Nessuno" ? "inactive" : "active",
-                    'subscription.autoRenew': newAutoRenew,
-                    'subscription.lastPaymentDate': newLastPaymentDate ? firebase.firestore.Timestamp.fromDate(new Date(newLastPaymentDate)) : null,
-                    'subscription.nextPaymentDate': newNextPaymentDate ? firebase.firestore.Timestamp.fromDate(new Date(newNextPaymentDate)) : null
+                    'subscription.plan': newPlan,
+                    'subscription.status': newStatus,
+                    'subscription.endDate': newEndDate ? firebase.firestore.Timestamp.fromDate(new Date(newEndDate)) : null,
+                    'role': newPlan // Per coerenza
                 };
 
                 await db.collection('users').doc(currentUser.uid).update(subscriptionUpdates);
@@ -1326,23 +1366,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Update Cache with strings
                 const cacheUpdates = { ...subscriptionUpdates };
-                // Convert timestamps to strings for cache
-                if (cacheUpdates['subscription.startDate']) cacheUpdates['subscription.startDate'] = new Date(newStartDate).toISOString();
                 if (cacheUpdates['subscription.endDate']) cacheUpdates['subscription.endDate'] = new Date(newEndDate).toISOString();
-                if (cacheUpdates['subscription.lastPaymentDate']) cacheUpdates['subscription.lastPaymentDate'] = newLastPaymentDate ? new Date(newLastPaymentDate).toISOString() : null;
-                if (cacheUpdates['subscription.nextPaymentDate']) cacheUpdates['subscription.nextPaymentDate'] = newNextPaymentDate ? new Date(newNextPaymentDate).toISOString() : null;
 
                 updateLocalUserProfile(currentUser.uid, cacheUpdates);
 
                 if (window.showSuccessToast) {
-                    window.showSuccessToast("Dati abbonamento aggiornati con successo!");
+                    window.showSuccessToast("Abbonamento aggiornato con successo!");
                 }
                 subscriptionEditModal.classList.remove('active');
-                // Non serve più fetchUserData, il listener onSnapshot aggiornerà l'UI automaticamente
+                
+                // Update UI immediately
+                const updatedDoc = await db.collection('users').doc(currentUser.uid).get();
+                updateUIWithUserData(updatedDoc.data());
             } catch (error) {
                 console.error("Error updating subscription data:", error);
                 if (window.showErrorToast) {
-                    window.showErrorToast("Errore durante l'aggiornamento dei dati dell'abbonamento: " + error.message);
+                    window.showErrorToast("Errore durante l'aggiornamento dell'abbonamento: " + error.message);
+                }
+            }
+        });
+    }
+
+    if (savePaymentChangesBtn) {
+        savePaymentChangesBtn.addEventListener('click', async () => {
+            if (!currentUser) return;
+
+            const cardNumber = cardNumberInput ? cardNumberInput.value.trim() : "";
+            
+            if (!cardNumber) {
+                if (window.showErrorToast) window.showErrorToast("Inserisci un numero di carta valido.");
+                return;
+            }
+
+            try {
+                const updates = {};
+                // Mock Stripe Customer ID if card details are provided
+                if (cardNumber && !cardNumber.includes('****')) {
+                    updates['subscription.stripeCustomerId'] = "cus_mock_" + Math.random().toString(36).substr(2, 9);
+                }
+
+                if (Object.keys(updates).length > 0) {
+                    await db.collection('users').doc(currentUser.uid).update(updates);
+                    updateLocalUserProfile(currentUser.uid, updates);
+                    
+                    // Update UI
+                    const updatedDoc = await db.collection('users').doc(currentUser.uid).get();
+                    updateUIWithUserData(updatedDoc.data());
+                }
+
+                if (window.showSuccessToast) {
+                    window.showSuccessToast("Metodo di pagamento aggiornato con successo!");
+                }
+                paymentEditModal.classList.remove('active');
+            } catch (error) {
+                console.error("Error updating payment data:", error);
+                if (window.showErrorToast) {
+                    window.showErrorToast("Errore durante l'aggiornamento del pagamento: " + error.message);
                 }
             }
         });
@@ -1351,10 +1430,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Support Actions
-    const contactBtn = document.querySelector('.card-btn.primary');
-    if (contactBtn) {
-        contactBtn.addEventListener('click', () => {
+    if (contactUsBtn) {
+        contactUsBtn.addEventListener('click', () => {
             window.location.href = 'mailto:Fitsuite.company@gmail.com';
+        });
+    }
+
+    if (giveFeedbackBtn) {
+        giveFeedbackBtn.addEventListener('click', () => {
+            if (giveFeedbackModal) giveFeedbackModal.classList.add('active');
         });
     }
 
@@ -1425,6 +1509,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (event.target === subscriptionEditModal) {
             subscriptionEditModal.classList.remove('active');
+        }
+        if (event.target === paymentEditModal) {
+            paymentEditModal.classList.remove('active');
         }
         if (event.target === logoutConfirmModal) {
             logoutConfirmModal.classList.remove('active');
