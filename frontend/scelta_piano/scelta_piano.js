@@ -107,25 +107,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (loading) loading.show(['Inizializzazione Stripe Checkout...', 'Preparazione sessione...']);
         
         try {
+            console.log(`[StripeCheckout] Inizio sessione per piano: ${planId}`);
             // Chiama la Cloud Function per creare la sessione di checkout
             const createSession = firebase.app().functions('us-central1').httpsCallable('createStripeCheckoutSession');
             
+            console.log(`[StripeCheckout] Chiamata Cloud Function 'createStripeCheckoutSession'...`);
             const result = await createSession({ 
                 planId: planId,
                 origin: window.location.origin
             });
 
+            console.log(`[StripeCheckout] Risultato ricevuto:`, result.data);
+
             if (result.data && result.data.url) {
-                // Reindirizzamento diretto all'URL fornito da Stripe
+                console.log(`[StripeCheckout] Reindirizzamento a: ${result.data.url}`);
                 window.location.href = result.data.url;
             } else {
-                throw new Error("URL della sessione non ricevuto.");
+                throw new Error("URL della sessione non ricevuto dal server.");
             }
         } catch (error) {
-            console.error('Errore creazione sessione Stripe:', error);
+            console.error('[StripeCheckout] ERRORE DETTAGLIATO:', {
+                message: error.message,
+                code: error.code,
+                details: error.details,
+                stack: error.stack
+            });
+            
             if (loading) loading.hide();
+            
+            let userMessage = 'Errore durante l\'avvio del pagamento.';
+            if (error.code === 'internal') {
+                userMessage = 'Errore interno del server (internal). Controlla i log di Firebase Functions.';
+            } else if (error.message) {
+                userMessage = error.message;
+            }
+
             if (window.showErrorToast) {
-                window.showErrorToast(error.message || 'Errore durante l\'avvio del pagamento.');
+                window.showErrorToast(userMessage);
             }
         }
     }
