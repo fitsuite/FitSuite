@@ -83,6 +83,16 @@ const CookieManager = {
         if (consent.analytics) {
             window[gaDisableKey] = false;
             this.loadGtag(this.MEASUREMENT_ID);
+            
+            // Se lo script è già caricato, forziamo l'invio della PageView
+            if (window.gtag && document.querySelector(`script[src*="${this.MEASUREMENT_ID}"]`)) {
+                gtag('config', this.MEASUREMENT_ID, {
+                    'anonymize_ip': true,
+                    'cookie_flags': 'SameSite=Lax;Secure'
+                });
+                console.log('CookieManager: GA4 riattivato con PageView forzata.');
+            }
+
             // Microsoft Clarity
             if (this.CLARITY_ID !== 'YOUR_CLARITY_ID') {
                 this.loadClarity(this.CLARITY_ID);
@@ -98,6 +108,8 @@ const CookieManager = {
             // Consenso Facebook Pixel
             if (window.fbq) {
                 fbq('consent', 'grant');
+                fbq('track', 'PageView');
+                console.log('CookieManager: Facebook Pixel riattivato.');
             }
             
             this.loadAdSense(this.ADSENSE_CLIENT_ID);
@@ -295,16 +307,13 @@ const CookieManager = {
         // 2. Applica immediatamente le modifiche agli strumenti (SENZA REFRESH)
         this.updateThirdPartyTools(consent);
         
-        // 3. Rimuovi i cookie delle categorie non autorizzate IMMEDIATAMENTE
-        this.cleanupCookies(consent);
-        
-        // 4. Notifica il sistema
+        // 3. Notifica il sistema
         window.dispatchEvent(new CustomEvent('cookieConsentChanged', { detail: consent }));
         
-        // 5. Esegui callback pendenti
+        // 4. Esegui callback pendenti
         this.triggerCallbacks(consent);
 
-        console.log('CookieManager: Preferenze salvate, cookie puliti e applicate in tempo reale.');
+        console.log('CookieManager: Preferenze salvate e applicate in tempo reale.');
     },
 
     /**
