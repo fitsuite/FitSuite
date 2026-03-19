@@ -69,6 +69,49 @@ document.addEventListener('DOMContentLoaded', () => {
     window.loadUserAvatar = loadUserAvatar;
     window.setPrimaryColor = setPrimaryColor;
 
+    // Load Premium Popup Pro globally
+    function loadPremiumPopup() {
+        if (!document.getElementById('premium-popup-script')) {
+            const script = document.createElement('script');
+            script.id = 'premium-popup-script';
+            
+            const sidebarScript = document.querySelector('script[src*="sidebar.js"]');
+            let pathPrefix = '../components/popup/popup_pro/';
+            
+            if (sidebarScript) {
+                const src = sidebarScript.getAttribute('src');
+                const base = src.replace('templates/sidebar/sidebar.js', '');
+                pathPrefix = base + 'components/popup/popup_pro/';
+            }
+            
+            script.src = pathPrefix + 'popup_pro.js';
+            document.head.appendChild(script);
+        }
+    }
+
+    // Load Plan Manager globally
+    function loadPlanManager() {
+        if (!document.getElementById('plan-manager-script')) {
+            const script = document.createElement('script');
+            script.id = 'plan-manager-script';
+            
+            const sidebarScript = document.querySelector('script[src*="sidebar.js"]');
+            let pathPrefix = '../plan/';
+            
+            if (sidebarScript) {
+                const src = sidebarScript.getAttribute('src');
+                const base = src.replace('templates/sidebar/sidebar.js', '');
+                pathPrefix = base + 'plan/';
+            }
+            
+            script.src = pathPrefix + 'plan_manager.js';
+            document.head.appendChild(script);
+        }
+    }
+
+    loadPremiumPopup();
+    loadPlanManager();
+
     // Listen for username updates
     window.addEventListener('usernameUpdated', (event) => {
         const { userId, username } = event.detail;
@@ -81,6 +124,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const userInitialSidebar = document.getElementById('user-initial-sidebar');
             if (userInitialSidebar) {
                 loadUserAvatar(auth.currentUser.email, username, userInitialSidebar, 45);
+            }
+            
+            // Update plan badge
+            if (window.PlanManager) {
+                window.PlanManager.updateSidebarPlanBadge();
             }
         }
     });
@@ -369,6 +417,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Load user avatar with Google profile picture fallback to initial
                 if (userInitialSidebar) {
                     loadUserAvatar(user.email, username.replace('@', ''), userInitialSidebar, 45);
+                }
+
+                // Update plan badge
+                if (window.PlanManager) {
+                    window.PlanManager.updateSidebarPlanBadge();
+                    window.PlanManager.applyAdsVisibility();
                 }
 
                 if (userRoutineListSidebar) {

@@ -1,5 +1,12 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
+const admin = require("firebase-admin");
 const axios = require("axios");
+
+// Initialize admin if not already initialized
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
 
 /**
  * Cloud Function: generateWorkoutRoutine (v2)
@@ -20,12 +27,53 @@ exports.generateWorkoutRoutine = onCall({
         );
     }
 
+    const uid = request.auth.uid;
+    const db = getFirestore();
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+        throw new HttpsError('not-found', 'Profilo utente non trovato');
+    }
+
+    const userDataDB = userDoc.data();
+    const plan = (userDataDB.subscription && userDataDB.subscription.plan) || 'free';
+    const aiUsage = userDataDB.ai_usage || { count: 0, lastReset: null };
+
+    // Check limits
+    const limits = {
+        'free': 1,
+        'pro': 7,
+        'pt': 100
+    };
+
+    const maxAI = limits[plan.toLowerCase()] || 1;
+    const isMonthly = plan.toLowerCase() !== 'free';
+
+    let currentCount = aiUsage.count || 0;
+    const now = new Date();
+    let lastReset = aiUsage.lastReset ? (aiUsage.lastReset.toDate ? aiUsage.lastReset.toDate() : new Date(aiUsage.lastReset)) : null;
+
+    if (isMonthly) {
+        // Reset monthly counter if needed
+        if (!lastReset || lastReset.getMonth() !== now.getMonth() || lastReset.getFullYear() !== now.getFullYear()) {
+            currentCount = 0;
+            lastReset = now;
+        }
+    }
+
+    if (currentCount >= maxAI) {
+        throw new HttpsError('resource-exhausted', `Hai raggiunto il limite di ${maxAI} schede AI per il tuo piano attuale.`);
+    }
+
     const { userData, exerciseNames } = request.data;
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
         throw new Error('Chiave API Gemini non configurata.');
     }
+
+    // ... (rest of the existing logic)
 
     // Calcolo BMI e categorizzazione per una guida più precisa
     const altezzaM = userData.altezza / 100;
@@ -138,6 +186,13 @@ Struttura:
             const parsedResult = JSON.parse(text);
 
             console.log(`Successo con modello: ${modelName}`);
+            
+            // Increment usage counter after success
+            await userRef.update({
+                'ai_usage.count': currentCount + 1,
+                'ai_usage.lastReset': lastReset || now
+            });
+
             return {
                 success: true,
                 routine: parsedResult,

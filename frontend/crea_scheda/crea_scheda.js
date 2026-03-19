@@ -404,6 +404,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     waitForSidebar()
                 ]);
 
+                // Apply plan visibility
+                if (window.PlanManager) {
+                    window.PlanManager.applyAdsVisibility();
+                }
+
                 window.LoadingManager.nextStep('Verifica dati scheda...');
                 // 1. Check for AI generated routine in sessionStorage  
                 const aiRoutineJSON = sessionStorage.getItem('aiGeneratedRoutine');
@@ -1439,6 +1444,17 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.textContent = 'Salvataggio...';
 
         try {
+            // Check plan limits before saving a NEW routine
+            if (!editingRoutineId && window.PlanManager && window.CacheManager) {
+                const routines = window.CacheManager.getRoutines(currentUser.uid) || [];
+                if (!window.PlanManager.canCreateRoutine(routines.length)) {
+                    window.PlanManager.showProPopup(`Hai raggiunto il limite di ${window.PlanManager.getCurrentPlan().maxRoutines} schede per il tuo piano attuale.`);
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Salva';
+                    return;
+                }
+            }
+
             // Collect sedute and exercises data
             const seduteData = [];
             const sedutaCards = document.querySelectorAll('.seduta-card');

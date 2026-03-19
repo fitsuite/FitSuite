@@ -731,6 +731,12 @@ document.addEventListener('DOMContentLoaded', () => {
                           dot.classList.contains('green') ? 'Verde' :
                           dot.classList.contains('blue') ? 'Blu' : 'Rosa';
             
+            // Check plan limits for color change
+            if (color !== 'Arancione' && window.PlanManager && !window.PlanManager.canChangeColor()) {
+                window.PlanManager.showProPopup("Solo gli utenti Pro e PT possono cambiare il colore del tema. Passa a Pro per personalizzare la tua esperienza!");
+                return;
+            }
+            
             try {
                 // Optimistic Update: Update cache and UI immediately
                 if (window.CacheManager) {
@@ -1289,7 +1295,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (changePlanBtn) {
-        changePlanBtn.addEventListener('click', openSubscriptionEditModal);
+        changePlanBtn.addEventListener('click', () => {
+            if (window.showPremiumPopup) {
+                window.showPremiumPopup();
+            } else {
+                openSubscriptionEditModal();
+            }
+        });
     }
 
     if (editPaymentMethodBtn) {

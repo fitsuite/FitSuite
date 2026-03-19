@@ -257,6 +257,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     waitForSidebar()
                 ]);
                 
+                // Apply plan visibility
+                if (window.PlanManager) {
+                    window.PlanManager.applyAdsVisibility();
+                }
+                
                 loadDraft();
                 window.LoadingManager.nextStep('Preparazione interfaccia completata');
             } catch (error) {
@@ -583,9 +588,17 @@ const bodyParts = [
             
             data.attrezzatura = equipment;
             data.focus = focus;
-            data.workout_type = workoutType;
+            data.workout_type = workout_type;
 
             console.log("Form Data Collected:", data);
+
+            // Check plan limits for AI usage
+            if (window.PlanManager) {
+                if (!window.PlanManager.canUseAI()) {
+                    window.PlanManager.showProPopup(`Hai raggiunto il limite di ${window.PlanManager.getCurrentPlan().maxAIRoutines} schede AI per il tuo piano attuale.`);
+                    return;
+                }
+            }
 
             // Validation
             if (data.focus.length === 0) {
@@ -622,7 +635,42 @@ const bodyParts = [
                 window.LoadingManager.nextStep('Elaborazione esercizi...');
                 const finalRoutine = mapRoutineToFullObjects(generatedRoutine, exercises.fullList);
 
-                // 4. Export/Save
+                // 4. Update AI usage counter in Firestore and Cache
+                try {
+                    const user = firebase.auth().currentUser;
+                    const profile = window.PlanManager.getUserProfile();
+                    if (user && profile) {
+                        const usage = profile.ai_usage || { count: 0, lastReset: null };
+                        const plan = window.PlanManager.getCurrentPlan();
+                        
+                        let newCount = usage.count + 1;
+                        let lastReset = usage.lastReset;
+                        
+                        // Reset if monthly and period changed
+                        if (plan.isMonthlyAI && window.PlanManager._shouldResetAIUsage(lastReset)) {
+                            newCount = 1;
+                            lastReset = new Date().toISOString();
+                        } else if (!lastReset) {
+                            lastReset = new Date().toISOString();
+                        }
+
+                        const newUsage = { count: newCount, lastReset: lastReset };
+                        
+                        // Update Firestore
+                        await db.collection('users').doc(user.uid).update({
+                            ai_usage: newUsage
+                        });
+                        
+                        // Update Cache
+                        profile.ai_usage = newUsage;
+                        localStorage.setItem(`userProfile_${user.uid}`, JSON.stringify(profile));
+                        console.log('AI usage updated:', newUsage);
+                    }
+                } catch (usageError) {
+                    console.error("Error updating AI usage:", usageError);
+                }
+
+                // 5. Export/Save
                 window.LoadingManager.nextStep('Preparazione download...');
                 exportRoutineToPDF(finalRoutine);
 
