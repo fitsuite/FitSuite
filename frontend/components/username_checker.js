@@ -71,93 +71,56 @@
     // Show username selection popup
     async function showUsernameSelectionPopup() {
         console.log('UsernameChecker - Starting showUsernameSelectionPopup');
-        return new Promise(async (resolve) => {
-            const showPopup = async () => {
-                console.log('UsernameChecker - Showing popup to user');
-                
-                // Add username-popup class to the popup content for special styling
-                setTimeout(() => {
-                    const popupContent = document.querySelector('.custom-popup-content');
-                    if (popupContent) {
-                        popupContent.classList.add('username-popup');
-                        console.log('UsernameChecker - Added username-popup class');
-                    }
-                }, 10);
+        
+        const validateUsername = async (value) => {
+            // Non usiamo trim() qui perché vogliamo che lo spazio sia rilevato come errore
+            if (!value || value.length === 0) return 'ERRORE: Inserisci un username.';
+            if (value.length < 3) return 'ERRORE: Troppo corto (min 3 caratteri).';
+            if (value.length > 20) return 'ERRORE: Troppo lungo (max 20 caratteri).';
+            
+            // Regex aggiornata: solo lettere, numeri, . e _ (NIENTE SPAZI)
+            const validRegex = /^[a-zA-Z0-9._]+$/;
+            if (!validRegex.test(value)) {
+                return 'ERRORE: Caratteri non ammessi (usa solo lettere, numeri, . e _). Niente spazi.';
+            }
+            
+            // Se arriviamo qui, l'input è formalmente corretto, controlliamo l'unicità
+            if (window.showLoadingToast) window.showLoadingToast('Verifica disponibilità...');
+            const isUnique = await isUsernameUnique(value);
+            if (window.hideLoadingToast) window.hideLoadingToast();
+            
+            if (!isUnique) return 'ERRORE: Questo username è già occupato.';
+            return null; // Valido!
+        };
 
-                const username = await window.showPrompt(
-                    'Scegli un username obbligatorio (3-20 caratteri, solo lettere, numeri e _):',
-                    '',
-                    'Username Richiesto',
-                    'SALVA',
-                    'ANNULLA'
-                );
+        const username = await window.showPrompt(
+            'L\'username è obbligatorio per continuare.\nScegline uno (3-20 caratteri):',
+            '',
+            'Username Richiesto',
+            'SALVA',
+            '', // Rimuoviamo il testo del pulsante annulla per nasconderlo
+            validateUsername,
+            20
+        );
 
-                console.log('UsernameChecker - Popup result:', username);
+        if (username === null) {
+            console.log('UsernameChecker - User cancelled popup, reopening...');
+            return await showUsernameSelectionPopup();
+        }
 
-                if (username === null) {
-                    console.log('UsernameChecker - User cancelled popup');
-                    resolve(null);
-                    return;
-                }
-
-                const trimmedUsername = username.trim();
-                console.log('UsernameChecker - Validating username:', trimmedUsername);
-
-                // Validate username
-                if (trimmedUsername.length < 3) {
-                    console.log('UsernameChecker - Username too short');
-                    await window.showErrorToast('L\'username deve contenere almeno 3 caratteri.');
-                    showPopup();
-                    return;
-                }
-
-                if (trimmedUsername.length > 20) {
-                    console.log('UsernameChecker - Username too long');
-                    await window.showErrorToast('L\'username non può superare i 20 caratteri.');
-                    showPopup();
-                    return;
-                }
-
-                if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
-                    console.log('UsernameChecker - Username has invalid characters');
-                    await window.showErrorToast('L\'username può contenere solo lettere, numeri e underscore.');
-                    showPopup();
-                    return;
-                }
-
-                // Show loading state
-                console.log('UsernameChecker - Checking uniqueness...');
-                if (window.showLoadingToast) {
-                    window.showLoadingToast('Verifica disponibilità username...');
-                }
-
-                // Check if username is unique
-                const isUnique = await isUsernameUnique(trimmedUsername);
-                console.log('UsernameChecker - Username uniqueness result:', isUnique);
-                
-                // Hide loading state
-                if (window.hideLoadingToast) {
-                    window.hideLoadingToast();
-                }
-
-                if (!isUnique) {
-                    console.log('UsernameChecker - Username not unique');
-                    await window.showErrorToast('Questo username è già stato scelto da un altro utente. Scegline un altro.');
-                    showPopup();
-                    return;
-                }
-
-                console.log('UsernameChecker - Username validated and unique:', trimmedUsername);
-                resolve(trimmedUsername);
-            };
-
-            showPopup();
-        });
+        return username; // Restituiamo il valore così come inserito
     }
 
     // Update user username in Firestore using simple update
     async function updateUserUsername(userId, username) {
         try {
+            // Validazione di sicurezza dell'ultimo secondo prima della scrittura
+            const validRegex = /^[a-zA-Z0-9._]+$/;
+            if (!username || username.length < 3 || username.length > 20 || !validRegex.test(username)) {
+                console.error('UsernameChecker - Tentativo di salvataggio username non valido:', username);
+                return false;
+            }
+
             const db = firebase.firestore();
             
             // Show loading state
@@ -289,7 +252,7 @@
             
             if (!hasUsername) {
                 console.log('UsernameChecker - User needs username, showing popup');
-                // User doesn't have username, show popup to choose one
+                // User doesn't have username, show popup to choose one (this will loop until success)
                 const username = await showUsernameSelectionPopup();
                 console.log('UsernameChecker - Username selected:', username);
                 
@@ -299,19 +262,11 @@
                     const updated = await updateUserUsername(currentUser.uid, username);
                     console.log('UsernameChecker - Update result:', updated);
                     if (!updated) {
-                        await window.showErrorToast('Errore nell\'aggiornamento dell\'username. Riprova più tardi.');
-                        return false;
+                        // Se fallisce l'aggiornamento (es. errore di rete), riproviamo il giro
+                        return await enforceUsernameRequirement();
                     }
                     console.log('UsernameChecker - Username set successfully:', username);
                     return true;
-                } else {
-                    console.log('UsernameChecker - User cancelled username selection');
-                    // User cancelled, sign them out
-                    await auth.signOut();
-                    await window.showErrorToast('L\'username è obbligatorio per utilizzare FitSuite.');
-                    // Redirect to auth page
-                    window.location.href = '../auth/auth.html';
-                    return false;
                 }
             }
 

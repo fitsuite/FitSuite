@@ -29,6 +29,73 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Test Firebase Config Button Logic
+    const testFirebaseBtn = document.getElementById('test-firebase-btn');
+    if (testFirebaseBtn) {
+        testFirebaseBtn.addEventListener('click', async () => {
+            console.log('Testing Firebase configuration...');
+            testFirebaseBtn.disabled = true;
+            const originalText = testFirebaseBtn.innerText;
+            testFirebaseBtn.innerText = 'Testing...';
+            
+            let report = "--- REPORT TEST FIREBASE ---\n\n";
+            
+            try {
+                // 1. Test Auth Connection
+                console.log('Testing Auth connection...');
+                const authState = auth.currentUser;
+                report += `✅ Auth: Inizializzato\n`;
+                report += `👤 Stato: ${authState ? 'Loggato (' + authState.email + ')' : 'Non loggato'}\n\n`;
+
+                // 2. Test Google Connectivity (Fundamental for Google Login)
+                console.log('Testing Google Connectivity...');
+                try {
+                    const googleCheck = await fetch('https://accounts.google.com/generate_204', {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        cache: 'no-cache'
+                    });
+                    report += `✅ Google Services: Raggiungibili\n`;
+                } catch (e) {
+                    report += `❌ Google Services: NON RAGGIUNGIBILI (Possibile Ad-Block o Firewall)\n`;
+                }
+
+                // 3. Test Domain Authorization
+                const currentDomain = window.location.hostname;
+                report += `🌐 Dominio Attuale: ${currentDomain}\n`;
+                if (currentDomain.includes('github.io')) {
+                    report += `ℹ️ Nota: Su GitHub Pages assicurati che '${currentDomain}' sia tra i "Authorized Domains" in Firebase Console.\n`;
+                }
+                report += `\n`;
+
+                // 4. Test Firestore Connection and Rules
+                console.log('Testing Firestore connection and rules...');
+                try {
+                    // Try to read from 'users' collection with a dummy ID
+                    await db.collection('users').doc('test_connectivity').get();
+                    report += `✅ Firestore: Raggiungibile\n`;
+                } catch (fsError) {
+                    console.error('Firestore Test Error:', fsError);
+                    if (fsError.code === 'permission-denied') {
+                        report += `⚠️ Firestore Rules: ACCESSO NEGATO (Normale se non loggato)\n`;
+                        report += `   Codice: ${fsError.code}\n`;
+                    } else {
+                        report += `❌ Firestore: ERRORE (${fsError.message})\n`;
+                    }
+                }
+
+                alert(report + "\nLa configurazione di base è pronta per il test di Login Google.");
+
+            } catch (error) {
+                console.error('General Firebase Test Error:', error);
+                alert('❌ Errore Generale durante il test\n\n' + error.message);
+            } finally {
+                testFirebaseBtn.disabled = false;
+                testFirebaseBtn.innerText = originalText;
+            }
+        });
+    }
+
     // Form toggle functionality
     const registrationFormContainer = document.getElementById('registration-form-container');
     const loginFormContainer = document.getElementById('login-form-container');
@@ -42,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const navbarLoginButton = navbarLoginBtn ? navbarLoginBtn.querySelector('.login-btn') : null;
     const verifyEmailOverlay = document.getElementById('verify-email-overlay');
     const userEmailDisplay = document.getElementById('user-email-display');
+    const closeVerifyOverlayBtn = document.getElementById('close-verify-overlay');
 
     console.log('Elements found:');
     console.log('registrationFormContainer:', registrationFormContainer);
@@ -52,9 +120,38 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('forgotPasswordContainer:', forgotPasswordContainer);
     console.log('verifyEmailOverlay:', verifyEmailOverlay);
     console.log('userEmailDisplay:', userEmailDisplay);
+    console.log('closeVerifyOverlayBtn:', closeVerifyOverlayBtn);
     console.log('showLoginFromForgotLink:', showLoginFromForgotLink);
     console.log('navbarLoginBtn:', navbarLoginBtn);
     console.log('navbarLoginButton:', navbarLoginButton);
+
+    // Gestione chiusura overlay verifica email
+    if (closeVerifyOverlayBtn && verifyEmailOverlay) {
+        closeVerifyOverlayBtn.addEventListener('click', async () => {
+            console.log('Chiusura overlay verifica email richiesta');
+            
+            // 1. Ferma i timer e i controlli automatici
+            stopAutoCheck();
+            if (resendInterval) {
+                clearInterval(resendInterval);
+                resendCooldown = 0;
+            }
+
+            // 2. Nascondi l'overlay
+            verifyEmailOverlay.style.display = 'none';
+
+            // 3. Imposta flag in sessionStorage per NON riaprirlo automaticamente in questa sessione su QUESTA pagina
+            sessionStorage.setItem('verifyOverlayClosedExplicitly', 'true');
+
+            // 4. Esegui il logout per permettere all'utente di registrarsi con un'altra mail
+            try {
+                await auth.signOut();
+                console.log('Logout effettuato con successo dopo chiusura overlay');
+            } catch (error) {
+                console.error('Errore durante il logout post-chiusura overlay:', error);
+            }
+        });
+    }
 
     // Initialize form display states
     if (registrationFormContainer && loginFormContainer && forgotPasswordContainer) {
@@ -286,6 +383,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registrationForm) {
         registrationForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            // Rimuovi il flag di chiusura esplicita se l'utente tenta una nuova registrazione
+            sessionStorage.removeItem('verifyOverlayClosedExplicitly');
+            
             const email = registrationForm.querySelector('#email').value;
             const password = registrationForm.querySelector('#password').value;
             const confirmPassword = registrationForm.querySelector('#confirm-password').value;
@@ -350,6 +450,9 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Login form found.');
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            // Rimuovi il flag di chiusura esplicita se l'utente tenta un nuovo login
+            sessionStorage.removeItem('verifyOverlayClosedExplicitly');
+            
             const email = loginForm.querySelector('#login-email').value;
             const password = loginForm.querySelector('#login-password').value;
 
@@ -925,6 +1028,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Check if user is verified (System B)
                 if (!user.emailVerified) {
+                    // Se l'utente ha chiuso esplicitamente l'overlay in questa sessione, non mostrarlo
+                    if (sessionStorage.getItem('verifyOverlayClosedExplicitly') === 'true') {
+                        console.log('User not verified but overlay was explicitly closed, skipping automatic show');
+                        return;
+                    }
+
                     console.log('User not verified in onAuthStateChanged, showing overlay');
                     if (userEmailDisplay) userEmailDisplay.textContent = user.email;
                     if (verifyEmailOverlay) verifyEmailOverlay.style.display = 'flex';

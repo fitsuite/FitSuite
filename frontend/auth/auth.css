@@ -289,6 +289,27 @@ body {
     background-color: #1a1a1a;
     border: 1px solid #ff6600;
     box-shadow: 0 0 20px rgba(255, 102, 0, 0.2);
+    position: relative;
+}
+
+.close-overlay-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 30px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.2s, transform 0.2s;
+    z-index: 100;
+}
+
+.close-overlay-btn:hover {
+    color: #ff6600;
+    transform: scale(1.1);
 }
 
 #resend-code-link.disabled {

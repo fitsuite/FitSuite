@@ -94,15 +94,14 @@
 
         titleEl.textContent = '';
         messageEl.textContent = '';
+        messageEl.style.color = '';
         inputEl.value = '';
         inputEl.style.display = 'none';
+        inputEl.classList.remove('error');
+        inputEl.removeAttribute('maxlength');
         cancelBtn.style.display = 'none';
         cancelBtn.textContent = 'ANNULLA';
         okBtn.textContent = 'OK';
-        
-        // Remove previous event listeners if any (cloning to remove)
-        // Actually we used a static listener that calls resolvePromise, which we update.
-        // So no need to remove listeners.
     }
 
     // Override window.alert
@@ -158,7 +157,7 @@
     };
 
     // Custom Prompt
-    window.showPrompt = function(message, defaultValue = '', title = 'Inserisci', okButtonText = 'CONFERMA', cancelButtonText = 'ANNULLA') {
+    window.showPrompt = function(message, defaultValue = '', title = 'Inserisci', okButtonText = 'CONFERMA', cancelButtonText = 'ANNULLA', validateFn = null, maxLength = null) {
         return new Promise((resolve) => {
             if (!document.getElementById('customPopup')) initPopup();
             
@@ -173,15 +172,77 @@
             const cancelBtn = document.getElementById('customPopupCancel');
             
             titleEl.textContent = title;
-            messageEl.textContent = message;
-            inputEl.value = defaultValue;
-            inputEl.style.display = 'block';
-            okBtn.textContent = okButtonText;
-            cancelBtn.style.display = 'inline-block';
-            cancelBtn.textContent = cancelButtonText;
+            messageEl.innerHTML = message.replace(/\n/g, '<br>');
+            
+            // Sostituiamo gli elementi per pulire tutti i listener precedenti
+            const newInputEl = inputEl.cloneNode(true);
+            inputEl.parentNode.replaceChild(newInputEl, inputEl);
+            
+            const newOkBtn = okBtn.cloneNode(true);
+            okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+            
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+            newInputEl.value = defaultValue;
+            newInputEl.style.display = 'block';
+            if (maxLength) newInputEl.setAttribute('maxlength', maxLength);
+            newOkBtn.textContent = okButtonText;
+            
+            // Gestione pulsante annulla: se null o vuoto, nascondilo
+            if (cancelButtonText === null || cancelButtonText === '') {
+                newCancelBtn.style.display = 'none';
+            } else {
+                newCancelBtn.style.display = 'inline-block';
+                newCancelBtn.textContent = cancelButtonText;
+            }
+
+            const overlay = document.getElementById('customPopup');
+
+            function closePopup(result, fromBackAction = false) {
+                overlay.classList.remove('show');
+                if (resolvePromise) {
+                    resolvePromise(result);
+                    resolvePromise = null;
+                }
+                
+                if (!fromBackAction && history.state && history.state.popupOpen) {
+                    history.back();
+                }
+            }
+
+            newOkBtn.addEventListener('click', async () => {
+                const value = newInputEl.value;
+                if (validateFn) {
+                    const validationError = await validateFn(value);
+                    if (validationError) {
+                        messageEl.innerHTML = `${validationError}<br><br>${message.replace(/\n/g, '<br>')}`;
+                        messageEl.style.color = '#ff4444';
+                        newInputEl.classList.add('error');
+                        newInputEl.focus();
+                        return;
+                    }
+                }
+                closePopup(value);
+            });
+
+            newCancelBtn.addEventListener('click', () => {
+                closePopup(null);
+            });
+            
+            newInputEl.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    newOkBtn.click();
+                }
+            });
+
+            newInputEl.addEventListener('input', () => {
+                newInputEl.classList.remove('error');
+                messageEl.style.color = '';
+            });
             
             // Focus input after a small delay to allow transition
-            setTimeout(() => inputEl.focus(), 100);
+            setTimeout(() => newInputEl.focus(), 100);
             
             resolvePromise = resolve;
             popup.classList.add('show');
