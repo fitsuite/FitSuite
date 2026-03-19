@@ -136,7 +136,8 @@ const CookieUI = {
             
             // Feedback visivo istantaneo
             btn.innerHTML = '<i class="fas fa-check"></i> Salvato!';
-            btn.style.backgroundColor = '#4ade80';
+            // Manteniamo il colore primario invece di forzare il verde
+            btn.style.filter = 'brightness(1.2)';
             btn.disabled = true;
             
             setTimeout(() => {
@@ -144,7 +145,7 @@ const CookieUI = {
                 // Ripristina per la prossima volta che si apre
                 setTimeout(() => {
                     btn.innerHTML = originalText;
-                    btn.style.backgroundColor = '';
+                    btn.style.filter = '';
                     btn.disabled = false;
                 }, 500);
             }, 600);

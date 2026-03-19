@@ -17,7 +17,7 @@
     gap: 12px;
     max-width: 380px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-right: 4px solid #ff6600; /* Arancione FitSuite spostatato a destra */
+    border-right: 4px solid var(--primary-color, #ff6600); /* Arancione FitSuite spostatato a destra */
     animation: slideUp 0.5s ease-out;
 }
 
@@ -35,7 +35,7 @@
 #fitsuite-cookie-banner h3 {
     margin: 0;
     font-size: 1rem;
-    color: #ff6600;
+    color: var(--primary-color, #ff6600);
 }
 
 #fitsuite-cookie-banner .close-btn {
@@ -55,7 +55,7 @@
 }
 
 #fitsuite-cookie-banner a {
-    color: #ff6600;
+    color: var(--primary-color, #ff6600);
     text-decoration: underline;
 }
 
@@ -76,7 +76,7 @@
 }
 
 #fitsuite-cookie-banner button.btn-primary {
-    background: #ff6600;
+    background: var(--primary-color, #ff6600);
     color: white;
 }
 
@@ -158,11 +158,11 @@
 }
 
 input:checked + .slider {
-    background-color: #ff6600;
+    background-color: var(--primary-color, #ff6600);
 }
 
 input:focus + .slider {
-    box-shadow: 0 0 1px #ff6600;
+    box-shadow: 0 0 1px var(--primary-color, #ff6600);
 }
 
 input:checked + .slider:before {
@@ -189,7 +189,7 @@ input:disabled + .slider {
     justify-content: center;
     cursor: pointer;
     z-index: 999998;
-    color: #ff6600;
+    color: var(--primary-color, #ff6600);
     font-size: 16px;
     transition: all 0.3s;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
