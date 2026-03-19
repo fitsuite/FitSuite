@@ -295,13 +295,16 @@ const CookieManager = {
         // 2. Applica immediatamente le modifiche agli strumenti (SENZA REFRESH)
         this.updateThirdPartyTools(consent);
         
-        // 3. Notifica il sistema
+        // 3. Rimuovi i cookie delle categorie non autorizzate IMMEDIATAMENTE
+        this.cleanupCookies(consent);
+        
+        // 4. Notifica il sistema
         window.dispatchEvent(new CustomEvent('cookieConsentChanged', { detail: consent }));
         
-        // 4. Esegui callback pendenti
+        // 5. Esegui callback pendenti
         this.triggerCallbacks(consent);
 
-        console.log('CookieManager: Preferenze salvate e applicate in tempo reale.');
+        console.log('CookieManager: Preferenze salvate, cookie puliti e applicate in tempo reale.');
     },
 
     /**
