@@ -331,100 +331,10 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .selection-container {
-        padding: 20px 10px;
-    }
-
-    .page-header {
-        margin-bottom: 30px;
-    }
-
-    .page-header h1 {
-        font-size: 24px;
-    }
-
-    .page-header p {
-        font-size: 0.9rem;
-    }
-
-    .pricing-grid {
-        display: flex;
-        flex-direction: row; /* Force side-by-side */
-        flex-wrap: nowrap;
-        gap: 10px;
-        padding: 0 5px;
-        align-items: stretch;
-        overflow-x: auto; /* Allow horizontal scroll if they still don't fit */
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 20px; /* Space for scrollbar if needed */
-    }
-
-    .pricing-card {
-        flex: 0 0 calc(50% - 5px); /* Exactly half width minus half gap */
-        min-width: 160px; /* Minimum readable width */
-        padding: 15px;
-        border-radius: 16px;
-    }
-
     .pricing-card.popular {
-        transform: scale(1); /* No scale on mobile to avoid overlapping */
-        margin: 0;
+        transform: scale(1);
     }
-
-    .popular-badge {
-        font-size: 8px;
-        padding: 4px 10px;
-        top: -10px;
-    }
-
-    .card-header {
-        margin-bottom: 10px;
-    }
-
-    .card-header h3 {
-        font-size: 16px;
-    }
-
-    .card-tagline {
-        font-size: 0.75rem;
-        margin-bottom: 5px;
-    }
-
-    .price {
-        font-size: 24px;
-    }
-
-    .price span {
-        font-size: 12px;
-    }
-
-    .features {
-        margin-bottom: 15px;
-        gap: 8px;
-    }
-
-    .features li {
-        font-size: 0.75rem;
-        margin-bottom: 5px;
-        gap: 6px;
-    }
-
-    .features i {
-        font-size: 10px;
-    }
-
-    .pricing-btn {
-        padding: 12px 5px;
-        font-size: 11px;
-    }
-}
-
-@media (max-width: 380px) {
-    .pricing-card {
-        min-width: 145px;
-    }
-    
     .pricing-grid {
-        gap: 5px;
+        gap: 20px;
     }
 }

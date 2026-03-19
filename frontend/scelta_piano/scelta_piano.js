@@ -19,69 +19,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     const db = firebase.firestore();
     const loading = window.LoadingManager;
     
-    let stripe = null;
-    let currentUser = null;
-
-    // Inizializza Stripe recuperando la chiave dal database
-    async function initStripe() {
-        try {
-            // Tentativo di recupero della chiave pubblica dal DB (se le regole Firestore lo permettono)
-            const configDoc = await db.collection('config').doc('stripe').get();
-            if (configDoc.exists && configDoc.data().STRIPE_PUBLISHABLE_KEY) {
-                stripe = Stripe(configDoc.data().STRIPE_PUBLISHABLE_KEY);
-            } else {
-                throw new Error("Chiave non trovata nel DB");
-            }
-        } catch (e) {
-            // Fallback silenzioso alla chiave fornita se non presente o errore permessi
-            stripe = Stripe('pk_test_51T9iVb2Hrb9wTJ3aRbGMBCSfJmVQHPqcq18KZF4hCozCqCQMfzRQlWYvVqjxkGmlpwCLOUEhqftw4sfqPVNifl7f00r5L4IudA');
-        }
-    }
-
-    // Chiamiamo initStripe all'avvio
-    await initStripe();
-    
     // Hide loading screen when everything is ready
     if (loading) {
         loading.hide();
     }
     
+    // Stripe Initialization
+    const stripe = Stripe('pk_test_51T9iVb2Hrb9wTJ3aRbGMBCSfJmVQHPqcq18KZF4hCozCqCQMfzRQlWYvVqjxkGmlpwCLOUEhqftw4sfqPVNifl7f00r5L4IudA');
+    const elements = stripe.elements();
+    
+    // Custom styling for Stripe Elements
+    const style = {
+        base: {
+            color: '#ffffff',
+            fontFamily: '"Segoe UI", Roboto, sans-serif',
+            fontSmoothing: 'antialiased',
+            fontSize: '16px',
+            '::placeholder': {
+                color: '#888888'
+            }
+        },
+        invalid: {
+            color: '#ff4d4d',
+            iconColor: '#ff4d4d'
+        }
+    };
+    
+    const card = elements.create('card', { style: style });
+    card.mount('#card-element');
+    
     // DOM Elements
     const selectionContainer = document.getElementById('selection-container');
+    const paymentContainer = document.getElementById('payment-container');
     const successContainer = document.getElementById('success-container');
+    const paymentForm = document.getElementById('payment-form');
+    const selectedPlanText = document.getElementById('selected-plan-text');
+    const submitBtn = document.getElementById('submit-payment');
+    const backBtn = document.getElementById('back-to-plans');
     const goHomeBtn = document.getElementById('go-home-btn');
+    const cardErrors = document.getElementById('card-errors');
+    const spinner = document.getElementById('spinner');
+    const buttonText = document.getElementById('button-text');
     
     let selectedPlan = null;
-
-    // Check for success parameter in URL (if returning from Stripe)
-    const urlParams = new URLSearchParams(window.location.search);
-    const successParam = urlParams.get('payment_success');
-    const planParam = urlParams.get('plan');
+    let currentUser = null;
 
     // Check Authentication
-    auth.onAuthStateChanged(async user => {
+    auth.onAuthStateChanged(user => {
         if (user) {
             currentUser = user;
-            
-            // If we just returned from a "successful" payment
-            if (successParam === 'true' && planParam) {
-                if (loading) loading.show(['Conferma pagamento...', 'Aggiornamento profilo...']);
-                try {
-                    await updateUserDataAfterPayment(planParam);
-                    
-                    // Clear URL parameters without reloading
-                    const newUrl = window.location.origin + window.location.pathname;
-                    window.history.replaceState({}, document.title, newUrl);
-                    
-                    showSuccessStep();
-                } catch (err) {
-                    console.error('Error updating profile after redirect:', err);
-                    if (window.showErrorToast) window.showErrorToast('Errore durante l\'aggiornamento del profilo.');
-                } finally {
-                    if (loading) loading.hide();
-                }
-            }
         } else {
+            // auth_guard should handle this, but as a fallback:
             window.location.href = '../auth/auth.html';
         }
     });
@@ -91,62 +79,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     planButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             selectedPlan = btn.getAttribute('data-plan-id');
-            startStripeCheckout(selectedPlan);
+            showPaymentStep(selectedPlan);
         });
     });
 
-    /**
-     * Starts Stripe Checkout via Firebase Cloud Function
-     */
-    async function startStripeCheckout(planId) {
-        if (!currentUser) {
-            if (window.showErrorToast) window.showErrorToast('Devi essere autenticato.');
-            return;
-        }
-
-        if (loading) loading.show(['Inizializzazione Stripe Checkout...', 'Preparazione sessione...']);
+    // Step Navigation
+    function showPaymentStep(planId) {
+        const planName = planId.toUpperCase();
+        selectedPlanText.innerHTML = `Stai acquistando il piano <strong>${planName}</strong>`;
         
-        try {
-            console.log(`[StripeCheckout] Inizio sessione per piano: ${planId}`);
-            // Chiama la Cloud Function per creare la sessione di checkout
-            const createSession = firebase.app().functions('us-central1').httpsCallable('createStripeCheckoutSession');
-            
-            console.log(`[StripeCheckout] Chiamata Cloud Function 'createStripeCheckoutSession'...`);
-            const result = await createSession({ 
-                planId: planId,
-                origin: window.location.origin
-            });
+        selectionContainer.style.display = 'none';
+        paymentContainer.style.display = 'flex';
+        
+        // Clear any previous errors
+        cardErrors.textContent = '';
+    }
 
-            console.log(`[StripeCheckout] Risultato ricevuto:`, result.data);
+    backBtn.addEventListener('click', () => {
+        paymentContainer.style.display = 'none';
+        selectionContainer.style.display = 'block';
+        selectedPlan = null;
+    });
 
-            if (result.data && result.data.url) {
-                console.log(`[StripeCheckout] Reindirizzamento a: ${result.data.url}`);
-                window.location.href = result.data.url;
-            } else {
-                throw new Error("URL della sessione non ricevuto dal server.");
-            }
-        } catch (error) {
-            console.error('[StripeCheckout] ERRORE DETTAGLIATO:', {
-                message: error.message,
-                code: error.code,
-                details: error.details,
-                stack: error.stack
-            });
+    // Payment Form Submission
+    paymentForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        
+        if (!selectedPlan || !currentUser) return;
+        
+        setLoading(true);
+        
+        // In a real app, you would first call your backend to create a PaymentIntent
+        // and get a client_secret. Since we are doing a frontend-only flow for this task:
+        
+        const { token, error } = await stripe.createToken(card);
+        
+        if (error) {
+            cardErrors.textContent = error.message;
+            setLoading(false);
+        } else {
+            // Token created successfully!
+            // Now we simulate the successful payment and update the database.
+            // In a real app, you'd send 'token.id' to your server to process the charge.
             
-            if (loading) loading.hide();
+            console.log('Stripe Token created:', token.id);
             
-            let userMessage = 'Errore durante l\'avvio del pagamento.';
-            if (error.code === 'internal') {
-                userMessage = 'Errore interno del server (internal). Controlla i log di Firebase Functions.';
-            } else if (error.message) {
-                userMessage = error.message;
-            }
-
-            if (window.showErrorToast) {
-                window.showErrorToast(userMessage);
+            try {
+                await updateUserDataAfterPayment(selectedPlan);
+                showSuccessStep();
+            } catch (err) {
+                console.error('Error updating database:', err);
+                cardErrors.textContent = 'Errore durante l\'aggiornamento del profilo. Contatta l\'assistenza.';
+                setLoading(false);
             }
         }
-    }
+    });
 
     async function updateUserDataAfterPayment(planId) {
         if (!currentUser) return;
@@ -200,7 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function showSuccessStep() {
-        selectionContainer.style.display = 'none';
+        paymentContainer.style.display = 'none';
         successContainer.style.display = 'flex';
         
         if (window.showSuccessToast) {
@@ -210,5 +197,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     goHomeBtn.addEventListener('click', () => {
         window.location.href = '../lista_schede/lista_scheda.html';
+    });
+
+    function setLoading(isLoading) {
+        if (isLoading) {
+            submitBtn.disabled = true;
+            spinner.classList.remove('hidden');
+            buttonText.textContent = 'Elaborazione...';
+        } else {
+            submitBtn.disabled = false;
+            spinner.classList.add('hidden');
+            buttonText.textContent = 'Paga ora';
+        }
+    }
+    
+    // Listen for card changes to show errors immediately
+    card.on('change', (event) => {
+        if (event.error) {
+            cardErrors.textContent = event.error.message;
+        } else {
+            cardErrors.textContent = '';
+        }
     });
 });

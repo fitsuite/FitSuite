@@ -180,7 +180,7 @@
                     Continua con una versione superiore per accedere a questa funzionalità esclusiva e massimizzare i tuoi risultati!
                 </p>
                 <div class="premium-popup-actions">
-                    <a href="../scelta_piano/scelta_piano.html" id="premiumPopupBtn" class="premium-btn-primary">
+                    <a href="/scelta_piano/scelta_piano.html" id="premiumPopupBtn" class="premium-btn-primary">
                         <span>SCOPRI I PIANI</span>
                         <i class="fas fa-arrow-right"></i>
                     </a>
