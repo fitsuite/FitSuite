@@ -180,7 +180,7 @@
                     Continua con una versione superiore per accedere a questa funzionalità esclusiva e massimizzare i tuoi risultati!
                 </p>
                 <div class="premium-popup-actions">
-                    <a href="../scelta_piano/scelta_piano.html" id="premiumPopupBtn" class="premium-btn-primary">
+                    <a href="/scelta_piano/scelta_piano.html" id="premiumPopupBtn" class="premium-btn-primary">
                         <span>SCOPRI I PIANI</span>
                         <i class="fas fa-arrow-right"></i>
                     </a>
@@ -247,22 +247,6 @@
         
         const overlay = document.getElementById('premiumPopup');
         const messageEl = overlay.querySelector('.premium-popup-message');
-        const mainBtn = document.getElementById('premiumPopupBtn');
-
-        // Dynamically calculate the path to scelta_piano.html
-        const currentPath = window.location.pathname;
-        let targetPath = '';
-        
-        if (currentPath.includes('/frontend/')) {
-            // We are inside a frontend subfolder
-            const base = currentPath.split('/frontend/')[0];
-            targetPath = base + '/frontend/scelta_piano/scelta_piano.html';
-        } else {
-            // We are at the root or in another folder
-            targetPath = './frontend/scelta_piano/scelta_piano.html';
-        }
-        
-        if (mainBtn) mainBtn.setAttribute('href', targetPath);
         
         if (customMessage) {
             messageEl.textContent = customMessage;

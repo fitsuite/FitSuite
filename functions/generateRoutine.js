@@ -70,7 +70,7 @@ exports.generateWorkoutRoutine = onCall({
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-        throw new HttpsError('failed-precondition', 'Chiave API Gemini non configurata.');
+        throw new Error('Chiave API Gemini non configurata.');
     }
 
     // ... (rest of the existing logic)

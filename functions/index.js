@@ -1,16 +1,8 @@
-const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {onCall} = require("firebase-functions/v2/https");
 const {setGlobalOptions} = require("firebase-functions");
 const {onRequest} = require("firebase-functions/https");
 const logger = require("firebase-functions/logger");
 const nodemailer = require("nodemailer");
-const admin = require("firebase-admin");
-const { getFirestore } = require("firebase-admin/firestore");
-const stripeLib = require("stripe");
-
-// Initialize admin if not already initialized
-if (!admin.apps.length) {
-    admin.initializeApp();
-}
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -42,98 +34,12 @@ const { generateWorkoutRoutine, testGeminiConnection } = require("./generateRout
 exports.generateWorkoutRoutine = generateWorkoutRoutine;
 exports.testGeminiConnection = testGeminiConnection;
 
-/**
- * Cloud Function: createStripeCheckoutSession
- * 
- * Crea una sessione di checkout Stripe recuperando la chiave dal database.
- */
-exports.createStripeCheckoutSession = onCall(async (request) => {
-    // Log di debug iniziale
-    logger.info("Avvio createStripeCheckoutSession", { data: request.data, auth: request.auth ? request.auth.uid : 'null' });
-
-    const { planId, origin } = request.data;
-    const auth = request.auth;
-
-    if (!auth) {
-        throw new HttpsError('unauthenticated', "Devi essere autenticato per procedere al pagamento.");
-    }
-
-    if (!planId || !['pro', 'pt'].includes(planId)) {
-        throw new HttpsError('invalid-argument', "Piano selezionato non valido.");
-    }
-
-    if (!origin) {
-        throw new HttpsError('invalid-argument', "Origin mancante nella richiesta.");
-    }
-
-    try {
-        const db = getFirestore();
-        logger.info("Recupero configurazione da Firestore: config/stripe");
-        
-        const configDoc = await db.collection('config').doc('stripe').get();
-        
-        if (!configDoc.exists) {
-            logger.error("DOCUMENTO NON TROVATO: config/stripe");
-            throw new HttpsError('not-found', "Configurazione Stripe non trovata nel database (config/stripe).");
-        }
-
-        const configData = configDoc.data();
-        const stripeSecretKey = configData.STRIPE_SECRET_KEY;
-        
-        if (!stripeSecretKey) {
-            logger.error("CHIAVE MANCANTE: STRIPE_SECRET_KEY nel documento config/stripe");
-            throw new HttpsError('failed-precondition', "Chiave STRIPE_SECRET_KEY mancante nel database.");
-        }
-
-        logger.info("Inizializzazione Stripe con chiave segreta...");
-        const stripe = stripeLib(stripeSecretKey);
-
-        const prices = {
-            'pro': { amount: 499, name: 'FitSuite PRO' },
-            'pt': { amount: 999, name: 'FitSuite PT' }
-        };
-
-        logger.info(`Creazione sessione Checkout per ${planId}...`);
-        
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [{
-                price_data: {
-                    currency: 'eur',
-                    product_data: {
-                        name: prices[planId].name,
-                        description: `Abbonamento mensile ${planId.toUpperCase()}`
-                    },
-                    unit_amount: prices[planId].amount,
-                },
-                quantity: 1,
-            }],
-            mode: 'payment',
-            success_url: `${origin}/frontend/scelta_piano/scelta_piano.html?payment_success=true&plan=${planId}`,
-            cancel_url: `${origin}/frontend/scelta_piano/scelta_piano.html`,
-            client_reference_id: auth.uid,
-            metadata: {
-                planId: planId,
-                userId: auth.uid
-            }
-        });
-
-        logger.info("Sessione creata con successo:", session.id);
-        return { url: session.url };
-    } catch (error) {
-        if (error instanceof HttpsError) throw error;
-        
-        logger.error("CRASH CLOUD FUNCTION:", error);
-        throw new HttpsError('internal', `Errore durante la creazione della sessione: ${error.message}`);
-    }
-});
-
 // Funzione per inviare l'email di verifica
 exports.sendVerificationEmail = onCall(async (request) => {
     const { email, code } = request.data;
     
     if (!email || !code) {
-        throw new HttpsError('invalid-argument', "Email e codice sono richiesti");
+        throw new Error("Email e codice sono richiesti");
     }
 
     const mailOptions = {
@@ -161,7 +67,7 @@ exports.sendVerificationEmail = onCall(async (request) => {
         return { success: true };
     } catch (error) {
         logger.error(`Errore nell'invio dell'email a ${email}:`, error);
-        throw new HttpsError('internal', "Errore nell'invio dell'email");
+        throw new Error("Errore nell'invio dell'email");
     }
 });
 
