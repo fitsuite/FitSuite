@@ -1,10 +1,16 @@
-const {onCall} = require("firebase-functions/v2/https");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {setGlobalOptions} = require("firebase-functions");
 const {onRequest} = require("firebase-functions/https");
 const logger = require("firebase-functions/logger");
 const nodemailer = require("nodemailer");
+const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
 const stripeLib = require("stripe");
+
+// Initialize admin if not already initialized
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -46,11 +52,11 @@ exports.createStripeCheckoutSession = onCall(async (request) => {
     const auth = request.auth;
 
     if (!auth) {
-        throw new Error("Devi essere autenticato per procedere al pagamento.");
+        throw new HttpsError('unauthenticated', "Devi essere autenticato per procedere al pagamento.");
     }
 
     if (!planId || !['pro', 'pt'].includes(planId)) {
-        throw new Error("Piano non valido.");
+        throw new HttpsError('invalid-argument', "Piano non valido.");
     }
 
     try {
@@ -59,18 +65,19 @@ exports.createStripeCheckoutSession = onCall(async (request) => {
         const configDoc = await db.collection('config').doc('stripe').get();
         
         if (!configDoc.exists) {
-            throw new Error("Configurazione Stripe non trovata nel database.");
+            logger.error("Configurazione Stripe non trovata in Firestore: config/stripe");
+            throw new HttpsError('not-found', "Configurazione Stripe non trovata nel database.");
         }
 
         const stripeSecretKey = configDoc.data().STRIPE_SECRET_KEY;
         if (!stripeSecretKey) {
-            throw new Error("Chiave STRIPE_SECRET_KEY mancante nel database.");
+            logger.error("Chiave STRIPE_SECRET_KEY mancante nel documento config/stripe");
+            throw new HttpsError('failed-precondition', "Chiave STRIPE_SECRET_KEY mancante nel database.");
         }
 
         const stripe = stripeLib(stripeSecretKey);
 
-        // Definiamo i prezzi (ID dei prodotti Stripe in produzione dovrebbero essere nel DB)
-        // Per ora simuliamo con i prezzi fissi o usiamo i nomi dei piani
+        // Definiamo i prezzi
         const prices = {
             'pro': { amount: 499, name: 'Piano PRO' }, // 4.99€
             'pt': { amount: 999, name: 'Piano PT' }    // 9.99€
@@ -100,8 +107,10 @@ exports.createStripeCheckoutSession = onCall(async (request) => {
 
         return { url: session.url };
     } catch (error) {
+        if (error instanceof HttpsError) throw error;
+        
         logger.error("Errore creazione sessione Stripe:", error);
-        throw new Error("Impossibile avviare il pagamento. Riprova più tardi.");
+        throw new HttpsError('internal', "Impossibile avviare il pagamento. Riprova più tardi.");
     }
 });
 
@@ -110,7 +119,7 @@ exports.sendVerificationEmail = onCall(async (request) => {
     const { email, code } = request.data;
     
     if (!email || !code) {
-        throw new Error("Email e codice sono richiesti");
+        throw new HttpsError('invalid-argument', "Email e codice sono richiesti");
     }
 
     const mailOptions = {
@@ -138,7 +147,7 @@ exports.sendVerificationEmail = onCall(async (request) => {
         return { success: true };
     } catch (error) {
         logger.error(`Errore nell'invio dell'email a ${email}:`, error);
-        throw new Error("Errore nell'invio dell'email");
+        throw new HttpsError('internal', "Errore nell'invio dell'email");
     }
 });
 
