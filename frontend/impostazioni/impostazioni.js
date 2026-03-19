@@ -1070,6 +1070,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.showWarningToast) {
                         window.showWarningToast("Per eliminare l'account è necessario aver effettuato l'accesso di recente. Effettua il logout e rientra prima di riprovare.");
                     }
+                    if (window.CacheManager && typeof window.CacheManager.clearAllCache === 'function') {
+                        window.CacheManager.clearAllCache();
+                    }
                     auth.signOut().then(() => window.location.href = '../auth/auth.html');
                 } else {
                     if (window.showErrorToast) {
@@ -1219,6 +1222,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 try {
                     console.log('Attempting to sign out...');
+                    // Pulisce tutta la cache prima del logout
+                    if (window.CacheManager && typeof window.CacheManager.clearAllCache === 'function') {
+                        window.CacheManager.clearAllCache();
+                    }
                     await auth.signOut();
                     console.log("User signed out successfully.");
                     window.location.href = '../auth/auth.html'; // Redirect to login page

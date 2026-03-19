@@ -145,6 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 4. Esegui il logout per permettere all'utente di registrarsi con un'altra mail
             try {
+                if (window.CacheManager && typeof window.CacheManager.clearAllCache === 'function') {
+                    window.CacheManager.clearAllCache();
+                }
                 await auth.signOut();
                 console.log('Logout effettuato con successo dopo chiusura overlay');
             } catch (error) {

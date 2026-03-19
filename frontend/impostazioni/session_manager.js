@@ -146,14 +146,20 @@ const SessionManager = {
             }
         }
 
-        localStorage.removeItem('fitsuite_sessionId');
-        localStorage.removeItem('lastUserId');
-        // Pulisce anche altre chiavi di cache se necessario
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && (key.startsWith('userProfile_') || key.startsWith('userPreferences_') || key.startsWith('routines_'))) {
-                localStorage.removeItem(key);
-                i--;
+        // Pulisce tutta la cache tramite CacheManager
+        if (window.CacheManager && typeof window.CacheManager.clearAllCache === 'function') {
+            window.CacheManager.clearAllCache();
+        } else {
+            console.warn("CacheManager non trovato, eseguo pulizia manuale parziale");
+            localStorage.removeItem('fitsuite_sessionId');
+            localStorage.removeItem('lastUserId');
+            // Pulisce anche altre chiavi di cache se necessario
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.startsWith('userProfile_') || key.startsWith('userPreferences_') || key.startsWith('routines_'))) {
+                    localStorage.removeItem(key);
+                    i--;
+                }
             }
         }
 
