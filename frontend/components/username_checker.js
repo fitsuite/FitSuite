@@ -165,10 +165,23 @@
                 window.showLoadingToast('Salvataggio username...');
             }
             
-            // Simple update to users collection only
-            await db.collection('users').doc(userId).update({
-                username: username
-            });
+            // Use set with merge: true to ensure document exists and fields are added
+            const currentUser = firebase.auth().currentUser;
+            await db.collection('users').doc(userId).set({
+                uid: userId,
+                email: currentUser ? currentUser.email : null,
+                username: username,
+                role: "free",
+                subscription: {
+                    plan: "free",
+                    status: "active",
+                    stripeCustomerId: null, // Creato al primo checkout
+                    stripeSubscriptionId: null, // Presente solo se Pro o PT
+                    startDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    endDate: null, // Null per free
+                    ptId: null // Opzionale: ID del Personal Trainer se il piano è "pt"
+                }
+            }, { merge: true });
             
             // Update local cache after successful update
             try {
@@ -178,6 +191,16 @@
                     if (cachedProfile) {
                         const profile = JSON.parse(cachedProfile);
                         profile.username = username;
+                        profile.role = "free";
+                        profile.subscription = {
+                            plan: "free",
+                            status: "active",
+                            stripeCustomerId: null,
+                            stripeSubscriptionId: null,
+                            startDate: new Date().toISOString(), // Use local time for cache
+                            endDate: null,
+                            ptId: null
+                        };
                         localStorage.setItem(`userProfile_${userId}`, JSON.stringify(profile));
                     }
                 }

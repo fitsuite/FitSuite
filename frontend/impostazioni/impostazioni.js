@@ -263,16 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 language: "Italiano",
                 notifications: "Consenti tutti"
             },
-            subscription: {
-                type: "Nessuno",
-                startDate: null,
-                endDate: null,
-                status: "inactive",
-                autoRenew: false,
-                lastPaymentDate: null,
-                nextPaymentDate: null,
-                paymentMethod: "Non impostato"
-            },
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         try {
@@ -961,10 +951,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.showLoadingToast('Salvataggio username...');
             }
             
-            // Simple update to users collection only
-            await db.collection('users').doc(userId).update({
-                username: username
-            });
+            // Use set with merge: true for consistency and to ensure subscription fields exist
+            const currentUserObj = firebase.auth().currentUser;
+            await db.collection('users').doc(userId).set({
+                uid: userId,
+                email: currentUserObj ? currentUserObj.email : null,
+                username: username,
+                role: "free",
+                subscription: {
+                    plan: "free",
+                    status: "active",
+                    stripeCustomerId: null,
+                    stripeSubscriptionId: null,
+                    startDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    endDate: null,
+                    ptId: null
+                }
+            }, { merge: true });
             
             // Update last refresh timestamp
             localStorage.setItem(`lastProfileRefresh_${userId}`, Date.now().toString());
@@ -977,6 +980,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (cachedProfile) {
                         const profile = JSON.parse(cachedProfile);
                         profile.username = username;
+                        profile.role = "free";
+                        profile.subscription = {
+                            plan: "free",
+                            status: "active",
+                            stripeCustomerId: null,
+                            stripeSubscriptionId: null,
+                            startDate: new Date().toISOString(), // Use local time for cache
+                            endDate: null,
+                            ptId: null
+                        };
                         localStorage.setItem(`userProfile_${userId}`, JSON.stringify(profile));
                     }
                 }
