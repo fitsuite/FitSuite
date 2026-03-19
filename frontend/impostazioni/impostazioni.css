@@ -315,6 +315,9 @@ body.settings-body {
 /* Delete Action */
 .card-footer-action {
     margin-top: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
 }
 
@@ -633,7 +636,7 @@ body.settings-body {
     }
 
     .card-row .card-btn,
-    .card-row .delete-account-btn-styled {
+    .delete-account-btn-styled {
         width: 100%; /* I bottoni occupano tutta la larghezza disponibile */
         min-width: unset; /* Rimuove il min-width fisso */
         padding: 10px 15px; /* Riduci il padding per schermi più piccoli */
