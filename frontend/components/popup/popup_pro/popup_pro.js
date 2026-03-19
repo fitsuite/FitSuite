@@ -247,6 +247,22 @@
         
         const overlay = document.getElementById('premiumPopup');
         const messageEl = overlay.querySelector('.premium-popup-message');
+        const mainBtn = document.getElementById('premiumPopupBtn');
+
+        // Dynamically calculate the path to scelta_piano.html
+        const currentPath = window.location.pathname;
+        let targetPath = '';
+        
+        if (currentPath.includes('/frontend/')) {
+            // We are inside a frontend subfolder
+            const base = currentPath.split('/frontend/')[0];
+            targetPath = base + '/frontend/scelta_piano/scelta_piano.html';
+        } else {
+            // We are at the root or in another folder
+            targetPath = './frontend/scelta_piano/scelta_piano.html';
+        }
+        
+        if (mainBtn) mainBtn.setAttribute('href', targetPath);
         
         if (customMessage) {
             messageEl.textContent = customMessage;

@@ -126,12 +126,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error("URL della sessione non ricevuto dal server.");
             }
         } catch (error) {
-            console.error('[StripeCheckout] ERRORE DETTAGLIATO:', {
-                message: error.message,
-                code: error.code,
-                details: error.details,
-                stack: error.stack
-            });
+            console.error('[StripeCheckout] ERRORE DETTAGLIATO:', error);
+            console.error('[StripeCheckout] Messaggio:', error.message);
+            console.error('[StripeCheckout] Codice:', error.code);
+            console.error('[StripeCheckout] Dettagli:', error.details);
             
             if (loading) loading.hide();
             

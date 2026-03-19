@@ -48,7 +48,10 @@ exports.testGeminiConnection = testGeminiConnection;
  * Crea una sessione di checkout Stripe recuperando la chiave dal database.
  */
 exports.createStripeCheckoutSession = onCall(async (request) => {
-    const { planId } = request.data;
+    // Log di debug iniziale
+    logger.info("Avvio createStripeCheckoutSession", { data: request.data, auth: request.auth ? request.auth.uid : 'null' });
+
+    const { planId, origin } = request.data;
     const auth = request.auth;
 
     if (!auth) {
@@ -56,33 +59,42 @@ exports.createStripeCheckoutSession = onCall(async (request) => {
     }
 
     if (!planId || !['pro', 'pt'].includes(planId)) {
-        throw new HttpsError('invalid-argument', "Piano non valido.");
+        throw new HttpsError('invalid-argument', "Piano selezionato non valido.");
+    }
+
+    if (!origin) {
+        throw new HttpsError('invalid-argument', "Origin mancante nella richiesta.");
     }
 
     try {
         const db = getFirestore();
-        // Recupera la chiave segreta dal database come richiesto dall'utente
+        logger.info("Recupero configurazione da Firestore: config/stripe");
+        
         const configDoc = await db.collection('config').doc('stripe').get();
         
         if (!configDoc.exists) {
-            logger.error("Configurazione Stripe non trovata in Firestore: config/stripe");
-            throw new HttpsError('not-found', "Configurazione Stripe non trovata nel database.");
+            logger.error("DOCUMENTO NON TROVATO: config/stripe");
+            throw new HttpsError('not-found', "Configurazione Stripe non trovata nel database (config/stripe).");
         }
 
-        const stripeSecretKey = configDoc.data().STRIPE_SECRET_KEY;
+        const configData = configDoc.data();
+        const stripeSecretKey = configData.STRIPE_SECRET_KEY;
+        
         if (!stripeSecretKey) {
-            logger.error("Chiave STRIPE_SECRET_KEY mancante nel documento config/stripe");
+            logger.error("CHIAVE MANCANTE: STRIPE_SECRET_KEY nel documento config/stripe");
             throw new HttpsError('failed-precondition', "Chiave STRIPE_SECRET_KEY mancante nel database.");
         }
 
+        logger.info("Inizializzazione Stripe con chiave segreta...");
         const stripe = stripeLib(stripeSecretKey);
 
-        // Definiamo i prezzi
         const prices = {
-            'pro': { amount: 499, name: 'Piano PRO' }, // 4.99€
-            'pt': { amount: 999, name: 'Piano PT' }    // 9.99€
+            'pro': { amount: 499, name: 'FitSuite PRO' },
+            'pt': { amount: 999, name: 'FitSuite PT' }
         };
 
+        logger.info(`Creazione sessione Checkout per ${planId}...`);
+        
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [{
@@ -90,14 +102,15 @@ exports.createStripeCheckoutSession = onCall(async (request) => {
                     currency: 'eur',
                     product_data: {
                         name: prices[planId].name,
+                        description: `Abbonamento mensile ${planId.toUpperCase()}`
                     },
                     unit_amount: prices[planId].amount,
                 },
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: `${request.data.origin}/frontend/scelta_piano/scelta_piano.html?payment_success=true&plan=${planId}`,
-            cancel_url: `${request.data.origin}/frontend/scelta_piano/scelta_piano.html`,
+            success_url: `${origin}/frontend/scelta_piano/scelta_piano.html?payment_success=true&plan=${planId}`,
+            cancel_url: `${origin}/frontend/scelta_piano/scelta_piano.html`,
             client_reference_id: auth.uid,
             metadata: {
                 planId: planId,
@@ -105,12 +118,13 @@ exports.createStripeCheckoutSession = onCall(async (request) => {
             }
         });
 
+        logger.info("Sessione creata con successo:", session.id);
         return { url: session.url };
     } catch (error) {
         if (error instanceof HttpsError) throw error;
         
-        logger.error("Errore creazione sessione Stripe:", error);
-        throw new HttpsError('internal', "Impossibile avviare il pagamento. Riprova più tardi.");
+        logger.error("CRASH CLOUD FUNCTION:", error);
+        throw new HttpsError('internal', `Errore durante la creazione della sessione: ${error.message}`);
     }
 });
 
