@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="col-name" title="${routine.name || 'Scheda senza nome'}">
-                    ${routine.name || 'Scheda senza nome'}
+                    <span class="routine-name">${routine.name || 'Scheda senza nome'}</span>
                     <div class="shared-status">
                         ${statusBadge}
                     </div>
@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span>${routine.ownerInfo?.username || 'Utente'}</span>
                     </div>
                 </div>
-                <div class="col-sessions">${seduteText}</div>
+                <div class="col-sessions">${routine.sedute || 0}</div>
                 <div class="col-actions">
                     ${!isAccepted ? `
                         <div class="accept-reject-buttons">

@@ -405,7 +405,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="col-sessions">
                     <span class="sessions-number">${seduteCount}</span>
-                    <span class="sessions-text">sedute</span>
                 </div>
                 <div class="col-date">
                     <span>${periodText}</span>
