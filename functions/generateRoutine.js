@@ -89,7 +89,6 @@ exports.generateWorkoutRoutine = onCall({
     // Utilizziamo modelli stabili e performanti
     const models = [
         'gemini-2.5-flash',
-
     ];
 
     let lastError = null;

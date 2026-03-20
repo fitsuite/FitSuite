@@ -588,7 +588,7 @@ const bodyParts = [
             
             data.attrezzatura = equipment;
             data.focus = focus;
-            data.workout_type = workout_type;
+            data.workout_type = workoutType;
 
             console.log("Form Data Collected:", data);
 
