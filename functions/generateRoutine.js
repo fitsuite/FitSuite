@@ -90,8 +90,8 @@ exports.generateWorkoutRoutine = onCall({
     const models = [
         'gemini-2.5-flash',
         'gemini-1.5-flash',
-        'gemini-2.0-flash',
-        'gemini-1.5-pro'
+        'gemini-1.5-pro',
+        'gemini-2.0-flash-exp'
     ];
 
     let lastError = null;
@@ -259,7 +259,7 @@ exports.testGeminiConnection = onCall({
         throw new HttpsError('unauthenticated', 'Devi essere autenticato');
     }
 
-    const models = ['gemini-3-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
+    const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp'];
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {

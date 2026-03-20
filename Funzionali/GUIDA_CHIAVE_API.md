@@ -5,7 +5,7 @@ Questa guida spiega come aggiornare la chiave API di Gemini sia per lo sviluppo 
 ## 1. Recuperare la Nuova Chiave API
 1. Vai su [Google AI Studio](https://aistudio.google.com/app/apikey).
 2. Se hai già una chiave, copiala. Altrimenti, clicca su **"Create API key"**.
-3. Assicurati che la chiave sia attiva per il modello che stai usando (es. Gemini 1.5 Flash o Gemini 2.0 Flash).
+3. Assicurati che la chiave sia attiva per il modello che stai usando (es. Gemini 2.5 Flash).
 
 ---
 

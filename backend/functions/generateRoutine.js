@@ -93,8 +93,8 @@ Struttura JSON:
 }
 `;
 
-        // Chiama Gemini API - Utilizziamo gemini-3-flash per la massima velocità e stabilità
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${apiKey}`;
+        // Chiama Gemini API - Utilizziamo gemini-2.5-flash per la massima velocità e stabilità
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
         
         const response = await axios.post(url, {
             contents: [{
@@ -150,7 +150,7 @@ Struttura JSON:
         if (status === 404) {
             throw new functions.https.HttpsError(
                 'not-found',
-                'Modello non trovato. Il nome "gemini-3-flash" potrebbe non essere ancora attivo nel tuo account o regione.'
+                'Modello non trovato. Il nome "gemini-2.5-flash" potrebbe non essere ancora attivo nel tuo account o regione.'
             );
         }
 
@@ -177,8 +177,8 @@ exports.testGeminiConnection = functions
 
     try {
         const apiKey = geminiApiKey.value();
-        // Chiama Gemini API - Utilizziamo gemini-3-flash per la massima velocità e stabilità
-        const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${apiKey}`;
+        // Chiama Gemini API - Utilizziamo gemini-2.5-flash per la massima velocità e stabilità
+        const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
         
         console.log('Avvio test connettività Gemini...');
         
@@ -195,7 +195,7 @@ exports.testGeminiConnection = functions
             success: true,
             message: "Connessione a Gemini riuscita!",
             apiResponse: reply,
-            modelUsed: "gemini-3-flash"
+            modelUsed: "gemini-2.5-flash"
         };
 
     } catch (error) {
