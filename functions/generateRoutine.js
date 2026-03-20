@@ -86,18 +86,26 @@ exports.generateWorkoutRoutine = onCall({
     else bmiStatus = "Obesità Classe II o superiore";
 
     // Lista di modelli da provare in ordine di preferenza (Piano Free)
-    // Utilizziamo modelli stabili e performanti
+    // Utilizziamo modelli stabili e performanti, con fallback automatico
     const models = [
-        'gemini-2.5-flash',
+        'gemini-2.5-flash',    // Modello principale (richiesto dall'utente)
+        'gemini-2.0-flash',    // Ultima versione stabile di Gemini 2
+        'gemini-1.5-flash',    // Modello di fallback ultra-veloce e stabile
+        'gemini-1.5-pro'       // Modello più potente se i flash falliscono
     ];
 
     let lastError = null;
+    const maxRetriesPerModel = 2; // Numero di tentativi per ogni modello in caso di 429
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     for (const modelName of models) {
-        try {
-            console.log(`Tentativo generazione scheda con modello: ${modelName}`);
-            
-            const systemPrompt = `
+        let retryCount = 0;
+        
+        while (retryCount <= maxRetriesPerModel) {
+            try {
+                console.log(`Tentativo generazione scheda con modello: ${modelName} (Tentativo ${retryCount + 1})`);
+                
+                const systemPrompt = `
 Sei un Personal Trainer d'élite con competenze avanzate in fisiologia, biomeccanica e nutrizione sportiva.
 Il tuo compito è creare una scheda di allenamento professionale, SCIENTIFICAMENTE VALIDA e CALIBRATA sui parametri biometrici dell'utente.
 
@@ -166,54 +174,64 @@ Struttura:
 }
 `;
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-            
-            const response = await axios.post(url, {
-                contents: [{
-                    role: "user",
-                    parts: [{ text: systemPrompt }]
-                }]
-            });
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+                
+                const response = await axios.post(url, {
+                    contents: [{
+                        role: "user",
+                        parts: [{ text: systemPrompt }]
+                    }]
+                });
 
-            // Estrai e parsea la risposta
-            let text = response.data.candidates[0].content.parts[0].text;
-            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const parsedResult = JSON.parse(text);
+                // Estrai e parsea la risposta
+                let text = response.data.candidates[0].content.parts[0].text;
+                text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                const parsedResult = JSON.parse(text);
 
-            console.log(`Successo con modello: ${modelName}`);
-            
-            // Increment usage counter after success
-            await userRef.update({
-                'ai_usage.count': currentCount + 1,
-                'ai_usage.lastReset': lastReset || now
-            });
+                console.log(`Successo con modello: ${modelName}`);
+                
+                // Increment usage counter after success
+                await userRef.update({
+                    'ai_usage.count': currentCount + 1,
+                    'ai_usage.lastReset': lastReset || now
+                });
 
-            return {
-                success: true,
-                routine: parsedResult,
-                modelUsed: modelName
-            };
+                return {
+                    success: true,
+                    routine: parsedResult,
+                    modelUsed: modelName
+                };
 
-        } catch (error) {
-            const status = error.response?.status;
-            const errorData = error.response?.data;
-            
-            // Log dettagliato per debug
-            console.error(`[Gemini Error] Modello: ${modelName} | Status: ${status} | Messaggio: ${error.message}`);
-            if (errorData) {
-                console.error(`[Gemini Error Data]:`, JSON.stringify(errorData));
+            } catch (error) {
+                const status = error.response?.status;
+                const errorData = error.response?.data;
+                
+                // Log dettagliato per debug
+                console.error(`[Gemini Error] Modello: ${modelName} | Status: ${status} | Messaggio: ${error.message}`);
+                if (errorData) {
+                    console.error(`[Gemini Error Data]:`, JSON.stringify(errorData));
+                }
+                
+                lastError = error;
+
+                // Se l'errore è 429 (Quota superata), proviamo a riprovare lo STESSO modello dopo un breve ritardo
+                if (status === 429 && retryCount < maxRetriesPerModel) {
+                    retryCount++;
+                    const waitTime = retryCount * 2000; // 2s, 4s...
+                    console.log(`Quota superata per ${modelName}. Riprovo tra ${waitTime}ms...`);
+                    await delay(waitTime);
+                    continue; // Riprova il ciclo while con lo stesso modello
+                }
+
+                // Se l'errore è 403 (Auth/API Key non valida), è inutile riprovare altri modelli
+                if (status === 403) {
+                    console.error("ERRORE DI AUTENTICAZIONE (403). La chiave API potrebbe essere non valida per questo progetto o regione.");
+                    break; // Esci dal ciclo for dei modelli
+                }
+                
+                // Per altri errori (404, 500, o 429 dopo i retry), passiamo al prossimo modello nel ciclo for
+                break; // Esci dal ciclo while, continua il ciclo for dei modelli
             }
-            
-            lastError = error;
-
-            // Se l'errore è 429 (Quota), 404 (Not Found) o 500/503 (Server Error), proviamo il prossimo modello
-            // Se l'errore è 403 (Auth/API Key non valida), è inutile riprovare
-            if (status === 403) {
-                console.error("ERRORE DI AUTENTICAZIONE (403). La chiave API potrebbe essere non valida per questo progetto o regione.");
-                break;
-            }
-            
-            continue;
         }
     }
 
@@ -228,7 +246,7 @@ Struttura:
 
     if (status === 429) {
         throw new HttpsError('resource-exhausted', 
-            'Quota Gemini superata o limite di spesa raggiunto (429). Verifica il tuo account Google AI Studio / Google Cloud Billing.'
+            'Quota Gemini superata (429). Ho provato tutti i modelli disponibili e i tentativi di riprova, ma il limite persiste. Riprova tra qualche minuto.'
         );
     }
 
@@ -256,7 +274,7 @@ exports.testGeminiConnection = onCall({
         throw new HttpsError('unauthenticated', 'Devi essere autenticato');
     }
 
-    const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp'];
+    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp'];
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {

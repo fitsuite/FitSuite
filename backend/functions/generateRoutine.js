@@ -93,70 +93,114 @@ Struttura JSON:
 }
 `;
 
-        // Chiama Gemini API - Utilizziamo gemini-2.5-flash per la massima velocità e stabilità
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-        
-        const response = await axios.post(url, {
-            contents: [{
-                role: "user",
-                parts: [{ text: systemPrompt }]
-            }],
-            generationConfig: {
-                temperature: 0.7,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 4096, // Assicurati che non venga troncato
-                responseMimeType: "application/json" // Forza la risposta JSON
+        // Lista di modelli da provare in ordine di preferenza
+        const models = [
+            'gemini-2.5-flash',
+            'gemini-2.0-flash',
+            'gemini-1.5-flash',
+            'gemini-1.5-pro'
+        ];
+
+        let lastError = null;
+        const maxRetriesPerModel = 2;
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        for (const modelName of models) {
+            let retryCount = 0;
+            while (retryCount <= maxRetriesPerModel) {
+                try {
+                    console.log(`Tentativo con modello: ${modelName} (Tentativo ${retryCount + 1})`);
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+                    
+                    const response = await axios.post(url, {
+                        contents: [{
+                            role: "user",
+                            parts: [{ text: systemPrompt }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 4096,
+                            responseMimeType: "application/json"
+                        }
+                    });
+
+                    // Estrai e parsea la risposta
+                    let text = response.data.candidates[0].content.parts[0].text;
+                    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                    const parsedResult = JSON.parse(text);
+
+                    return {
+                        success: true,
+                        routine: parsedResult,
+                        modelUsed: modelName
+                    };
+
+                } catch (error) {
+                    const status = error.response?.status;
+                    const errorData = error.response?.data;
+                    
+                    console.error(`ERRORE GEMINI (${modelName}):`, {
+                        status,
+                        message: error.message,
+                        data: JSON.stringify(errorData)
+                    });
+                    
+                    lastError = error;
+
+                    if (status === 429 && retryCount < maxRetriesPerModel) {
+                        retryCount++;
+                        await delay(retryCount * 2000);
+                        continue;
+                    }
+
+                    if (status === 403) break;
+                    break;
+                }
             }
-        });
+        }
 
-        // Estrai e parsea la risposta
-        let text = response.data.candidates[0].content.parts[0].text;
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsedResult = JSON.parse(text);
+        // Se tutti falliscono
+        const finalStatus = lastError.response?.status;
+        const finalMessage = lastError.message;
 
-        return {
-            success: true,
-            routine: parsedResult
-        };
-
-    } catch (error) {
-        // Log dettagliato sul server (visibile nella console Firebase)
-        const status = error.response?.status;
-        const errorData = error.response?.data;
-        const message = error.message;
-
-        console.error('ERRORE DETTAGLIATO GEMINI:', {
-            status,
-            message,
-            data: JSON.stringify(errorData),
-            stack: error.stack
-        });
-        
-        if (status === 429) {
+        if (finalStatus === 429) {
             throw new functions.https.HttpsError(
                 'resource-exhausted',
-                'riprovare perche si e verificato un problema'
+                'Quota Gemini superata (429). Ho provato tutti i modelli disponibili e i tentativi di riprova, ma il limite persiste. Riprova tra qualche minuto.'
             );
         }
 
-        if (status === 403) {
+        if (finalStatus === 403) {
             throw new functions.https.HttpsError(
                 'permission-denied',
                 'Chiave API non valida o permessi insufficienti. Verifica la tua GEMINI_API_KEY.'
             );
         }
 
-        if (status === 404) {
+        if (finalStatus === 404) {
             throw new functions.https.HttpsError(
                 'not-found',
-                'Modello non trovato. Il nome "gemini-2.5-flash" potrebbe non essere ancora attivo nel tuo account o regione.'
+                'Modello non trovato. Verifica la configurazione della tua GEMINI_API_KEY.'
             );
         }
 
         throw new functions.https.HttpsError(
             'internal',
-            `Errore Gemini (${status || 'unknown'}): ${message}. Controlla i log di Firebase per i dettagli.`
+            `Errore Gemini (${finalStatus || 'unknown'}): ${finalMessage}. Controlla i log di Firebase per i dettagli.`
+        );
+
+    } catch (outerError) {
+        // Questo cattura errori di validazione iniziale o errori lanciati sopra
+        if (outerError instanceof functions.https.HttpsError) {
+            throw outerError;
+        }
+        
+        console.error('ERRORE CRITICO GENERAZIONE:', outerError);
+        throw new functions.https.HttpsError(
+            'internal',
+            `Errore imprevisto: ${outerError.message}`
         );
     }
 });
