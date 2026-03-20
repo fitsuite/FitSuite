@@ -90,8 +90,7 @@ exports.generateWorkoutRoutine = onCall({
     const models = [
         'gemini-2.5-flash',    // Modello principale (richiesto dall'utente)
         'gemini-2.0-flash',    // Ultima versione stabile di Gemini 2
-        'gemini-1.5-flash',    // Modello di fallback ultra-veloce e stabile
-        'gemini-1.5-pro'       // Modello più potente se i flash falliscono
+
     ];
 
     let lastError = null;
