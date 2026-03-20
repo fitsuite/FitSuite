@@ -12,6 +12,10 @@ if (typeof window.CONFIG === 'undefined') {
         },
         GEMINI: {
             API_KEY: "PLACEHOLDER - SET IN config.local.js"
+        },
+        STRIPE: {
+            // Indirizzo base delle tue Cloud Functions Firebase
+            CLOUD_FUNCTIONS_URL: "https://europe-west1-fitsuite-a7b6c.cloudfunctions.net"
         }
     };
 }

@@ -106,36 +106,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         const period = isYearly ? 'yearly' : 'monthly';
         const priceId = PRICE_IDS[planId][period];
 
+        // Se siamo ancora con i placeholder, avvisa l'utente
+        if (priceId.includes('PRICE_MENSILE_PRO')) {
+            if (window.showErrorToast) {
+                window.showErrorToast('Configura i tuoi Price ID in scelta_piano.js prima di procedere.');
+            }
+            return;
+        }
+
         if (window.LoadingManager) {
             window.LoadingManager.show(['Inizializzazione pagamento...', 'Reindirizzamento a Stripe...']);
         }
 
         try {
-            /**
-             * NOTA SULLA SICUREZZA:
-             * Non aggiorniamo più il database Firestore direttamente dal frontend.
-             * Il reindirizzamento porta l'utente sulla pagina sicura di Stripe.
-             * L'aggiornamento del piano dell'utente nel database avverrà tramite un 
-             * WEBHOOK di Stripe collegato a una Cloud Function (es. stripeWebhook).
-             * Questo impedisce manipolazioni lato client e garantisce che l'accesso 
-             * PRO/PT venga concesso solo dopo la conferma effettiva del pagamento da Stripe.
-             */
-            
-            // Chiamata alla Cloud Function per creare la sessione di Checkout
-            // Assicurati che l'URL sia corretto per il tuo ambiente
-            const response = await fetch('https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/createCheckoutSession', {
+            const functionsBaseUrl = (window.CONFIG && window.CONFIG.STRIPE && window.CONFIG.STRIPE.CLOUD_FUNCTIONS_URL) 
+                ? window.CONFIG.STRIPE.CLOUD_FUNCTIONS_URL 
+                : 'https://europe-west1-fitsuite-a7b6c.cloudfunctions.net';
+
+            if (functionsBaseUrl.includes('your_region-your_project')) {
+                throw new Error('Configurazione Cloud Functions mancante. Imposta CLOUD_FUNCTIONS_URL in config.local.js');
+            }
+
+            const response = await fetch(`${functionsBaseUrl}/createCheckoutSession`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                mode: 'cors', // Assicura che la richiesta sia CORS
                 body: JSON.stringify({
                     priceId: priceId,
                     userId: currentUser.uid,
                     userEmail: currentUser.email,
-                    successUrl: window.location.origin + '/frontend/scelta_piano/scelta_piano.html?session_id={CHECKOUT_SESSION_ID}',
+                    successUrl: window.location.origin + window.location.pathname + '?session_id={CHECKOUT_SESSION_ID}',
                     cancelUrl: window.location.href
                 }),
             });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Errore durante la creazione della sessione.');
+            }
 
             const session = await response.json();
 

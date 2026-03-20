@@ -21,5 +21,9 @@ window.CONFIG = {
     },
     GEMINI: {
         API_KEY: "YOUR_GEMINI_API_KEY_HERE"
+    },
+    STRIPE: {
+        // Esempio: "https://europe-west1-fitsuite-a7b6c.cloudfunctions.net"
+        CLOUD_FUNCTIONS_URL: "https://europe-west1-fitsuite-a7b6c.cloudfunctions.net"
     }
 };

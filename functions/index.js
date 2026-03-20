@@ -1,8 +1,12 @@
 const {onCall} = require("firebase-functions/v2/https");
 const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
+const {onRequest} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const nodemailer = require("nodemailer");
+const cors = require('cors')({origin: true});
+
+// Inizializza Stripe (usa la tua Secret Key)
+// const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -33,6 +37,44 @@ const { generateWorkoutRoutine, testGeminiConnection } = require("./generateRout
 // Esporta le funzioni
 exports.generateWorkoutRoutine = generateWorkoutRoutine;
 exports.testGeminiConnection = testGeminiConnection;
+
+// Funzione per creare la sessione di Checkout di Stripe
+exports.createCheckoutSession = onRequest(async (req, res) => {
+    // Gestione CORS
+    return cors(req, res, async () => {
+        if (req.method !== 'POST') {
+            return res.status(405).json({ message: 'Metodo non consentito' });
+        }
+
+        try {
+            const { priceId, userId, userEmail, successUrl, cancelUrl } = req.body;
+
+            // Logica per creare la sessione con Stripe (richiede 'stripe' npm package)
+            /*
+            const session = await stripe.checkout.sessions.create({
+                payment_method_types: ['card'],
+                line_items: [{ price: priceId, quantity: 1 }],
+                mode: 'subscription',
+                customer_email: userEmail,
+                client_reference_id: userId,
+                success_url: successUrl,
+                cancel_url: cancelUrl,
+            });
+            return res.json({ id: session.id });
+            */
+
+            // Messaggio temporaneo finché non configuri Stripe nel backend
+            logger.warn("Richiesta Checkout ricevuta ma Stripe non è ancora configurato nel backend.");
+            return res.status(501).json({ 
+                message: "Backend non ancora configurato. Installa 'stripe' e configura la Secret Key." 
+            });
+
+        } catch (error) {
+            logger.error("Errore Checkout:", error);
+            return res.status(500).json({ message: error.message });
+        }
+    });
+});
 
 // Funzione per inviare l'email di verifica
 exports.sendVerificationEmail = onCall(async (request) => {
