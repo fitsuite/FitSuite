@@ -1,4 +1,4 @@
-vdocument.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     // Funzione per verificare la connessione
     function checkConnection() {
         if (!navigator.onLine) {
