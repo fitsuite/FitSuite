@@ -88,9 +88,9 @@ exports.generateWorkoutRoutine = onCall({
     // Lista di modelli da provare in ordine di preferenza (Piano Free)
     // Utilizziamo modelli stabili e performanti
     const models = [
+        'gemini-2.5-flash',
         'gemini-1.5-flash',
         'gemini-2.0-flash',
-        'gemini-1.5-flash-8b',
         'gemini-1.5-pro'
     ];
 
@@ -231,7 +231,13 @@ Struttura:
 
     if (status === 429) {
         throw new HttpsError('resource-exhausted', 
-            'riprovare perche si e verificato un problema'
+            'Quota Gemini superata o limite di spesa raggiunto (429). Verifica il tuo account Google AI Studio / Google Cloud Billing.'
+        );
+    }
+
+    if (status === 404) {
+        throw new HttpsError('not-found', 
+            `Il modello AI richiesto non è stato trovato o non è disponibile per questa chiave API (404). Modello: ${lastError.config.url.split('/').pop().split(':')[0]}`
         );
     }
 
