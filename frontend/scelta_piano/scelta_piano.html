@@ -57,13 +57,23 @@
                     <p>Sblocca tutte le potenzialità di FitSuite per la tua attività</p>
                 </header>
 
+                <!-- Pricing Toggle -->
+                <div class="pricing-toggle-container">
+                    <span class="toggle-label monthly active">Mensile</span>
+                    <label class="switch">
+                        <input type="checkbox" id="pricing-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label yearly">Annuale <span class="discount-badge">RISPARMIA 20%</span></span>
+                </div>
+
                 <div class="pricing-grid">
-                    <!-- Card 1: PRO (Ex Lite) -->
+                    <!-- Card 1: PRO -->
                     <div class="pricing-card" data-plan="pro">
                         <div class="card-header">
                             <h3>PRO</h3>
                             <p class="card-tagline">Per appassionati regolari</p>
-                            <p class="price">€4.99<span>/mese</span></p>
+                            <p class="price" id="pro-price">€4.99<span>/mese</span></p>
                         </div>
                         <div class="card-body">
                             <ul class="features">
@@ -79,13 +89,13 @@
                         <button class="pricing-btn" data-plan-id="pro">PASSA A PRO</button>
                     </div>
 
-                    <!-- Card 2: PT (Ex PRO) -->
+                    <!-- Card 2: PT -->
                     <div class="pricing-card popular" data-plan="pt">
                         <div class="popular-badge">PIÙ SCELTO</div>
                         <div class="card-header">
                             <h3>PT</h3>
                             <p class="card-tagline">Per veri professionisti</p>
-                            <p class="price">€9.99<span>/mese</span></p>
+                            <p class="price" id="pt-price">€9.99<span>/mese</span></p>
                         </div>
                         <div class="card-body">
                             <ul class="features">
@@ -101,26 +111,6 @@
                         </div>
                         <button class="pricing-btn" data-plan-id="pt">DIVENTA PT</button>
                     </div>
-                </div>
-            </div>
-
-            <!-- Stripe Payment Container (Hidden by default) -->
-            <div id="payment-container" class="payment-container" style="display: none;">
-                <div class="payment-card">
-                    <button id="back-to-plans" class="back-btn"><i class="fas fa-arrow-left"></i> Torna ai piani</button>
-                    <h2>Completamento Pagamento</h2>
-                    <p id="selected-plan-text">Stai acquistando il piano <strong>PRO</strong></p>
-                    
-                    <form id="payment-form">
-                        <div id="card-element">
-                            <!-- Stripe Elements will be inserted here -->
-                        </div>
-                        <div id="card-errors" role="alert"></div>
-                        <button id="submit-payment" class="submit-btn">
-                            <span id="button-text">Paga ora</span>
-                            <div class="spinner hidden" id="spinner"></div>
-                        </button>
-                    </form>
                 </div>
             </div>
 

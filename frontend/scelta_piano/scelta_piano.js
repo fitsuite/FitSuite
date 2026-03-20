@@ -26,50 +26,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Stripe Initialization
     const stripe = Stripe('pk_test_51T9iVb2Hrb9wTJ3aRbGMBCSfJmVQHPqcq18KZF4hCozCqCQMfzRQlWYvVqjxkGmlpwCLOUEhqftw4sfqPVNifl7f00r5L4IudA');
-    const elements = stripe.elements();
     
-    // Custom styling for Stripe Elements
-    const style = {
-        base: {
-            color: '#ffffff',
-            fontFamily: '"Segoe UI", Roboto, sans-serif',
-            fontSmoothing: 'antialiased',
-            fontSize: '16px',
-            '::placeholder': {
-                color: '#888888'
-            }
+    // Price IDs Mapping (Replace with actual IDs from Stripe Dashboard)
+    const PRICE_IDS = {
+        pro: {
+            monthly: 'PRICE_MENSILE_PRO',
+            yearly: 'PRICE_ANNUALE_PRO'
         },
-        invalid: {
-            color: '#ff4d4d',
-            iconColor: '#ff4d4d'
+        pt: {
+            monthly: 'PRICE_MENSILE_PT',
+            yearly: 'PRICE_ANNUALE_PT'
         }
     };
-    
-    const card = elements.create('card', { style: style });
-    card.mount('#card-element');
-    
+
+    const PRICES = {
+        pro: { monthly: '€4.99', yearly: '€50' },
+        pt: { monthly: '€9.99', yearly: '€100' }
+    };
+
     // DOM Elements
     const selectionContainer = document.getElementById('selection-container');
-    const paymentContainer = document.getElementById('payment-container');
     const successContainer = document.getElementById('success-container');
-    const paymentForm = document.getElementById('payment-form');
-    const selectedPlanText = document.getElementById('selected-plan-text');
-    const submitBtn = document.getElementById('submit-payment');
-    const backBtn = document.getElementById('back-to-plans');
+    const pricingToggle = document.getElementById('pricing-toggle');
+    const proPriceText = document.getElementById('pro-price');
+    const ptPriceText = document.getElementById('pt-price');
+    const toggleLabels = document.querySelectorAll('.toggle-label');
     const goHomeBtn = document.getElementById('go-home-btn');
-    const cardErrors = document.getElementById('card-errors');
-    const spinner = document.getElementById('spinner');
-    const buttonText = document.getElementById('button-text');
     
-    let selectedPlan = null;
+    let isYearly = false;
     let currentUser = null;
+
+    // Pricing Toggle Logic
+    pricingToggle.addEventListener('change', () => {
+        isYearly = pricingToggle.checked;
+        updatePricingUI();
+    });
+
+    function updatePricingUI() {
+        const period = isYearly ? 'yearly' : 'monthly';
+        const suffix = isYearly ? '<span>/anno</span>' : '<span>/mese</span>';
+        
+        proPriceText.innerHTML = `${PRICES.pro[period]}${suffix}`;
+        ptPriceText.innerHTML = `${PRICES.pt[period]}${suffix}`;
+        
+        // Update label active state
+        toggleLabels.forEach(label => {
+            if (label.classList.contains(period)) {
+                label.classList.add('active');
+            } else {
+                label.classList.remove('active');
+            }
+        });
+    }
 
     // Check Authentication
     auth.onAuthStateChanged(user => {
         if (user) {
             currentUser = user;
         } else {
-            // auth_guard should handle this, but as a fallback:
             window.location.href = '../auth/auth.html';
         }
     });
@@ -77,146 +91,96 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Plan Selection Buttons
     const planButtons = document.querySelectorAll('.pricing-btn[data-plan-id]');
     planButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectedPlan = btn.getAttribute('data-plan-id');
-            showPaymentStep(selectedPlan);
+        btn.addEventListener('click', async () => {
+            const planId = btn.getAttribute('data-plan-id');
+            await handleCheckout(planId);
         });
     });
 
-    // Step Navigation
-    function showPaymentStep(planId) {
-        const planName = planId.toUpperCase();
-        selectedPlanText.innerHTML = `Stai acquistando il piano <strong>${planName}</strong>`;
-        
-        selectionContainer.style.display = 'none';
-        paymentContainer.style.display = 'flex';
-        
-        // Clear any previous errors
-        cardErrors.textContent = '';
+    async function handleCheckout(planId) {
+        if (!currentUser) {
+            window.location.href = '../auth/auth.html';
+            return;
+        }
+
+        const period = isYearly ? 'yearly' : 'monthly';
+        const priceId = PRICE_IDS[planId][period];
+
+        if (window.LoadingManager) {
+            window.LoadingManager.show(['Inizializzazione pagamento...', 'Reindirizzamento a Stripe...']);
+        }
+
+        try {
+            /**
+             * NOTA SULLA SICUREZZA:
+             * Non aggiorniamo più il database Firestore direttamente dal frontend.
+             * Il reindirizzamento porta l'utente sulla pagina sicura di Stripe.
+             * L'aggiornamento del piano dell'utente nel database avverrà tramite un 
+             * WEBHOOK di Stripe collegato a una Cloud Function (es. stripeWebhook).
+             * Questo impedisce manipolazioni lato client e garantisce che l'accesso 
+             * PRO/PT venga concesso solo dopo la conferma effettiva del pagamento da Stripe.
+             */
+            
+            // Chiamata alla Cloud Function per creare la sessione di Checkout
+            // Assicurati che l'URL sia corretto per il tuo ambiente
+            const response = await fetch('https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/createCheckoutSession', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    priceId: priceId,
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    successUrl: window.location.origin + '/frontend/scelta_piano/scelta_piano.html?session_id={CHECKOUT_SESSION_ID}',
+                    cancelUrl: window.location.href
+                }),
+            });
+
+            const session = await response.json();
+
+            if (session.id) {
+                // Reindirizzamento a Stripe Checkout
+                const result = await stripe.redirectToCheckout({
+                    sessionId: session.id,
+                });
+
+                if (result.error) {
+                    throw new Error(result.error.message);
+                }
+            } else {
+                throw new Error('Impossibile creare la sessione di pagamento.');
+            }
+
+        } catch (error) {
+            console.error('Checkout error:', error);
+            if (window.showErrorToast) {
+                window.showErrorToast('Errore durante l\'avvio del pagamento: ' + error.message);
+            }
+        } finally {
+            if (window.LoadingManager) {
+                window.LoadingManager.hide();
+            }
+        }
     }
 
-    backBtn.addEventListener('click', () => {
-        paymentContainer.style.display = 'none';
-        selectionContainer.style.display = 'block';
-        selectedPlan = null;
-    });
-
-    // Payment Form Submission
-    paymentForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        
-        if (!selectedPlan || !currentUser) return;
-        
-        setLoading(true);
-        
-        // In a real app, you would first call your backend to create a PaymentIntent
-        // and get a client_secret. Since we are doing a frontend-only flow for this task:
-        
-        const { token, error } = await stripe.createToken(card);
-        
-        if (error) {
-            cardErrors.textContent = error.message;
-            setLoading(false);
-        } else {
-            // Token created successfully!
-            // Now we simulate the successful payment and update the database.
-            // In a real app, you'd send 'token.id' to your server to process the charge.
-            
-            console.log('Stripe Token created:', token.id);
-            
-            try {
-                await updateUserDataAfterPayment(selectedPlan);
-                showSuccessStep();
-            } catch (err) {
-                console.error('Error updating database:', err);
-                cardErrors.textContent = 'Errore durante l\'aggiornamento del profilo. Contatta l\'assistenza.';
-                setLoading(false);
-            }
-        }
-    });
-
-    async function updateUserDataAfterPayment(planId) {
-        if (!currentUser) return;
-        
-        const userRef = db.collection('users').doc(currentUser.uid);
-        
-        // Calculate end date (30 days from now)
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setDate(startDate.getDate() + 30);
-        
-        const updateData = {
-            'subscription.plan': planId,
-            'subscription.status': 'active',
-            'subscription.startDate': firebase.firestore.Timestamp.fromDate(startDate),
-            'subscription.endDate': firebase.firestore.Timestamp.fromDate(endDate),
-            'role': planId, // Sync role with plan
-            'updatedAt': firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        // Special logic for PT plan if needed (e.g., initializing client lists)
-        if (planId === 'pt') {
-            updateData['clients_count'] = 0;
-        }
-
-        await userRef.update(updateData);
-        
-        // Update Local Cache
-        if (window.CacheManager) {
-            const cachedProfile = localStorage.getItem(`userProfile_${currentUser.uid}`);
-            if (cachedProfile) {
-                const profile = JSON.parse(cachedProfile);
-                profile.subscription = {
-                    plan: planId,
-                    status: 'active',
-                    startDate: startDate.toISOString(),
-                    endDate: endDate.toISOString()
-                };
-                profile.role = planId;
-                localStorage.setItem(`userProfile_${currentUser.uid}`, JSON.stringify(profile));
-            }
-        }
-        
-        // Force refresh for other components
-        localStorage.setItem(`lastProfileRefresh_${currentUser.uid}`, Date.now().toString());
-        
-        // Trigger event for sidebar if loaded
-        window.dispatchEvent(new CustomEvent('planUpdated', { 
-            detail: { planId: planId } 
-        }));
+    // Check for success redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    if (sessionId) {
+        showSuccessStep();
     }
 
     function showSuccessStep() {
-        paymentContainer.style.display = 'none';
+        selectionContainer.style.display = 'none';
         successContainer.style.display = 'flex';
         
         if (window.showSuccessToast) {
-            window.showSuccessToast('Abbonamento attivato con successo!');
+            window.showSuccessToast('Pagamento completato con successo!');
         }
     }
 
     goHomeBtn.addEventListener('click', () => {
         window.location.href = '../lista_schede/lista_scheda.html';
-    });
-
-    function setLoading(isLoading) {
-        if (isLoading) {
-            submitBtn.disabled = true;
-            spinner.classList.remove('hidden');
-            buttonText.textContent = 'Elaborazione...';
-        } else {
-            submitBtn.disabled = false;
-            spinner.classList.add('hidden');
-            buttonText.textContent = 'Paga ora';
-        }
-    }
-    
-    // Listen for card changes to show errors immediately
-    card.on('change', (event) => {
-        if (event.error) {
-            cardErrors.textContent = event.error.message;
-        } else {
-            cardErrors.textContent = '';
-        }
     });
 });
