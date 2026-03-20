@@ -3,10 +3,15 @@ const {setGlobalOptions} = require("firebase-functions");
 const {onRequest} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const nodemailer = require("nodemailer");
-const cors = require('cors')({origin: true});
+const cors = require('cors')({
+    origin: ['https://fitsuite.github.io', 'http://localhost:5500', 'http://127.0.0.1:5500'],
+    methods: ['POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type']
+});
 
-// Inizializza Stripe (usa la tua Secret Key)
-// const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// Inizializza Stripe (usa la tua Secret Key salvata nelle variabili d'ambiente)
+// firebase functions:config:set stripe.secret="sk_test_..."
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder");
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -40,8 +45,16 @@ exports.testGeminiConnection = testGeminiConnection;
 
 // Funzione per creare la sessione di Checkout di Stripe
 exports.createCheckoutSession = onRequest(async (req, res) => {
-    // Gestione CORS
+    // Gestione CORS per fitsuite.github.io
     return cors(req, res, async () => {
+        // Se Stripe non è configurato correttamente
+        if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === "sk_test_placeholder") {
+            logger.error("STRIPE_SECRET_KEY non configurata nel backend.");
+            return res.status(500).json({ 
+                message: "Configurazione Stripe mancante sul server. Imposta la variabile STRIPE_SECRET_KEY." 
+            });
+        }
+
         if (req.method !== 'POST') {
             return res.status(405).json({ message: 'Metodo non consentito' });
         }
@@ -49,29 +62,38 @@ exports.createCheckoutSession = onRequest(async (req, res) => {
         try {
             const { priceId, userId, userEmail, successUrl, cancelUrl } = req.body;
 
-            // Logica per creare la sessione con Stripe (richiede 'stripe' npm package)
-            /*
+            if (!priceId || !userId) {
+                return res.status(400).json({ message: "priceId e userId sono obbligatori." });
+            }
+
+            // Creazione della sessione di Checkout su Stripe
             const session = await stripe.checkout.sessions.create({
                 payment_method_types: ['card'],
-                line_items: [{ price: priceId, quantity: 1 }],
+                line_items: [
+                    {
+                        price: priceId,
+                        quantity: 1,
+                    },
+                ],
                 mode: 'subscription',
                 customer_email: userEmail,
                 client_reference_id: userId,
+                metadata: {
+                    userId: userId,
+                },
                 success_url: successUrl,
                 cancel_url: cancelUrl,
             });
-            return res.json({ id: session.id });
-            */
 
-            // Messaggio temporaneo finché non configuri Stripe nel backend
-            logger.warn("Richiesta Checkout ricevuta ma Stripe non è ancora configurato nel backend.");
-            return res.status(501).json({ 
-                message: "Backend non ancora configurato. Installa 'stripe' e configura la Secret Key." 
-            });
+            logger.info(`Sessione Checkout creata per utente ${userId}: ${session.id}`);
+            return res.json({ id: session.id });
 
         } catch (error) {
-            logger.error("Errore Checkout:", error);
-            return res.status(500).json({ message: error.message });
+            logger.error("Errore durante la creazione della sessione Stripe:", error);
+            return res.status(500).json({ 
+                message: "Errore interno durante la creazione della sessione di pagamento.",
+                details: error.message 
+            });
         }
     });
 });
