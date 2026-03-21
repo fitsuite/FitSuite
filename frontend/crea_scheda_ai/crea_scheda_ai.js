@@ -588,7 +588,7 @@ const bodyParts = [
             
             data.attrezzatura = equipment;
             data.focus = focus;
-            data.workout_type = workout_type;
+            data.workout_type = workoutType;
 
             console.log("Form Data Collected:", data);
 
@@ -763,12 +763,15 @@ const bodyParts = [
             
             let errorMessage = "Non è stato possibile generare la scheda.\n\n";
             
-            if (error.code === 'resource-exhausted') {
-                errorMessage = "riprovare perche si e verificato un problema";
+            // Gestione specifica degli errori di quota (429)
+            if (error.code === 'resource-exhausted' || error.message?.includes('429')) {
+                errorMessage = "Quota Gemini temporaneamente superata. Ho implementato un sistema di riprova automatico e fallback su altri modelli. Per favore, attendi un minuto e riprova.";
             } else if (error.code === 'unauthenticated') {
                 errorMessage += "Errore di autenticazione. Per favore, accedi di nuovo.";
+            } else if (error.code === 'deadline-exceeded') {
+                errorMessage += "La richiesta ha impiegato troppo tempo. Riprova con una frequenza settimanale minore o una durata inferiore.";
             } else {
-                errorMessage += "Errore: " + (error.message || 'Sconosciuto');
+                errorMessage += "Dettaglio Errore: " + (error.message || 'Sconosciuto');
             }
             
             throw new Error(errorMessage);
