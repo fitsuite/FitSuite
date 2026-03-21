@@ -88,9 +88,9 @@ exports.generateWorkoutRoutine = onCall({
     // Lista di modelli da provare in ordine di preferenza (Piano Free)
     // Utilizziamo modelli stabili e performanti, con fallback automatico
     const models = [
-        'gemini-2.5-flash',    // Modello principale (richiesto dall'utente)
-        'gemini-2.0-flash',    // Ultima versione stabile di Gemini 2
-
+        'gemini-3.0-flash',    // Modello di punta Gemini 3
+        'gemini-2.5-flash',    // Modello Gemini 2.5
+        'gemini-2.0-flash'     // Modello Gemini 2.0 stabile
     ];
 
     let lastError = null;
@@ -273,7 +273,7 @@ exports.testGeminiConnection = onCall({
         throw new HttpsError('unauthenticated', 'Devi essere autenticato');
     }
 
-    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp'];
+    const models = ['gemini-3.0-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {

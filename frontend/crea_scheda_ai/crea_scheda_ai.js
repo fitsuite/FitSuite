@@ -635,7 +635,7 @@ const bodyParts = [
                 window.LoadingManager.nextStep('Elaborazione esercizi...');
                 const finalRoutine = mapRoutineToFullObjects(generatedRoutine, exercises.fullList);
 
-                // 4. Update AI usage counter in Firestore and Cache
+                // 4. Update AI usage counter in Cache (Firestore is updated by Cloud Function)
                 try {
                     const user = firebase.auth().currentUser;
                     const profile = window.PlanManager.getUserProfile();
@@ -656,18 +656,13 @@ const bodyParts = [
 
                         const newUsage = { count: newCount, lastReset: lastReset };
                         
-                        // Update Firestore
-                        await db.collection('users').doc(user.uid).update({
-                            ai_usage: newUsage
-                        });
-                        
-                        // Update Cache
+                        // Update Cache only (Cloud Function already updated Firestore)
                         profile.ai_usage = newUsage;
                         localStorage.setItem(`userProfile_${user.uid}`, JSON.stringify(profile));
-                        console.log('AI usage updated:', newUsage);
+                        console.log('Local AI usage cache updated:', newUsage);
                     }
                 } catch (usageError) {
-                    console.error("Error updating AI usage:", usageError);
+                    console.error("Error updating local AI usage cache:", usageError);
                 }
 
                 // 5. Export/Save
@@ -763,9 +758,14 @@ const bodyParts = [
             
             let errorMessage = "Non è stato possibile generare la scheda.\n\n";
             
-            // Gestione specifica degli errori di quota (429)
-            if (error.code === 'resource-exhausted' || error.message?.includes('429')) {
-                errorMessage = "Quota Gemini temporaneamente superata. Ho implementato un sistema di riprova automatico e fallback su altri modelli. Per favore, attendi un minuto e riprova.";
+            // Gestione specifica degli errori di quota (429) o limiti piano
+            if (error.code === 'resource-exhausted' || error.message?.includes('429') || error.message?.includes('quota')) {
+                // Se l'errore contiene un messaggio specifico dal server (es. limite piano), usa quello
+                if (error.message && (error.message.includes('limite') || error.message.includes('piano'))) {
+                    errorMessage = error.message;
+                } else {
+                    errorMessage = "Quota Gemini temporaneamente superata. Ho implementato un sistema di riprova automatico e fallback su altri modelli. Per favore, attendi un minuto e riprova.";
+                }
             } else if (error.code === 'unauthenticated') {
                 errorMessage += "Errore di autenticazione. Per favore, accedi di nuovo.";
             } else if (error.code === 'deadline-exceeded') {

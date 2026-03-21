@@ -95,10 +95,9 @@ Struttura JSON:
 
         // Lista di modelli da provare in ordine di preferenza
         const models = [
+            'gemini-3.0-flash',
             'gemini-2.5-flash',
-            'gemini-2.0-flash',
-            'gemini-1.5-flash',
-            'gemini-1.5-pro'
+            'gemini-2.0-flash'
         ];
 
         let lastError = null;
