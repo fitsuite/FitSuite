@@ -88,20 +88,20 @@ exports.generateWorkoutRoutine = onCall({
     // Lista di modelli da provare in ordine di preferenza (Piano Free)
     // Utilizziamo modelli stabili e performanti, con fallback automatico
     const models = [
-        'gemini-3.0-flash',    // Modello di punta Gemini 3
         'gemini-2.5-flash',    // Modello Gemini 2.5
-        'gemini-2.0-flash'     // Modello Gemini 2.0 stabile
+        'gemini-2.0-flash',    // Modello Gemini 2.0 stabile
+        'gemini-1.5-flash',    // Modello Gemini 1.5 stabile
+        'gemini-1.5-flash-8b', // Modello ultraleggero
+        'gemini-1.5-pro'       // Modello Pro (più lento ma preciso)
     ];
 
     let lastError = null;
     const maxRetriesPerModel = 3; // Aumentato per maggiore resilienza
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     
-    // Flag per gestire il rate limiting globale (se un modello è in 429, probabilmente lo sono tutti)
-    let isRateLimited = false;
-
     for (const modelName of models) {
-        if (isRateLimited) break; 
+        // Se siamo stati bloccati per 429 su un modello, proviamo comunque il prossimo
+        // a meno che non sia un errore bloccante di sistema
         
         let retryCount = 0;
         
@@ -231,10 +231,9 @@ Struttura:
                         continue; // Riprova il ciclo while con lo stesso modello
                     } else {
                         // Se abbiamo esaurito i retry per questo modello con 429, 
-                        // è inutile provare gli altri immediatamente (stessa API KEY)
-                        console.error(`Quota esaurita definitivamente per ${modelName} dopo ${maxRetriesPerModel} tentativi.`);
-                        isRateLimited = true;
-                        break; 
+                        // passiamo al prossimo modello invece di bloccare tutto
+                        console.error(`Quota esaurita definitivamente per ${modelName} dopo ${maxRetriesPerModel} tentativi. Provo il prossimo modello...`);
+                        break; // Esci dal ciclo while, continua il ciclo for dei modelli
                     }
                 }
 
@@ -260,20 +259,20 @@ Struttura:
         data: JSON.stringify(errorData)
     });
 
-    if (status === 429 || isRateLimited) {
+    if (status === 429) {
         throw new HttpsError('resource-exhausted', 
-            'Quota Gemini temporaneamente superata. Per evitare di consumare troppi tentativi, la generazione è stata sospesa. Riprova tra 1-2 minuti.'
+            'Quota Gemini temporaneamente superata su tutti i modelli disponibili. Per favore, attendi 1-2 minuti e riprova.'
         );
     }
 
     if (status === 404) {
         throw new HttpsError('not-found', 
-            'Modello AI non disponibile. Controlla la configurazione della chiave API Gemini.'
+            'Modello AI non disponibile o configurazione errata. Verifica la tua chiave API Gemini.'
         );
     }
 
     throw new HttpsError('internal', 
-        `Errore nella generazione della scheda: ${lastError?.message || 'Errore sconosciuto'}. Riprova.`
+        `Errore nella generazione della scheda dopo aver provato ${models.length} modelli: ${lastError?.message || 'Errore sconosciuto'}.`
     );
 });
 
@@ -292,35 +291,43 @@ exports.testGeminiConnection = onCall({
         throw new HttpsError('unauthenticated', 'Devi essere autenticato');
     }
 
-    const models = ['gemini-3.0-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+    const models = [
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash'
+    ];
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-        return { success: false, error: "GEMINI_API_KEY mancante." };
+        return { success: false, error: "GEMINI_API_KEY mancante nei secret." };
     }
+
+    let errors = [];
 
     for (const modelName of models) {
         try {
             console.log(`Test connettività per modello: ${modelName}`);
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             const response = await axios.post(url, {
-                contents: [{ role: "user", parts: [{ text: "Ciao, rispondi OK." }] }]
-            }, { timeout: 10000 });
+                contents: [{ role: "user", parts: [{ text: "Ciao, rispondi solo OK." }] }]
+            }, { timeout: 15000 });
 
             return {
                 success: true,
                 message: "Connessione riuscita!",
                 modelUsed: modelName,
-                response: response.data.candidates[0].content.parts[0].text
+                response: response.data.candidates?.[0]?.content?.parts?.[0]?.text || "Nessuna risposta testuale"
             };
         } catch (e) {
             const status = e.response?.status;
             console.error(`Test fallito per ${modelName}: Status ${status} | ${e.message}`);
-            if (status === 429) {
-                return { success: false, error: "Quota superata (429). Attendi qualche minuto." };
-            }
+            errors.push(`${modelName}: ${status || 'Error'} - ${e.message}`);
         }
     }
 
-    return { success: false, error: "Nessun modello ha risposto correttamente." };
+    return { 
+        success: false, 
+        error: "Nessun modello ha risposto correttamente.",
+        details: errors
+    };
 });

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        var viewport = document.querySelector("meta[name=viewport]");
+        if (viewport) {
+          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        }
+        
+        // Blocca pinch-to-zoom e zoom multi-touch
+        document.addEventListener('touchstart', function(e) {
+          if (e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+        
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+          }
+          lastTouchEnd = now;
+        }, { passive: false });
+      }
+    </script>
+    <title>Le Mie Schede | FitSuite</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="./lista_schede.css">
+    <link rel="stylesheet" href="../templates/sidebar/sidebar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../components/loading_screen/loading_screen.css">
+    <link rel="stylesheet" href="../components/session_control/session_control.css">
+    <link rel="stylesheet" href="../components/popup/popup.css">
+    <link rel="stylesheet" href="../components/share_popup/share_popup.css">
+    <link rel="stylesheet" href="../components/toast/toast.css">
+    <link rel="stylesheet" href="../components/adsense/adsense.css">
+    <link rel="icon" type="image/x-icon" href="image/logo.ico">
+    
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7857800406057346"
+         crossorigin="anonymous"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCEgbB9rBBKOov3aDma0DMn-EuU0bGMMYo",
+        authDomain: "fitsuite-a7b6c.firebaseapp.com",
+        projectId: "fitsuite-a7b6c",
+        storageBucket: "fitsuite-a7b6c.firebasestorage.app",
+        messagingSenderId: "721614273457",
+        appId: "1:721614273457:web:195f48279fafd01a1f5b90",
+        measurementId: "G-W4ME455MH5"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
+    <!-- Logout script -->
+    <script src="../../backend/function/logout.js"></script>
+    <script src="../cache_manager.js"></script>
+</head>
+<body class="list-body">
+    <script src="../components/loading_screen/loading_screen.js"></script>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div id="sidebar-placeholder"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Le Mie Schede</h1>
+                <div class="search-wrapper">
+                    <input type="text" id="search-bar" placeholder="Cerca schede...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <div class="header-actions">
+                    <button class="refresh-btn" id="refresh-btn" title="Aggiorna schede">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="create-scheda-btn desktop-only" id="create-scheda-button">Crea Scheda</button>
+                </div>
+            </header>
+
+            <div class="routines-list-container">
+                <div class="list-header">
+                    <span class="col-menu"></span> <!-- Placeholder for alignment -->
+                    <span class="col-name">Nome</span>
+                    <span class="col-sessions">Sedute</span>
+                    <span class="col-date">Periodo</span>
+                    <span class="col-actions">Azioni</span>
+                </div>
+                <div class="routines-list" id="routines-container">
+                    <!-- Le schede verranno caricate qui -->
+                </div>
+            </div>
+            <!-- AdSense Banner Bottom -->
+            <div class="adsense-banner bottom">
+                <div class="adsense-placeholder">
+                    <i class="fas fa-ad adsense-icon"></i>
+                    <span class="adsense-text">Pubblicità</span>
+                    <span class="adsense-disclosure">Annuncio pubblicitario</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../templates/sidebar/sidebar.js"></script>
+    <script src="../components/toast/toast.js"></script>
+    <script src="../components/share_popup/share_popup.js"></script>
+    <script src="../components/popup/popup.js"></script>
+    <script src="../components/username_checker.js"></script>
+    <script src="./lista_schede.js"></script>
+    <script src="../components/session_control/session_control.js"></script>
+    <script>
+        // Load sidebar.html into the sidebar-placeholder div
+        fetch('../templates/sidebar/sidebar.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('sidebar-placeholder').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading sidebar:', error));
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const createSchedaButton = document.getElementById('create-scheda-button');
+            if (createSchedaButton) {
+                createSchedaButton.addEventListener('click', () => {
+                    window.location.href = '../crea_scheda/crea_scheda.html';
+                });
+            }
+
+            // Firebase Auth check
+            const auth = firebase.auth();
+            const loadingScreen = document.getElementById('loading-screen');
+
+            auth.onAuthStateChanged(async user => {
+                if (!user) {
+                    window.location.href = '../auth/auth.html';
+                    return;
+                }
+                
+                // Check if user has username
+                if (window.UsernameChecker) {
+                    const hasValidUsername = await window.UsernameChecker.enforceUsernameRequirement();
+                    if (!hasValidUsername) {
+                        // User was logged out or redirected, don't continue
+                        return;
+                    }
+                }
+                
+                // loadingScreen.style.display = 'none'; // Moved to lista_schede.js after data load
+            });
+        });
+    </script>
+</body>
+</html>

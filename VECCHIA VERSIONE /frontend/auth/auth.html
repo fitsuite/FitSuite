@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        var viewport = document.querySelector("meta[name=viewport]");
+        if (viewport) {
+          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        }
+      }
+    </script>
+    <meta name="description" content="Registrati o accedi a FitSuite per creare schede di allenamento personalizzate gratuitamente.">
+    <meta name="keywords" content="login, registrazione, fitnes, schede allenamento, personal trainer">
+    <meta name="author" content="FitSuite">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="language" content="it">
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <title>Registrati | FitSuite</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="./auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../components/popup/popup.css">
+    
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7857800406057346"
+         crossorigin="anonymous"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyCEgbB9rBBKOov3aDma0DMn-EuU0bGMMYo",
+        authDomain: "fitsuite-a7b6c.firebaseapp.com",
+        projectId: "fitsuite-a7b6c",
+        storageBucket: "fitsuite-a7b6c.firebasestorage.app",
+        messagingSenderId: "721614273457",
+        appId: "1:721614273457:web:195f48279fafd01a1f5b90",
+        measurementId: "G-W4ME455MH5"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      
+      // Configure auth settings for local development
+      firebase.auth().settings = {
+        appVerificationDisabledForTesting: false
+      };
+    </script>
+    <script src="../cache_manager.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="../../index.html#">Home</a>
+                 <a href="../../index.html#chi-siamo">Chi siamo?</a>
+                <a href="../../index.html#esercizi">Esercizi</a>
+                <a href="../../index.html#trailer">Trailer</a>
+            </div>
+
+            <a href="#" id="navbar-login-btn" id="show-login"><button class="login-btn">Accedi</button></a>
+        
+        </div>
+    </nav>
+
+    <main class="auth-main-content">
+        <div class="auth-text-section">
+            <h1>Ottimizza la creazione delle schede per i tuoi clienti con <span class="fitsuite-highlight">Fit</span>Suite</h1>
+            <p>Il primo servizio di creazione schede totalmente gratuito</p>
+        </div>
+
+        <div class="auth-form-section">
+            <div class="registration-form-container" id="registration-form-container">
+                <h2>Registrati</h2>
+                <form class="registration-form">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" placeholder="Inserisci la tua Email">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Password (8-16 caratteri)">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password">Conferma Password</label>
+                        <input type="password" id="confirm-password" placeholder="Conferma Password">
+                    </div>
+                    <button type="submit" class="continue-btn">Continue</button>
+                    <div id="registration-error-message" class="error-message"></div>
+                </form>
+                
+                <div class="or-divider">o</div>
+                
+                <button class="google-signin-btn">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
+                    Continua con Google
+                </button>
+                
+                <p class="login-link">Se possiedi un account <a href="#" id="show-login"> Accedi qui</a></p>
+                <div class="terms-privacy">
+                    Per continuare, confermi di aver letto e accettato i <a href="../legal/terms.html">Termini e Condizioni</a> e la <a href="../legal/privacy.html">Privacy Policy</a>
+                    <p class="copyright"> 2025 - FitSuite</p>
+                    <button type="button" id="test-firebase-btn" style="margin-top: 10px; padding: 8px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        Test Firebase Config
+                    </button>
+                </div>
+            </div>
+
+            <div class="login-form-container registration-form-container" id="login-form-container" style="display: none;">
+                <h2>Accedi</h2>
+                <form class="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" placeholder="Inserisci la tua Email">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" placeholder="Password">
+                    <a href="#" id="forgot-password-link" class="forgot-password-link">Password dimenticata?</a>
+                    </div>
+                    <button type="submit" class="continue-btn">Accedi</button>
+                    <div id="login-error-message" class="error-message"></div>
+                </form>
+                <div class="or-divider">o</div>
+                <button class="google-signin-btn">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
+                    Continua con Google
+                </button>
+                <p class="login-link">Non hai un account? <a href="#" id="show-register"> Registrati qui</a></p>
+                <div class="terms-privacy">
+                    <!-- Per continuare, tu conosci, hai capito e hai accettato i <a href="#">Terms & Conditions</a> e <a href="#">Privacy Policy</a> -->
+                    <p class="copyright">© 2025 - FitSuite</p>
+                </div>
+            </div>
+
+            <div class="forgot-password-container registration-form-container" id="forgot-password-container" style="display: none;">
+                <h2>Recupera Password</h2>
+                <form class="forgot-password-form">
+                    <div class="form-group">
+                        <label for="reset-email">Email</label>
+                        <input type="email" id="reset-email" placeholder="Inserisci la tua Email">
+                    </div>
+                    <button type="submit" class="continue-btn">Invia Link di Reset</button>
+                    <div id="forgot-password-error-message" class="error-message"></div>
+                    <div id="forgot-password-success-message" class="success-message"></div>
+                </form>
+                <p class="login-link">Ricordi la password? <a href="#" id="show-login-from-forgot"> Accedi qui</a></p>
+                <div class="terms-privacy">
+                    <p class="copyright"> 2025 - FitSuite</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="./auth.js"></script>
+    <script src="../components/popup/popup.js"></script>
+</body>
+</html>

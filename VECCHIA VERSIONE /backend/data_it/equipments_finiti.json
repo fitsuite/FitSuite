@@ -1,0 +1,114 @@
+[
+  {
+    "name": "stepmill machine",
+    "name_it": "Stair Climber (Scalinata)"
+  },
+  {
+    "name": "elliptical machine",
+    "name_it": "Ellittica"
+  },
+  {
+    "name": "trap bar",
+    "name_it": "Trap Bar"
+  },
+  {
+    "name": "tire",
+    "name_it": "Pneumatico (Tire)"
+  },
+  {
+    "name": "stationary bike",
+    "name_it": "Cyclette"
+  },
+  {
+    "name": "wheel roller",
+    "name_it": "Ab Wheel (Rullo per addominali)"
+  },
+  {
+    "name": "smith machine",
+    "name_it": "Multipower (Smith Machine)"
+  },
+  {
+    "name": "hammer",
+    "name_it": "Martello (Sledgehammer)"
+  },
+  {
+    "name": "skierg machine",
+    "name_it": "SkiErg"
+  },
+  {
+    "name": "roller",
+    "name_it": "Rullo (Foam Roller)"
+  },
+  {
+    "name": "resistance band",
+    "name_it": "Fascia elastica"
+  },
+  {
+    "name": "bosu ball",
+    "name_it": "Bosu"
+  },
+  {
+    "name": "weighted",
+    "name_it": "Con sovraccarico"
+  },
+  {
+    "name": "olympic barbell",
+    "name_it": "Bilanciere olimpico"
+  },
+  {
+    "name": "kettlebell",
+    "name_it": "Kettlebell"
+  },
+  {
+    "name": "upper body ergometer",
+    "name_it": "Ergometro per braccia"
+  },
+  {
+    "name": "sled machine",
+    "name_it": "Slitta (Sled)"
+  },
+  {
+    "name": "ez barbell",
+    "name_it": "Bilanciere EZ (Sagomato)"
+  },
+  {
+    "name": "dumbbell",
+    "name_it": "Manubrio"
+  },
+  {
+    "name": "rope",
+    "name_it": "Corda"
+  },
+  {
+    "name": "barbell",
+    "name_it": "Bilanciere"
+  },
+  {
+    "name": "band",
+    "name_it": "Elastico"
+  },
+  {
+    "name": "stability ball",
+    "name_it": "Palla svizzera (Fitball)"
+  },
+  {
+    "name": "medicine ball",
+    "name_it": "Palla medica"
+  },
+  {
+    "name": "assisted",
+    "name_it": "Assistito"
+  },
+  {
+    "name": "leverage machine",
+    "name_it": "Macchina a leva"
+  },
+  {
+    "name": "cable",
+    "name_it": "Cavo"
+  },
+  {
+    "name": "body weight",
+    "name_it": "A corpo libero"
+  }
+]
