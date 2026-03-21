@@ -15,7 +15,7 @@ if (!admin.apps.length) {
  */
 exports.generateWorkoutRoutine = onCall({
     secrets: ["GEMINI_API_KEY"],
-    maxInstances: 10,
+    maxInstances: 5,
     region: "us-central1"
 }, async (request) => {
     // In emulatore locale permettiamo il test senza auth per facilitare il debug
@@ -94,15 +94,20 @@ exports.generateWorkoutRoutine = onCall({
     ];
 
     let lastError = null;
-    const maxRetriesPerModel = 2; // Numero di tentativi per ogni modello in caso di 429
+    const maxRetriesPerModel = 3; // Aumentato per maggiore resilienza
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    // Flag per gestire il rate limiting globale (se un modello è in 429, probabilmente lo sono tutti)
+    let isRateLimited = false;
 
     for (const modelName of models) {
+        if (isRateLimited) break; 
+        
         let retryCount = 0;
         
         while (retryCount <= maxRetriesPerModel) {
             try {
-                console.log(`Tentativo generazione scheda con modello: ${modelName} (Tentativo ${retryCount + 1})`);
+                console.log(`Tentativo generazione scheda con modello: ${modelName} (Tentativo ${retryCount + 1}/${maxRetriesPerModel + 1})`);
                 
                 const systemPrompt = `
 Sei un Personal Trainer d'élite con competenze avanzate in fisiologia, biomeccanica e nutrizione sportiva.
@@ -180,6 +185,8 @@ Struttura:
                         role: "user",
                         parts: [{ text: systemPrompt }]
                     }]
+                }, {
+                    timeout: 60000 // 60s timeout per singola richiesta
                 });
 
                 // Estrai e parsea la risposta
@@ -207,55 +214,67 @@ Struttura:
                 
                 // Log dettagliato per debug
                 console.error(`[Gemini Error] Modello: ${modelName} | Status: ${status} | Messaggio: ${error.message}`);
-                if (errorData) {
-                    console.error(`[Gemini Error Data]:`, JSON.stringify(errorData));
-                }
                 
                 lastError = error;
 
-                // Se l'errore è 429 (Quota superata), proviamo a riprovare lo STESSO modello dopo un breve ritardo
-                if (status === 429 && retryCount < maxRetriesPerModel) {
-                    retryCount++;
-                    const waitTime = retryCount * 2000; // 2s, 4s...
-                    console.log(`Quota superata per ${modelName}. Riprovo tra ${waitTime}ms...`);
-                    await delay(waitTime);
-                    continue; // Riprova il ciclo while con lo stesso modello
+                // Gestione 429: Too Many Requests
+                if (status === 429) {
+                    if (retryCount < maxRetriesPerModel) {
+                        retryCount++;
+                        // Backoff esponenziale con jitter (2s, 4s, 8s... + random)
+                        const baseWait = Math.pow(2, retryCount) * 1000;
+                        const jitter = Math.random() * 1000;
+                        const waitTime = baseWait + jitter;
+                        
+                        console.log(`Quota superata (429) per ${modelName}. Riprovo tra ${Math.round(waitTime)}ms...`);
+                        await delay(waitTime);
+                        continue; // Riprova il ciclo while con lo stesso modello
+                    } else {
+                        // Se abbiamo esaurito i retry per questo modello con 429, 
+                        // è inutile provare gli altri immediatamente (stessa API KEY)
+                        console.error(`Quota esaurita definitivamente per ${modelName} dopo ${maxRetriesPerModel} tentativi.`);
+                        isRateLimited = true;
+                        break; 
+                    }
                 }
 
-                // Se l'errore è 403 (Auth/API Key non valida), è inutile riprovare altri modelli
-                if (status === 403) {
-                    console.error("ERRORE DI AUTENTICAZIONE (403). La chiave API potrebbe essere non valida per questo progetto o regione.");
-                    break; // Esci dal ciclo for dei modelli
+                // Se l'errore è 403 (Auth/API Key non valida) o 400 (Bad Request - es. prompt troppo lungo)
+                if (status === 403 || status === 400) {
+                    console.error(`Errore bloccante (${status}). Salto il modello.`);
+                    break; // Esci dal ciclo while
                 }
                 
-                // Per altri errori (404, 500, o 429 dopo i retry), passiamo al prossimo modello nel ciclo for
+                // Per altri errori (404, 500), passiamo al prossimo modello
+                console.warn(`Errore non fatale (${status}). Provo il prossimo modello se disponibile.`);
                 break; // Esci dal ciclo while, continua il ciclo for dei modelli
             }
         }
     }
 
     // Se arriviamo qui, tutti i modelli hanno fallito
-    const status = lastError.response?.status;
-    const errorData = lastError.response?.data;
+    const status = lastError?.response?.status;
+    const errorData = lastError?.response?.data;
 
     console.error('TUTTI I MODELLI HANNO FALLITO:', {
         status,
         data: JSON.stringify(errorData)
     });
 
-    if (status === 429) {
+    if (status === 429 || isRateLimited) {
         throw new HttpsError('resource-exhausted', 
-            'Quota Gemini superata (429). Ho provato tutti i modelli disponibili e i tentativi di riprova, ma il limite persiste. Riprova tra qualche minuto.'
+            'Quota Gemini temporaneamente superata. Per evitare di consumare troppi tentativi, la generazione è stata sospesa. Riprova tra 1-2 minuti.'
         );
     }
 
     if (status === 404) {
         throw new HttpsError('not-found', 
-            `Il modello AI richiesto non è stato trovato o non è disponibile per questa chiave API (404). Modello: ${lastError.config.url.split('/').pop().split(':')[0]}`
+            'Modello AI non disponibile. Controlla la configurazione della chiave API Gemini.'
         );
     }
 
-    throw new HttpsError('internal', `Errore finale dopo fallback: ${lastError.message}`);
+    throw new HttpsError('internal', 
+        `Errore nella generazione della scheda: ${lastError?.message || 'Errore sconosciuto'}. Riprova.`
+    );
 });
 
 /**
@@ -282,10 +301,11 @@ exports.testGeminiConnection = onCall({
 
     for (const modelName of models) {
         try {
+            console.log(`Test connettività per modello: ${modelName}`);
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             const response = await axios.post(url, {
                 contents: [{ role: "user", parts: [{ text: "Ciao, rispondi OK." }] }]
-            });
+            }, { timeout: 10000 });
 
             return {
                 success: true,
@@ -294,7 +314,11 @@ exports.testGeminiConnection = onCall({
                 response: response.data.candidates[0].content.parts[0].text
             };
         } catch (e) {
-            console.log(`Test fallito per ${modelName}: ${e.message}`);
+            const status = e.response?.status;
+            console.error(`Test fallito per ${modelName}: Status ${status} | ${e.message}`);
+            if (status === 429) {
+                return { success: false, error: "Quota superata (429). Attendi qualche minuto." };
+            }
         }
     }
 
