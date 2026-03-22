@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const PRICES = {
-        pro: { monthly: '€2.99', yearly: '€29.99' },
+        pro: { monthly: '€4.99', yearly: '€49.99' },
         pt: { monthly: '€9.99', yearly: '€99.99' }
     };
 

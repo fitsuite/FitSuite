@@ -14,6 +14,10 @@
     <link rel="stylesheet" href="scelta_piano.css">
     <link rel="icon" type="image/x-icon" href="../../image/logo.ico">
     
+    <!-- Cookie Management (GDPR/Italy) -->
+    <script src="../../backend/cookie/cookie_manager.js"></script>
+    <script src="../../backend/cookie/cookie_ui.js"></script>
+    
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
@@ -63,12 +67,12 @@
 
                 <!-- Pricing Toggle -->
                 <div class="pricing-toggle-container">
-                    <span class="toggle-label monthly active">Mensile</span>
+                    <label for="pricing-toggle" class="toggle-label monthly active">Mensile</label>
                     <label class="switch">
                         <input type="checkbox" id="pricing-toggle">
                         <span class="slider round"></span>
                     </label>
-                    <span class="toggle-label yearly">Annuale <span class="discount-badge">RISPARMIA 20%</span></span>
+                    <label for="pricing-toggle" class="toggle-label yearly">Annuale <span class="discount-badge">Sconto 17%</span></label>
                 </div>
 
                 <div class="pricing-grid">
@@ -77,18 +81,25 @@
                         <div class="card-header">
                             <h3>PRO</h3>
                             <p class="card-tagline">Per appassionati regolari</p>
-                            <p class="price" id="pro-price">€2.99<span>/mese</span></p>
+                            <p class="price" id="pro-price">€4.99<span>/mese</span></p>
                         </div>
                         <div class="card-body">
                             <ul class="features">
-                                <li><i class="fas fa-check"></i> Tutte le funzionalità FREE</li>
-                                <li><i class="fas fa-check"></i> 15 schede salvate</li>
-                                <li><i class="fas fa-check"></i> Creazione AI illimitata</li>
-                                <li><i class="fas fa-check"></i> Tutti i temi (8+ opzioni)</li>
-                                <li><i class="fas fa-check"></i> Condivisione illimitata</li>
-                                <li><i class="fas fa-check"></i> Pubblicità rimossa</li>
-                                <li class="not-included"><i class="fas fa-xmark"></i> Gestione clienti base (max 10)</li>
+                                <li><i class="fas fa-check"></i> Creazione Schede manuale</li>
+                                <li><i class="fas fa-check"></i> Esplora 1300+ esercizi</li>
+                                <li><i class="fas fa-check"></i> Ricezione schede condivise</li>
+                                <li><i class="fas fa-check"></i> 1 tema base</li>
+                                <li><i class="fas fa-check"></i> 10 schede salvabili</li>
+                                <li><i class="fas fa-check"></i> Visualizzazione mobile</li>
+                                <li><i class="fas fa-check"></i> Nessuna pubblicità</li>
+                                <li><i class="fas fa-check"></i> Creazione Schede AI (5/al mese)</li>
+                                <li class="not-included"><i class="fas fa-xmark"></i> Supporto prioritario</li>
+                                <li class="not-included"><i class="fas fa-xmark"></i> Possibilità di condividere schede</li>
+                                <li class="not-included"><i class="fas fa-xmark"></i> Intelligenza artificiale avanzata</li>
                             </ul>
+                            <div class="card-footer-info">
+                                <p>Adatta agli atleti con funzionalità avanzate</p>
+                            </div>
                         </div>
                         <button class="pricing-btn" data-plan-id="pro">PASSA A PRO</button>
                     </div>
@@ -103,15 +114,21 @@
                         </div>
                         <div class="card-body">
                             <ul class="features">
-                                <li><i class="fas fa-check"></i> Tutte le funzionalità PRO</li>
-                                <li><i class="fas fa-check"></i> Schede illimitate</li>
-                                <li><i class="fas fa-check"></i> Gestione clienti illimitata</li>
-                                <li><i class="fas fa-check"></i> Logo personalizzato sulle schede</li>
-                                <li><i class="fas fa-check"></i> Report avanzati sui clienti</li>
-                                <li><i class="fas fa-check"></i> API access per integrazioni</li>
+                                <li><i class="fas fa-check"></i> Creazione Schede manuale</li>
+                                <li><i class="fas fa-check"></i> Esplora 1300+ esercizi</li>
+                                <li><i class="fas fa-check"></i> Ricezione schede condivise</li>
+                                <li><i class="fas fa-check"></i> 1 tema base</li>
+                                <li><i class="fas fa-check"></i> 1000 schede salvabili</li>
+                                <li><i class="fas fa-check"></i> Visualizzazione mobile</li>
+                                <li><i class="fas fa-check"></i> Nessuna pubblicità</li>
+                                <li><i class="fas fa-check"></i> Creazione Schede AI (100/al mese)</li>
                                 <li><i class="fas fa-check"></i> Supporto prioritario</li>
-                                <li><i class="fas fa-check"></i> Analytics dashboard</li>
+                                <li><i class="fas fa-check"></i> Possibilità di condividere schede</li>
+                                <li><i class="fas fa-check"></i> Intelligenza artificiale avanzata</li>
                             </ul>
+                            <div class="card-footer-info">
+                                <p>Adatta ai PT con massima libertà professionale</p>
+                            </div>
                         </div>
                         <button class="pricing-btn" data-plan-id="pt">DIVENTA PT</button>
                     </div>
@@ -135,5 +152,15 @@
     <!-- Scripts -->
     <script src="../templates/sidebar/sidebar.js"></script>
     <script src="scelta_piano.js"></script>
+    <script>
+        // Inizializza sidebar se necessario (sidebar.js gestisce già molto)
+        // Ma carichiamo il placeholder della sidebar
+        fetch('../templates/sidebar/sidebar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('sidebar-placeholder').innerHTML = data;
+                // Sidebar.js si accorgerà del caricamento tramite waitForSidebar
+            });
+    </script>
 </body>
 </html>
