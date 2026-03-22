@@ -380,6 +380,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             routineItem.innerHTML = `
+                <div class="card-content">
+                    <div class="col-name">
+                        <span class="routine-name">${routine.name || 'Scheda senza nome'}</span>
+                        ${routine.isAI ? '<span class="ai-badge" title="Creata con AI"><i class="fas fa-robot"></i></span>' : ''}
+                    </div>
+                    <div class="metadata-row">
+                        <div class="metadata-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>${periodText}</span>
+                        </div>
+                        <div class="metadata-item">
+                            <i class="fas fa-dumbbell"></i>
+                            <span>${seduteCount} sedute</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-actions">
+                    <a href="../visualizza_scheda/visualizza_scheda.html?id=${routine.id}" class="view-btn">Visualizza</a>
+                </div>
                 <div class="col-menu">
                     <button class="menu-trigger">
                         <i class="fas fa-ellipsis-v"></i>
@@ -399,19 +418,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         </button>
                     </div>
                 </div>
-                <div class="col-name">
-                    <span class="routine-name">${routine.name || 'Scheda senza nome'}</span>
-                    ${routine.isAI ? '<span class="ai-badge" title="Creata con AI"><i class="fas fa-robot"></i></span>' : ''}
-                </div>
-                <div class="col-sessions">
-                    <span class="sessions-number">${seduteCount}</span>
-                </div>
-                <div class="col-date">
-                    <span>${periodText}</span>
-                </div>
-                <div class="col-actions">
-                    <a href="../visualizza_scheda/visualizza_scheda.html?id=${routine.id}" class="view-btn">Visualizza</a>
-                </div>
             `;
 
             // Menu Event Listeners
@@ -425,6 +431,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (m !== menuDropdown) m.classList.remove('active');
                 });
                 menuDropdown.classList.toggle('active');
+                
+                // Ensure menu stays within screen bounds
+                const rect = menuDropdown.getBoundingClientRect();
+                if (rect.right > window.innerWidth) {
+                    menuDropdown.style.left = 'auto';
+                    menuDropdown.style.right = '0';
+                }
+                if (rect.left < 0) {
+                    menuDropdown.style.left = '0';
+                    menuDropdown.style.right = 'auto';
+                }
             });
 
             // Check if user is owner

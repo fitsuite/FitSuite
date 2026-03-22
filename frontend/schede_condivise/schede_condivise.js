@@ -408,41 +408,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 '<span class="pending-badge">In attesa</span>';
 
             routineItem.innerHTML = `
-                <div class="col-menu">
-                    <button class="menu-trigger">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    <div class="menu-dropdown">
-                        <button class="menu-item view-btn">
-                            <i class="fas fa-eye"></i> Visualizza
-                        </button>
-                        <button class="menu-item delete-btn delete">
-                            <i class="fas fa-trash-alt"></i> Elimina
-                        </button>
+                <div class="card-content">
+                    <div class="col-name" title="${routine.name || 'Scheda senza nome'}">
+                        <span class="routine-name">${routine.name || 'Scheda senza nome'}</span>
+                    </div>
+                    <div class="metadata-row">
+                        <div class="metadata-item badges-container">
+                            <div class="shared-by-badge">
+                                <div class="shared-by-avatar">${ownerInitials}</div>
+                                <span>${routine.ownerInfo?.username || 'Utente'}</span>
+                            </div>
+                            <div class="shared-status">
+                                ${statusBadge}
+                            </div>
+                        </div>
+                        <div class="metadata-item">
+                            <i class="fas fa-dumbbell"></i>
+                            <span>${routine.sedute || 0} sedute</span>
+                        </div>
                     </div>
                 </div>
-                <div class="col-name" title="${routine.name || 'Scheda senza nome'}">
-                    <span class="routine-name">${routine.name || 'Scheda senza nome'}</span>
-                    <div class="shared-status">
-                        ${statusBadge}
-                    </div>
-                </div>
-                <div class="col-owner">
-                    <div class="shared-by-badge">
-                        <div class="shared-by-avatar">${ownerInitials}</div>
-                        <span>${routine.ownerInfo?.username || 'Utente'}</span>
-                    </div>
-                </div>
-                <div class="col-sessions">${routine.sedute || 0}</div>
                 <div class="col-actions">
                     ${!isAccepted ? `
-                        <div class="accept-reject-buttons">
+                        <div class="accept-reject-buttons-container">
                             <button class="accept-btn" data-id="${routine.id}">Accetta</button>
                             <button class="reject-btn" data-id="${routine.id}">Rifiuta</button>
                         </div>
                     ` : `
                         <a href="../visualizza_scheda/visualizza_scheda.html?id=${routine.id}" class="view-btn">Visualizza</a>
                     `}
+                </div>
+                <div class="col-menu">
+                    <button class="menu-trigger">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="menu-dropdown">
+                        <button class="menu-item view-btn-menu">
+                            <i class="fas fa-eye"></i> Visualizza
+                        </button>
+                        <button class="menu-item delete-btn delete">
+                            <i class="fas fa-trash-alt"></i> Elimina
+                        </button>
+                    </div>
                 </div>
             `;
 
@@ -457,20 +464,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (m !== menuDropdown) m.classList.remove('active');
                 });
                 menuDropdown.classList.toggle('active');
+
+                // Ensure menu stays within screen bounds
+                const rect = menuDropdown.getBoundingClientRect();
+                if (rect.right > window.innerWidth) {
+                    menuDropdown.style.left = 'auto';
+                    menuDropdown.style.right = '0';
+                }
+                if (rect.left < 0) {
+                    menuDropdown.style.left = '0';
+                    menuDropdown.style.right = 'auto';
+                }
             });
 
             // View Action from menu
-            const viewBtn = routineItem.querySelector('.menu-item.view-btn');
-            if (viewBtn) {
-                viewBtn.addEventListener('click', async (e) => {
+            const viewBtnMenu = routineItem.querySelector('.view-btn-menu');
+            if (viewBtnMenu) {
+                viewBtnMenu.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     menuDropdown.classList.remove('active');
                     if (isAccepted) {
                         window.location.href = `../visualizza_scheda/visualizza_scheda.html?id=${routine.id}`;
                     } else {
                         if (await window.showConfirm("Devi prima accettare questa scheda condivisa. Vuoi accettarla ora?", "Accetta Scheda", "ACCETTA", "ANNULLA")) {
-                        await acceptSharedRoutine(routine.id);
-                    }
+                            await acceptSharedRoutine(routine.id);
+                        }
                     }
                 });
             }

@@ -109,7 +109,7 @@ body.list-body {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 25px;
-    padding: 12px 20px 12px 45px;
+    padding: 8px 20px 8px 45px;
     color: white;
     font-size: 16px;
     outline: none;
@@ -154,107 +154,170 @@ body.list-body {
 
 .routines-list-container {
     width: 100%;
-    max-width: 1200px;
+    max-width: 900px;
     padding: 0 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
 }
 
 .list-header {
-    display: grid;
-    grid-template-columns: 50px 2fr 1.5fr 1fr 150px;
-    padding: 0 20px;
-    color: var(--text-gray);
-    font-size: 14px;
-    font-weight: 500;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 10px;
-    margin-bottom: 10px;
+    display: none;
 }
 
 .routines-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
 }
 
 .routine-list-row {
-    display: grid;
-    grid-template-columns: 50px 2fr 1.5fr 1fr 150px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
     background: var(--bg-card);
-    padding: 15px 0;
-    border-radius: 10px;
+    padding: 15px 20px;
+    border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.2s;
-    position: relative; /* Ensure stacking context */
-    z-index: 1;
-    min-height: 60px; /* Ensure consistent height */
-}
-
-.routine-list-row:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    border-color: rgba(var(--primary-color-rgb), 0.3);
-    background: rgba(38, 38, 38, 0.8);
-    z-index: 100;
-}
-
-.routine-list-row:has(.menu-dropdown.active) {
-    z-index: 100;
-}
-
-.col-menu {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     position: relative;
-    margin-right: 12px;
+    gap: 20px;
 }
 
-.col-name {
-    color: white;
-    font-weight: 500;
-    font-size: 16px;
+.card-content {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    min-height: 24px; /* Ensure consistent line height */
+    gap: 10px;
     min-width: 0;
 }
 
+.col-menu {
+    position: relative;
+    z-index: 10;
+    width: auto;
+    margin-right: 0;
+}
+
+.col-name {
+    width: 100%;
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+}
+
 .routine-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
     width: 100%;
 }
 
-.col-owner {
-    color: var(--text-gray);
-    font-size: 14px;
+.metadata-row {
     display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
     align-items: center;
+    color: var(--text-gray);
+    font-size: 0.85rem;
 }
 
-.col-sessions {
-    color: var(--text-gray);
-    font-size: 14px;
+.metadata-item {
     display: flex;
     align-items: center;
+    gap: 8px;
 }
 
-.col-date {
+.metadata-item i {
+    font-size: 0.8rem;
     color: var(--text-gray);
-    font-size: 14px;
-    white-space: nowrap;
 }
 
 .col-actions {
     display: flex;
-    justify-content: flex-end;
     align-items: center;
+    justify-content: center;
+    gap: 10px;
+    z-index: 5;
+}
+
+.view-btn {
+    background: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.view-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.accept-reject-buttons-container {
+    display: flex;
+    gap: 10px;
+}
+
+.accept-btn, .reject-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.accept-btn {
+    background: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+.reject-btn {
+    background: rgba(255, 68, 68, 0.1);
+    color: #ff4444;
+    border: 1px solid #ff4444;
+}
+
+.accept-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.reject-btn:hover {
+    background-color: #ff4444;
+    color: white;
+}
+
+/* Status Colors for Rows (Left Border) */
+.routine-list-row.status-expired {
+    border-left: 5px solid #ff4444;
+}
+
+.routine-list-row.status-warning {
+    border-left: 5px solid #ffcc00;
+}
+
+.routine-list-row.status-active {
+    border-left: 5px solid #4ade80;
 }
 
 /* Ensure the active row (with open menu) stays on top even if not hovered */
@@ -283,76 +346,27 @@ body.list-body {
     color: white;
 }
 
-.view-btn {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.2s;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-.view-btn i {
-    margin-right: 6px;
-    font-size: 12px;
-}
-
-/* Specific styles for view-btn inside menu dropdown */
-.menu-item.view-btn {
-    width: 100%;
-    background: transparent;
-    border: none;
-    color: var(--text-white);
-    padding: 12px 16px;
-    text-align: left;
-    justify-content: flex-start;
-    border-radius: 0;
-    font-size: 14px;
-    font-weight: normal;
-}
-
-.menu-item.view-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    filter: none;
-    transform: none;
-}
-
-.view-btn:hover {
-    filter: brightness(0.9);
-    transform: translateY(-1px);
-}
-
+/* Dropdown Menu */
 .menu-dropdown {
     position: absolute;
-    top: 100%;
-    left: 100%;
+    top: 35px;
+    right: 0;
     background: var(--bg-card);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    display: none;
+    flex-direction: column;
     z-index: 1000;
     min-width: 180px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.2s ease;
-    margin-top: 5px;
-    margin-left: 5px;
+    padding: 5px 0;
 }
 
 .menu-dropdown.active {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    display: flex;
 }
 
 .menu-item {
@@ -425,71 +439,34 @@ body.list-body {
     font-size: 0.625rem;
 }
 
-.accept-reject-buttons {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.accept-btn, .reject-btn {
-    padding: 0.375rem 0.75rem;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.accept-btn {
-    background-color: var(--primary-color, #ff6600);
-    color: white;
-}
-
-.accept-btn:hover {
-    filter: brightness(0.9);
-}
-
-.reject-btn {
-    background-color: #444;
-    color: #fff;
-}
-
-.reject-btn:hover {
-    background-color: #ff4444;
-}
-
-.pending-badge {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    background-color: rgba(255, 193, 7, 0.1);
-    border: 1px solid #ffc107;
-    border-radius: 12px;
-    color: #ffc107;
-    font-size: 0.625rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.accepted-badge {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    background-color: rgba(74, 222, 128, 0.1);
-    border: 1px solid #4ade80;
-    border-radius: 12px;
-    color: #4ade80;
-    font-size: 0.625rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
 .shared-status {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-top: 0.25rem;
     flex-wrap: wrap;
+}
+
+.pending-badge, .accepted-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background-color: transparent;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.pending-badge {
+    border: 1px solid #ffc107;
+    color: #ffc107;
+    background-color: rgba(255, 193, 7, 0.05);
+}
+
+.accepted-badge {
+    border: 1px solid #4ade80;
+    color: #4ade80;
+    background-color: rgba(74, 222, 128, 0.05);
 }
 
 /* Tablet/Laptop scaling */
@@ -502,15 +479,13 @@ body.list-body {
         padding: 0 10px;
     }
 
-    .list-header, .routine-list-row {
-        grid-template-columns: 40px 2fr 1.5fr 1fr 120px; /* Reduce fixed columns */
-        padding: 10px 15px;
-        font-size: 13px;
-        gap: 10px;
+    .routine-list-row {
+        padding: 15px;
+        gap: 8px;
     }
     
     .col-name {
-        font-size: 15px;
+        font-size: 1rem;
     }
 
     .search-wrapper {
@@ -519,32 +494,18 @@ body.list-body {
     }
     
     .content-header h1 {
-        font-size: 26px;
-        /* Ensure static positioning */
+        font-size: 28px;
         position: static; 
         transform: none;
-        left: auto;
-    }
-    
-    .logout-btn {
-        padding: 8px 15px;
-        font-size: 13px;
-        /* Ensure static positioning */
-        position: static;
-        transform: none;
-        right: auto;
     }
 }
 
-/* Responsive Design */
-@media (max-width: 1200px) {
-    .list-header {
-        grid-template-columns: 50px 2fr 1.5fr 1fr 120px;
-    }
-    
-    .routine-list-row {
-        grid-template-columns: 50px 2fr 1.5fr 1fr 120px;
-    }
+.metadata-item.badges-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 @media (max-width: 768px) {
@@ -555,7 +516,7 @@ body.list-body {
     
     .content-header {
         flex-direction: column;
-        gap: 20px;
+        gap: 15px;
         position: static;
         text-align: center;
     }
@@ -578,92 +539,77 @@ body.list-body {
         width: 45px;
         height: 45px;
         border-radius: 25px;
-        box-shadow: none;
-        transition: transform 0.2s ease, background-color 0.2s;
         display: flex !important;
         align-items: center;
         justify-content: center;
     }
     
-    .refresh-btn:hover {
-        transform: scale(1.1);
-        background-color: var(--primary-color);
+    .routine-list-row {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 15px;
+        gap: 12px;
+    }
+
+    .col-name {
+        font-size: 1rem;
+        padding-right: 35px;
+    }
+
+    .metadata-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .metadata-item.badges-container {
+        flex-direction: row; /* Force side-by-side even on mobile */
+        align-items: center;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .col-actions {
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .view-btn, .accept-btn, .reject-btn {
+        width: 100%;
+        text-align: center;
+        padding: 12px;
+        justify-content: center;
+        background: rgba(var(--primary-color-rgb), 0.1);
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+    }
+
+    .reject-btn {
+        background: rgba(255, 68, 68, 0.1);
+        color: #ff4444;
+        border: 1px solid #ff4444;
+    }
+
+    .view-btn:hover, .accept-btn:hover {
+        background: var(--primary-color);
         color: white;
     }
 
-    .list-header {
-        grid-template-columns: 30px 1fr 0.4fr 110px;
-        font-size: 12px;
-        gap: 10px;
+    .reject-btn:hover {
+        background: #ff4444;
+        color: white;
     }
-    
-    .routine-list-row {
-        grid-template-columns: 30px 1fr 0.4fr 110px;
-        padding: 12px 15px;
-        gap: 10px;
-    }
-    
-    .col-sessions {
-        display: none !important;
-    }
-    
-    .col-name {
-        line-height: 1.3;
-    }
-    
-    .col-owner {
-        text-align: center;
-        justify-self: center;
-        font-size: 12px;
-    }
-    
-    .shared-by-badge {
-        font-size: 0.625rem;
-        padding: 0.2rem 0.5rem;
-        justify-self: center;
-    }
-    
-    .accept-reject-buttons {
+
+    .accept-reject-buttons-container {
+        width: 100%;
         flex-direction: column;
-        gap: 0.5rem;
-        min-width: 90px;
-    }
-    
-    .accept-btn, .reject-btn {
-        font-size: 0.75rem;
-        padding: 0.5rem 0.75rem;
-        min-height: 36px;
-        border-radius: 8px;
-        touch-action: manipulation;
-    }
-    
-    .view-btn {
-        padding: 6px 12px;
-        min-height: 36px;
-        touch-action: manipulation;
-    }
-    
-    .menu-item.view-btn {
-        padding: 10px 12px;
-        font-size: 13px;
-        min-height: 44px;
-    }
-    
-    /* Fix dropdown menu on mobile */
-    .menu-dropdown {
-        right: auto !important;
-        left: 10px !important;
-        min-width: 160px !important;
+        gap: 10px;
     }
 
-    .menu-trigger {
-        width: 28px !important;
-        height: 28px !important;
-        border-radius: 50% !important;
-    }
-
-    .menu-trigger i {
-        font-size: 12px !important;
+    .col-menu {
+        position: absolute;
+        top: 15px;
+        right: 15px;
     }
 }
 
@@ -679,74 +625,5 @@ body.list-body {
     
     .routines-list-container {
         padding: 0 15px;
-    }
-    
-    .list-header {
-        grid-template-columns: 30px 1fr 90px;
-        font-size: 12px;
-    }
-    
-    .routine-list-row {
-        grid-template-columns: 30px 1fr 90px;
-        padding: 15px;
-        min-height: 80px;
-    }
-    
-    .col-owner {
-        display: none;
-    }
-    
-    .col-name {
-        font-size: 15px;
-        line-height: 1.4;
-        margin-bottom: 0.5rem;
-    }
-    
-    .shared-status {
-        margin-top: 0.5rem;
-    }
-    
-    .pending-badge, .accepted-badge {
-        font-size: 0.625rem;
-        padding: 0.2rem 0.4rem;
-    }
-    
-    .accept-reject-buttons {
-        min-width: 80px;
-        gap: 0.4rem;
-    }
-    
-    .accept-btn, .reject-btn {
-        font-size: 0.7rem;
-        padding: 0.4rem 0.6rem;
-        min-height: 32px;
-        border-radius: 6px;
-        touch-action: manipulation;
-    }
-    
-    .view-btn {
-        padding: 5px 10px;
-        font-size: 12px;
-        min-height: 32px;
-        touch-action: manipulation;
-    }
-    
-    .menu-item.view-btn {
-        padding: 8px 10px;
-        font-size: 12px;
-        min-height: 40px;
-    }
-    
-    /* Fix dropdown menu on small mobile */
-    .menu-dropdown {
-        right: auto !important;
-        left: 5px !important;
-        min-width: 150px !important;
-    }
-    
-    .menu-item {
-        padding: 10px 12px;
-        font-size: 13px;
-        touch-action: manipulation;
     }
 }
