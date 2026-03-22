@@ -40,8 +40,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const PRICES = {
-        pro: { monthly: '€4.99', yearly: '€50' },
-        pt: { monthly: '€9.99', yearly: '€100' }
+        pro: { monthly: '€2.99', yearly: '€29.99' },
+        pt: { monthly: '€9.99', yearly: '€99.99' }
     };
 
     // DOM Elements
@@ -104,6 +104,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const period = isYearly ? 'yearly' : 'monthly';
+
+        // Reindirizzamento diretto per il piano PRO Mensile (richiesto dall'utente)
+        if (planId === 'pro' && period === 'monthly') {
+            const stripeUrl = `https://buy.stripe.com/test_3cIcMY1eigMWdXc2jqeUU00?prefilled_email=${encodeURIComponent(currentUser.email)}&client_reference_id=${currentUser.uid}`;
+            
+            if (window.LoadingManager) {
+                window.LoadingManager.show(['Reindirizzamento a Stripe...']);
+            }
+            
+            window.location.href = stripeUrl;
+            return;
+        }
+
         const priceId = PRICE_IDS[planId][period];
 
         // Se siamo ancora con i placeholder, avvisa l'utente
@@ -178,15 +191,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('session_id');
     if (sessionId) {
-        showSuccessStep();
+        // Aspettiamo che l'utente sia autenticato prima di mostrare il successo e aggiornare il profilo
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                showSuccessStep(sessionId);
+            }
+        });
     }
 
-    function showSuccessStep() {
+    async function showSuccessStep(sessionId) {
         selectionContainer.style.display = 'none';
         successContainer.style.display = 'flex';
         
         if (window.showSuccessToast) {
             window.showSuccessToast('Pagamento completato con successo!');
+        }
+
+        // Aggiornamento del profilo utente su Firestore
+        if (currentUser) {
+            try {
+                // Riferimento al documento dell'utente
+                const userRef = db.collection('users').doc(currentUser.uid);
+                
+                // Aggiorniamo il piano a 'pro' (dato che il link di Stripe fornito è per PRO)
+                // In un sistema reale, dovresti verificare il sessionId lato server
+                await userRef.set({
+                    subscription: {
+                        plan: 'pro',
+                        status: 'active',
+                        sessionId: sessionId,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }
+                }, { merge: true });
+
+                // Svuota la cache per forzare il ricaricamento del profilo in tutta l'app
+                localStorage.removeItem(`userProfile_${currentUser.uid}`);
+                
+                if (window.showSuccessToast) {
+                    window.showSuccessToast('Il tuo account è stato aggiornato a PRO!');
+                }
+                
+                console.log('User profile updated successfully in Firestore');
+            } catch (error) {
+                console.error('Error updating user profile:', error);
+                if (window.showErrorToast) {
+                    window.showErrorToast('Errore durante l\'aggiornamento del profilo: ' + error.message);
+                }
+            }
         }
     }
 

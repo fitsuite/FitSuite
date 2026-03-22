@@ -2,7 +2,13 @@ const {onCall} = require("firebase-functions/v2/https");
 const {setGlobalOptions} = require("firebase-functions");
 const {onRequest} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
+const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
+
+// Inizializza Firebase Admin
+admin.initializeApp();
+const db = admin.firestore();
+
 const cors = require('cors')({
     origin: ['https://fitsuite.github.io', 'http://localhost:5500', 'http://127.0.0.1:5500'],
     methods: ['POST', 'OPTIONS'],
@@ -132,6 +138,90 @@ exports.sendVerificationEmail = onCall(async (request) => {
     } catch (error) {
         logger.error(`Errore nell'invio dell'email a ${email}:`, error);
         throw new Error("Errore nell'invio dell'email");
+    }
+});
+
+// Webhook di Stripe per gestire le notifiche asincrone di pagamento
+exports.stripeWebhook = onRequest(async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    let event;
+
+    try {
+        if (webhookSecret && sig) {
+            // Verifica la firma se il segreto è configurato
+            event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
+        } else {
+            // Se non c'è il segreto, usiamo il body direttamente (meno sicuro, ma utile per test)
+            event = req.body;
+            logger.warn("Webhook ricevuto senza verifica della firma. Configura STRIPE_WEBHOOK_SECRET per la produzione.");
+        }
+    } catch (err) {
+        logger.error(`Webhook Error: ${err.message}`);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Gestione dei vari eventi di Stripe
+    try {
+        switch (event.type) {
+            case 'checkout.session.completed': {
+                const session = event.data.object;
+                const userId = session.client_reference_id;
+                
+                if (userId) {
+                    logger.info(`Pagamento completato con successo per utente: ${userId}`);
+                    
+                    // Determina il piano acquistato dai metadati o dal price_id
+                    // In questo caso, forziamo 'pro' come da richiesta dell'utente per il link specifico
+                    await db.collection('users').doc(userId).set({
+                        subscription: {
+                            plan: 'pro',
+                            status: 'active',
+                            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                            sessionId: session.id,
+                            customerId: session.customer
+                        }
+                    }, { merge: true });
+                    
+                    logger.info(`Profilo utente ${userId} aggiornato a PRO tramite Webhook.`);
+                } else {
+                    logger.error("User ID (client_reference_id) non trovato nella sessione di checkout.");
+                }
+                break;
+            }
+
+            case 'customer.subscription.deleted': {
+                const subscription = event.data.object;
+                const customerId = subscription.customer;
+                
+                // Trova l'utente tramite il customerId di Stripe
+                const usersSnapshot = await db.collection('users')
+                    .where('subscription.customerId', '==', customerId)
+                    .limit(1)
+                    .get();
+
+                if (!usersSnapshot.empty) {
+                    const userDoc = usersSnapshot.docs[0];
+                    await userDoc.ref.set({
+                        subscription: {
+                            plan: 'free',
+                            status: 'canceled',
+                            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                        }
+                    }, { merge: true });
+                    logger.info(`Abbonamento cancellato per l'utente ${userDoc.id}.`);
+                }
+                break;
+            }
+
+            default:
+                logger.info(`Evento Stripe non gestito: ${event.type}`);
+        }
+
+        res.json({ received: true });
+    } catch (error) {
+        logger.error("Errore durante la gestione del webhook:", error);
+        res.status(500).send("Internal Server Error");
     }
 });
 
